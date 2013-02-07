@@ -1,3 +1,5 @@
+# Video Barcodes FTW!
+
 These tools are inspired by http://moviebarcode.tumblr.com/movie-index - go
 have a look!
 
@@ -13,5 +15,5 @@ sliders. Currently these are two prototypes to generate the barcode:
   `barcode.ppm`. You can then use your favourite graphics program to convert it
   to a real image format.
 
-  Known issues: The barcode sometimes seems off by a few seconds and can't
-  handle videos with 2048p-resolution yet.
+  Known issues: The barcode seems off by a few seconds and something
+  goes wrong with 2048p videos yet.
