@@ -167,19 +167,19 @@ int main(int argc, char *argv[]) {
         try=0;
         while(!frameFinished && try<100 ) {
             try++;
-        while(av_read_frame(pFormatCtx, &packet)>=0) {
-            // Is this a packet from the video stream?
-            if(packet.stream_index==videoStream) {
-                // Decode video frame
-                avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, 
-                        &packet);
-                break;
+            while(av_read_frame(pFormatCtx, &packet)>=0) {
+                // Is this a packet from the video stream?
+                if(packet.stream_index==videoStream) {
+                    // Decode video frame
+                    avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, 
+                            &packet);
+                    break;
+                }
+                // Free the packet that was allocated by av_read_frame
+                av_free_packet(&packet);
             }
             // Free the packet that was allocated by av_read_frame
             av_free_packet(&packet);
-        }
-        // Free the packet that was allocated by av_read_frame
-        av_free_packet(&packet);
         }
 
         // Did we get a video frame?
@@ -201,16 +201,16 @@ int main(int argc, char *argv[]) {
     }
 
     pFrameWide->data[0] = orig;
-            sws_scale
-                (
-                 sws_ctx2,
-                 (uint8_t const * const *)pFrameWide->data,
-                 pFrameWide->linesize,
-                 0,
-                 HEIGHT,
-                 pFrameBar->data,
-                 pFrameBar->linesize
-                );
+    sws_scale
+        (
+         sws_ctx2,
+         (uint8_t const * const *)pFrameWide->data,
+         pFrameWide->linesize,
+         0,
+         HEIGHT,
+         pFrameBar->data,
+         pFrameBar->linesize
+        );
 
     SaveFrame(pFrameWide, WIDTH*LENGTH, HEIGHT, 1);
     SaveFrame(pFrameBar, LENGTH, HEIGHT, 0);
