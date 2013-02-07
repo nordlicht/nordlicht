@@ -120,10 +120,10 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     bufferWide = (uint8_t *)av_malloc(numBytesWide*sizeof(uint8_t));
 
     sws_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt,
-                             frameWidth, height, PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
+                             frameWidth, height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
     sws_ctx2 = sws_getContext(frameWidth*width, height, PIX_FMT_RGB24,
-                              width, height, PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
+                              width, height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
     // Assign appropriate parts of buffer to image planes in pFrameWide
     // Note that pFrameWide is an AVFrame, but AVFrame is a superset
