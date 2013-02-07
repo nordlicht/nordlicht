@@ -134,16 +134,19 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
 
     uint8_t *orig = pFrameWide->data[0];
 
-    int try;
-    for (i = 0; i<width; i++) {
-        printf("%d\n", i);
+    int stepSize = width;
+    while (stepSize>1) {
+        for (i = stepSize/2; i<width-stepSize/2+1; i+=stepSize) {
+            printf("%d\n", i);
 
-        if (decodeFrame(pFrame, pFormatCtx, pCodecCtx, videoStream, i*seconds_per_frame)) {
-            // Convert the image from its native format to RGB
-            sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data, pFrame->linesize, 0, pCodecCtx->height,
-                    pFrameWide->data, pFrameWide->linesize);
-            pFrameWide->data[0] += frameWidth*3;
+            if (decodeFrame(pFrame, pFormatCtx, pCodecCtx, videoStream, i*seconds_per_frame)) {
+                pFrameWide->data[0] = orig+i*frameWidth*3;
+                // Convert the image from its native format to RGB
+                sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data, pFrame->linesize, 0, pCodecCtx->height,
+                        pFrameWide->data, pFrameWide->linesize);
+            }
         }
+        stepSize /= 2;
     }
 
     pFrameWide->data[0] = orig;
