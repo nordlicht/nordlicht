@@ -26,16 +26,41 @@ void saveFrame(AVFrame *pFrame, int width, int height) {
     fclose(pFile);
 }
 
+int decodeFrame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext *codecContext, int videoStream, long time) {
+    av_seek_frame(formatContext, -1, time , 0);
+    int frameFinished = 0;
+    int try = 0;
+    AVPacket packet;
+    while(!frameFinished) {
+        try++;
+        if (try > 100) {
+            printf("oops\n");
+            return 0;
+        }
+        while(av_read_frame(formatContext, &packet) >= 0) {
+            // Is this a packet from the video stream?
+            if (packet.stream_index == videoStream) {
+                // Decode video frame
+                avcodec_decode_video2(codecContext, frame, &frameFinished, &packet);
+                break;
+            }
+            // Free the packet that was allocated by av_read_frame
+            av_free_packet(&packet);
+        }
+        // Free the packet that was allocated by av_read_frame
+        av_free_packet(&packet);
+    }
+    return 1;
+}
+
 int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     int frameWidth = 16;
     AVFormatContext *pFormatCtx = NULL;
-    int             i, videoStream;
     AVCodecContext  *pCodecCtx = NULL;
+    int             i, videoStream;
     AVCodec         *pCodec = NULL;
     AVFrame         *pFrame = NULL; 
     AVFrame         *pFrameWide = NULL;
-    AVPacket        packet;
-    int             frameFinished;
     int             numBytes, numBytesWide;
     uint8_t         *buffer = NULL;
     uint8_t         *bufferWide = NULL;
@@ -49,11 +74,11 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
 
     // Open video file
     if (avformat_open_input(&pFormatCtx, filename, NULL, NULL) != 0)
-        return -1; // Couldn't open file
+        return 0; // Couldn't open file
 
     // Retrieve stream information
     if (avformat_find_stream_info(pFormatCtx, NULL) < 0)
-        return -1; // Couldn't find stream information
+        return 0; // Couldn't find stream information
 
     // Dump information about file onto standard error
     av_dump_format(pFormatCtx, 0, filename, 0);
@@ -66,7 +91,7 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
             break;
         }
     if (videoStream == -1)
-        return -1; // Didn't find a video stream
+        return 0; // Didn't find a video stream
 
     // Get a pointer to the codec context for the video stream
     pCodecCtx = pFormatCtx->streams[videoStream]->codec;
@@ -75,11 +100,11 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
     if (pCodec == NULL) {
         fprintf(stderr, "Unsupported codec!\n");
-        return -1; // Codec not found
+        return 0; // Codec not found
     }
     // Open codec
     if (avcodec_open2(pCodecCtx, pCodec, &optionsDict)<0)
-        return -1; // Could not open codec
+        return 0; // Could not open codec
 
     // Allocate video frame
     pFrame = avcodec_alloc_frame();
@@ -112,30 +137,11 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     int try;
     for (i = 0; i<width; i++) {
         printf("%d\n", i);
-        av_seek_frame(pFormatCtx, -1, i*seconds_per_frame, 0);
-        frameFinished = 0;
-        try = 0;
-        while(!frameFinished && try<100 ) {
-            try++;
-            while(av_read_frame(pFormatCtx, &packet) >= 0) {
-                // Is this a packet from the video stream?
-                if (packet.stream_index == videoStream) {
-                    // Decode video frame
-                    avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
-                    break;
-                }
-                // Free the packet that was allocated by av_read_frame
-                av_free_packet(&packet);
-            }
-            // Free the packet that was allocated by av_read_frame
-            av_free_packet(&packet);
-        }
 
-        // Did we get a video frame?
-        if (frameFinished) {
+        if (decodeFrame(pFrame, pFormatCtx, pCodecCtx, videoStream, i*seconds_per_frame)) {
             // Convert the image from its native format to RGB
             sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data, pFrame->linesize, 0, pCodecCtx->height,
-                      pFrameWide->data, pFrameWide->linesize);
+                    pFrameWide->data, pFrameWide->linesize);
             pFrameWide->data[0] += frameWidth*3;
         }
     }
@@ -155,7 +161,7 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     // Close the video file
     avformat_close_input(&pFormatCtx);
 
-    return 0;
+    return 1;
 }
 
 int main(int argc, char *argv[]) {
@@ -180,8 +186,11 @@ int main(int argc, char *argv[]) {
     barcodeBuffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, width, height));
     avpicture_fill((AVPicture *)barcode, barcodeBuffer, PIX_FMT_RGB24, width, height);
 
-    createBarcode(barcode, argv[1], width, height);
-    saveFrame(barcode, width, height);
+    if (createBarcode(barcode, argv[1], width, height)) {
+        saveFrame(barcode, width, height);
+    } else {
+        printf("Barcode couln't be generated.\n");
+    }
 
     av_free(barcodeBuffer);
     av_free(barcode);
