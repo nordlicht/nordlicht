@@ -33,7 +33,6 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     AVCodecContext  *pCodecCtx = NULL;
     AVCodec         *pCodec = NULL;
     AVFrame         *pFrame = NULL; 
-    AVFrame         *pFrameRGB = NULL;
     AVFrame         *pFrameWide = NULL;
     AVPacket        packet;
     int             frameFinished;
@@ -86,10 +85,7 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     pFrame = avcodec_alloc_frame();
 
     // Allocate an AVFrame structure
-    pFrameRGB = avcodec_alloc_frame();
     pFrameWide = avcodec_alloc_frame();
-    if (pFrameRGB == NULL)
-        return -1;
 
     // Determine required buffer size and allocate buffer
     numBytes = avpicture_get_size(PIX_FMT_RGB24, pCodecCtx->width, height);
@@ -104,10 +100,9 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     sws_ctx2 = sws_getContext(frameWidth*width, height, PIX_FMT_RGB24,
                               width, height, PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
 
-    // Assign appropriate parts of buffer to image planes in pFrameRGB
-    // Note that pFrameRGB is an AVFrame, but AVFrame is a superset
+    // Assign appropriate parts of buffer to image planes in pFrameWide
+    // Note that pFrameWide is an AVFrame, but AVFrame is a superset
     // of AVPicture
-    avpicture_fill((AVPicture *)pFrameRGB, buffer, PIX_FMT_RGB24, frameWidth, height);
     avpicture_fill((AVPicture *)pFrameWide, bufferWide, PIX_FMT_RGB24, frameWidth*width, height);
 
     int64_t seconds_per_frame = pFormatCtx->duration/width;
@@ -152,7 +147,6 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     av_free(buffer);
     av_free(bufferWide);
     av_free(pFrame);
-    av_free(pFrameRGB);
     av_free(pFrameWide);
 
     // Close the codec
