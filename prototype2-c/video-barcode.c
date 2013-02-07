@@ -159,13 +159,19 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
 }
 
 int main(int argc, char *argv[]) {
+    int width = 1024;
+    int height = 40;
+
     if (argc < 2) {
         printf("Please provide a movie file\n");
         return -1;
     }
-
-    int width = 1024;
-    int height = 40;
+    if (argc >= 3) {
+        width = atoi(argv[2]);
+    }
+    if (argc >= 4) {
+        height = atoi(argv[3]);
+    }
 
     AVFrame *barcode;
     uint8_t *barcodeBuffer = NULL;
