@@ -144,9 +144,10 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
 
     uint8_t *orig = pFrameWide->data[0];
 
-    int stepSize = width;
-    while (stepSize>1) {
-        for (i = stepSize/2; i<width-stepSize/2+1; i+=stepSize) {
+    for (int i=0; i<width; i++) {
+    /* int stepSize = width; */
+    /* while (stepSize>1) { */
+    /*     for (i = stepSize/2; i<width-stepSize/2+1; i+=stepSize) { */
             //printf("%d\n", i);
 
             if (decodeFrame(pFrame, pFormatCtx, pCodecCtx, videoStream, i*seconds_per_frame)) {
@@ -155,12 +156,13 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
                 sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data, pFrame->linesize, 0, pCodecCtx->height,
                         pFrameWide->data, pFrameWide->linesize);
             }
-        }
-        stepSize /= 2;
+        /* stepSize /= 2; */
 
-        pFrameWide->data[0] = orig;
-        sws_scale(sws_ctx2, (uint8_t const * const *)pFrameWide->data, pFrameWide->linesize, 0, height,
-                  barcode->data, barcode->linesize);
+            if (i%100 == 0) {
+                pFrameWide->data[0] = orig;
+                sws_scale(sws_ctx2, (uint8_t const * const *)pFrameWide->data, pFrameWide->linesize, 0, height,
+                        barcode->data, barcode->linesize);
+            }
     }
 
 
