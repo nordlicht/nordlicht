@@ -3,6 +3,16 @@
 #include <libswscale/swscale.h>
 
 #include <stdio.h>
+#include <pthread.h>
+#include <signal.h>
+#include <unistd.h>
+
+struct barcodeInfo {
+    AVFrame *barcode;
+    char *filename;
+    int width;
+    int height;
+};
 
 void saveFrame(AVFrame *pFrame, int width, int height) {
     FILE *pFile;
@@ -137,7 +147,7 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     int stepSize = width;
     while (stepSize>1) {
         for (i = stepSize/2; i<width-stepSize/2+1; i+=stepSize) {
-            printf("%d\n", i);
+            //printf("%d\n", i);
 
             if (decodeFrame(pFrame, pFormatCtx, pCodecCtx, videoStream, i*seconds_per_frame)) {
                 pFrameWide->data[0] = orig+i*frameWidth*3;
@@ -147,11 +157,12 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
             }
         }
         stepSize /= 2;
+
+        pFrameWide->data[0] = orig;
+        sws_scale(sws_ctx2, (uint8_t const * const *)pFrameWide->data, pFrameWide->linesize, 0, height,
+                  barcode->data, barcode->linesize);
     }
 
-    pFrameWide->data[0] = orig;
-    sws_scale(sws_ctx2, (uint8_t const * const *)pFrameWide->data, pFrameWide->linesize, 0, height,
-              barcode->data, barcode->linesize);
 
     av_free(buffer);
     av_free(bufferWide);
@@ -167,9 +178,19 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     return 1;
 }
 
+void *test(void *arg) {
+    struct barcodeInfo* info = (struct barcodeInfo*)arg;
+    createBarcode(info->barcode, info->filename, info->width, info->height);
+    return NULL;
+}
+
 int main(int argc, char *argv[]) {
+    av_log_set_level(AV_LOG_QUIET);
+
     int width = 1024;
     int height = 40;
+
+    struct barcodeInfo info;
 
     if (argc < 2) {
         printf("Please provide a movie file\n");
@@ -189,11 +210,23 @@ int main(int argc, char *argv[]) {
     barcodeBuffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, width, height));
     avpicture_fill((AVPicture *)barcode, barcodeBuffer, PIX_FMT_RGB24, width, height);
 
-    if (createBarcode(barcode, argv[1], width, height)) {
+    pthread_t thread;
+
+    info.filename = argv[1];
+    info.barcode = barcode;
+    info.height = height;
+    info.width = width;
+
+    pthread_create(&thread, NULL, &test, (void*) &info);
+
+    while (pthread_kill(thread, 0) != ESRCH) {
         saveFrame(barcode, width, height);
-    } else {
-        printf("Barcode couln't be generated.\n");
+        printf("write\n");
+        sleep(1);
     }
+    saveFrame(barcode, width, height);
+
+    pthread_join(thread, NULL);
 
     av_free(barcodeBuffer);
     av_free(barcode);

@@ -1,2 +1,2 @@
 default:
-	clang video-barcode.c -lavformat -lavcodec -lavutil -lswscale -o video-barcode
+	clang video-barcode.c -lavformat -lavcodec -lavutil -lswscale -lpthread -o video-barcode
