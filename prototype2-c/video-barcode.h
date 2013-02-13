@@ -37,7 +37,8 @@ void saveFrame(AVFrame *pFrame, int width, int height) {
 }
 
 int decodeFrame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext *codecContext, int videoStream, long time) {
-    av_seek_frame(formatContext, -1, time , 0);
+    av_seek_frame(formatContext, -1, time+10000000 , 0);
+
     int frameFinished = 0;
     int try = 0;
     AVPacket packet;
@@ -150,7 +151,7 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     /* int stepSize = width; */
     /* while (stepSize>1) { */
     /*     for (i = stepSize/2; i<width-stepSize/2+1; i+=stepSize) { */
-            //printf("%d\n", i);
+            printf("%d\n", i);
 
             if (decodeFrame(pFrame, pFormatCtx, pCodecCtx, videoStream, i*seconds_per_frame)) {
                 pFrameWide->data[0] = orig+i*frameWidth*3;
@@ -160,16 +161,12 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
             }
         /* stepSize /= 2; */
 
-            if (i%100 == 0) {
+            if (i%100 == 0 || i == width-1) {
                 pFrameWide->data[0] = orig;
                 sws_scale(sws_ctx2, (uint8_t const * const *)pFrameWide->data, pFrameWide->linesize, 0, height,
                         barcode->data, barcode->linesize);
             }
     }
-
-    pFrameWide->data[0] = orig;
-    sws_scale(sws_ctx2, (uint8_t const * const *)pFrameWide->data, pFrameWide->linesize, 0, height,
-            barcode->data, barcode->linesize);
 
     av_free(buffer);
     av_free(bufferWide);
