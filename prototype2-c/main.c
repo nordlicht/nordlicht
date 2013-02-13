@@ -2,10 +2,10 @@
 
 int main(int argc, char *argv[]) {
     int width = 1024;
-    int height = 40;
+    int height = 400;
 
     if (argc < 2) {
-        printf("Please provide a movie file\n");
+        printf("Please provide a video file\n");
         return -1;
     }
     if (argc >= 3) {
