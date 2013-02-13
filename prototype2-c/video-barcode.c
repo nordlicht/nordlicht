@@ -66,8 +66,6 @@ int decodeFrame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext *
 int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     av_log_set_level(AV_LOG_QUIET);
 
-    printf("%d,%d,%s\n", width, height, filename);
-
     int frameWidth = 16;
     AVFormatContext *pFormatCtx = NULL;
     AVCodecContext  *pCodecCtx = NULL;
@@ -187,14 +185,14 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     return 1;
 }
 
-void *test(void *arg) {
+void *createBarcodeHelper(void *arg) {
     struct barcodeInfo* info = (struct barcodeInfo*)arg;
     createBarcode(info->barcode, info->filename, info->width, info->height);
     free(arg);
     return NULL;
 }
 
-pthread_t test2(AVFrame *barcode, char *filename, int width, int height) {
+pthread_t startBarcodeGeneration(AVFrame *barcode, char *filename, int width, int height) {
     pthread_t thread;
     struct barcodeInfo *info = malloc(sizeof(struct barcodeInfo));
 
@@ -203,7 +201,7 @@ pthread_t test2(AVFrame *barcode, char *filename, int width, int height) {
     info->width = width;
     info->height = height;
 
-    pthread_create(&thread, NULL, &test, (void*) info);
+    pthread_create(&thread, NULL, &createBarcodeHelper, (void*) info);
     return thread;
 }
 
@@ -224,16 +222,14 @@ int main(int argc, char *argv[]) {
 
     AVFrame *barcode;
     uint8_t *barcodeBuffer = NULL;
-
     barcode = avcodec_alloc_frame();
     barcodeBuffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, width, height));
     avpicture_fill((AVPicture *)barcode, barcodeBuffer, PIX_FMT_RGB24, width, height);
 
-    pthread_t thread = test2(barcode, argv[1], width, height);
+    pthread_t thread = startBarcodeGeneration(barcode, argv[1], width, height);
 
     while (pthread_kill(thread, 0) != ESRCH) {
         saveFrame(barcode, width, height);
-        printf("write\n");
         sleep(1);
     }
     saveFrame(barcode, width, height);
