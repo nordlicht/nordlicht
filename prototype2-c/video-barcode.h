@@ -12,29 +12,9 @@ struct barcodeInfo {
     char *filename;
     int width;
     int height;
+    void (*doneFunc)(void);
+    void (*redrawFunc)(void);
 };
-
-void saveFrame(AVFrame *pFrame, int width, int height) {
-    FILE *pFile;
-    char *szFilename = "barcode.ppm";
-    int  y;
-
-    // Open file
-    pFile=fopen(szFilename, "wb");
-    if (pFile==NULL)
-        return;
-
-    // Write header
-    fprintf(pFile, "P6\n%d %d\n255\n", width, height);
-
-    // Write pixel data
-    for (y=0; y<height; y++) {
-        fwrite(pFrame->data[0]+y*pFrame->linesize[0], 1, width*3, pFile);
-    }
-
-    // Close file
-    fclose(pFile);
-}
 
 int decodeFrame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext *codecContext, int videoStream, long time) {
     av_seek_frame(formatContext, -1, time+10000000 , 0);
@@ -64,7 +44,7 @@ int decodeFrame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext *
     return 1;
 }
 
-int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
+int createBarcode(AVFrame *barcode, char *filename, int width, int height, void(*doneFunc)(void), void(*redrawFunc)(void)) {
     av_log_set_level(AV_LOG_QUIET);
 
     int frameWidth = 16;
@@ -165,6 +145,7 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
                 pFrameWide->data[0] = orig;
                 sws_scale(sws_ctx2, (uint8_t const * const *)pFrameWide->data, pFrameWide->linesize, 0, height,
                         barcode->data, barcode->linesize);
+                redrawFunc();
             }
     }
 
@@ -179,17 +160,19 @@ int createBarcode(AVFrame *barcode, char *filename, int width, int height) {
     // Close the video file
     avformat_close_input(&pFormatCtx);
 
+    doneFunc();
+
     return 1;
 }
 
 void *createBarcodeHelper(void *arg) {
     struct barcodeInfo* info = (struct barcodeInfo*)arg;
-    createBarcode(info->barcode, info->filename, info->width, info->height);
+    createBarcode(info->barcode, info->filename, info->width, info->height, info->doneFunc, info->redrawFunc);
     free(arg);
     return NULL;
 }
 
-pthread_t startBarcodeGeneration(AVFrame *barcode, char *filename, int width, int height) {
+pthread_t startBarcodeGeneration(AVFrame *barcode, char *filename, int width, int height, void (*done)(void), void (*redraw)(void)) {
     pthread_t thread;
     struct barcodeInfo *info = malloc(sizeof(struct barcodeInfo));
 
@@ -197,6 +180,8 @@ pthread_t startBarcodeGeneration(AVFrame *barcode, char *filename, int width, in
     info->barcode = barcode;
     info->width = width;
     info->height = height;
+    info->doneFunc = done;
+    info->redrawFunc = redraw;
 
     pthread_create(&thread, NULL, &createBarcodeHelper, (void*) info);
     return thread;
