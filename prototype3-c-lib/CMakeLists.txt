@@ -16,3 +16,4 @@ target_link_libraries(main vidcode)
 
 install(TARGETS vidcode DESTINATION lib)
 install(FILES vidcode.h DESTINATION include)
+install(FILES libvidcode.pc DESTINATION lib/pkgconfig)

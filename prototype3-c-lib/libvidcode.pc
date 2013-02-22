@@ -1,0 +1,13 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+modules=1
+
+Name: libvidcode
+Version: 0.0.1
+Description: generates video barcodes
+Requires:
+Libs: -L${libdir} -lvidcode
+Libs.private:  -lz  -lm  
+Cflags: -I${includedir}/libvidcode
