@@ -8,6 +8,7 @@
 
 typedef struct vidcode {
     int width, height;
+    float progress;
     AVFrame *frame;
     uint8_t *buffer;
     char *input_file_path;
@@ -20,6 +21,8 @@ int vidcode_create(vidcode **code_ptr, int width, int height) {
     code = malloc(sizeof(vidcode));
     code->width = width;
     code->height = height;
+    code->input_file_path = NULL;
+    code->input_thread = 0;
 
     code->frame = avcodec_alloc_frame();
 
@@ -45,7 +48,6 @@ int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext 
     while(!frameFinished) {
         try++;
         if (try > 100) {
-            printf("oops\n");
             return 0;
         }
         while(av_read_frame(formatContext, &packet) >= 0) {
@@ -153,7 +155,7 @@ void *threaded_input(void *arg) {
     /* int stepSize = code->width; */
     /* while (stepSize>1) { */
     /*     for (i = stepSize/2; i<code->width-stepSize/2+1; i+=stepSize) { */
-            printf("%d\n", i);
+        code->progress = (float)i/code->width;
 
             if (decode_frame(pFrame, pFormatCtx, pCodecCtx, videoStream, i*seconds_per_frame)) {
                 pFrameWide->data[0] = orig+i*frameWidth*3;
@@ -186,6 +188,13 @@ void *threaded_input(void *arg) {
 }
 
 int vidcode_input(vidcode *code, char *file_path) {
+    if (code->input_file_path != NULL && strcmp(file_path, code->input_file_path) == 0)
+        return 0;
+
+    if (!vidcode_is_done(code)) {
+        pthread_cancel(code->input_thread);
+    }
+
     code->input_file_path = file_path;
 
     pthread_create(&code->input_thread, NULL, &threaded_input, code);
@@ -193,7 +202,11 @@ int vidcode_input(vidcode *code, char *file_path) {
 
 int vidcode_is_done(vidcode *code) {
     // TODO there are many problems with this
-    return pthread_kill(code->input_thread, 0) == ESRCH;
+    return code->input_thread == 0 || pthread_kill(code->input_thread, 0) == ESRCH;
+}
+
+float vidcode_progress(vidcode *code) {
+
 }
 
 #endif
