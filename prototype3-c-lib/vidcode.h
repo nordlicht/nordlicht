@@ -15,15 +15,22 @@ typedef struct vidcode {
     pthread_t input_thread;
 } vidcode;
 
-int vidcode_create(vidcode **code_ptr, int width, int height) {
-    vidcode *code;
+void init_libav() {
+    av_log_set_level(AV_LOG_QUIET);
+    av_register_all();
+}
 
+int vidcode_create(vidcode **code_ptr, int width, int height) {
+    init_libav();
+
+    vidcode *code;
     code = malloc(sizeof(vidcode));
+
     code->width = width;
     code->height = height;
+    code->progress = 0;
     code->input_file_path = NULL;
     code->input_thread = 0;
-
     code->frame = avcodec_alloc_frame();
 
     code->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, width, height));
@@ -39,7 +46,7 @@ int vidcode_free(vidcode *code) {
     free(code);
 }
 
-int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext *codecContext, int videoStream, long time) {
+int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext *codecContext, int video_stream, long time) {
     av_seek_frame(formatContext, -1, time+10000000 , 0);
 
     int frameFinished = 0;
@@ -51,16 +58,12 @@ int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext 
             return 0;
         }
         while(av_read_frame(formatContext, &packet) >= 0) {
-            // Is this a packet from the video stream?
-            if (packet.stream_index == videoStream) {
-                // Decode video frame
+            if (packet.stream_index == video_stream) {
                 avcodec_decode_video2(codecContext, frame, &frameFinished, &packet);
                 break;
             }
-            // Free the packet that was allocated by av_read_frame
             av_free_packet(&packet);
         }
-        // Free the packet that was allocated by av_read_frame
         av_free_packet(&packet);
     }
     return 1;
@@ -68,123 +71,88 @@ int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext 
 
 void *threaded_input(void *arg) {
     vidcode *code = arg;
+    int i;
 
-    av_log_set_level(AV_LOG_QUIET);
+    int frame_width = 16;
 
-    int frameWidth = 16;
-    AVFormatContext *pFormatCtx = NULL;
-    AVCodecContext  *pCodecCtx = NULL;
-    int             i, videoStream;
-    AVCodec         *pCodec = NULL;
-    AVFrame         *pFrame = NULL; 
-    AVFrame         *pFrameWide = NULL;
-    int             numBytes, numBytesWide;
-    uint8_t         *buffer = NULL;
-    uint8_t         *bufferWide = NULL;
+    AVFormatContext *format_context = NULL;
+    if (avformat_open_input(&format_context, code->input_file_path, NULL, NULL) != 0)
+        return 0;
 
-    AVDictionary    *optionsDict = NULL;
-    struct SwsContext      *sws_ctx = NULL;
-    struct SwsContext      *sws_ctx2 = NULL;
+    if (avformat_find_stream_info(format_context, NULL) < 0)
+        return 0;
 
-    // Register all formats and codecs
-    av_register_all();
-
-    // Open video file
-    if (avformat_open_input(&pFormatCtx, code->input_file_path, NULL, NULL) != 0)
-        return 0; // Couldn't open file
-
-    // Retrieve stream information
-    if (avformat_find_stream_info(pFormatCtx, NULL) < 0)
-        return 0; // Couldn't find stream information
-
-    // Dump information about file onto standard error
-    av_dump_format(pFormatCtx, 0, code->input_file_path, 0);
-
-    // Find the first video stream
-    videoStream = -1;
-    for (i=0; i<pFormatCtx->nb_streams; i++)
-        if (pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
-            videoStream = i;
+    int video_stream = -1;
+    for (i=0; i<format_context->nb_streams; i++) {
+        if (format_context->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+            video_stream = i;
             break;
         }
-    if (videoStream == -1)
-        return 0; // Didn't find a video stream
-
-    // Get a pointer to the codec context for the video stream
-    pCodecCtx = pFormatCtx->streams[videoStream]->codec;
-
-    // Find the decoder for the video stream
-    pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
-    if (pCodec == NULL) {
-        fprintf(stderr, "Unsupported codec!\n");
-        return 0; // Codec not found
     }
-    // Open codec
-    if (avcodec_open2(pCodecCtx, pCodec, &optionsDict)<0)
-        return 0; // Could not open codec
+    if (video_stream == -1)
+        return 0;
 
-    // Allocate video frame
-    pFrame = avcodec_alloc_frame();
+    AVCodecContext *codec_context = NULL;
+    codec_context = format_context->streams[video_stream]->codec;
 
-    // Allocate an AVFrame structure
-    pFrameWide = avcodec_alloc_frame();
+    AVCodec *codec = NULL;
+    codec = avcodec_find_decoder(codec_context->codec_id);
+    if (codec == NULL) {
+        fprintf(stderr, "Unsupported codec!\n");
+        return 0;
+    }
+    AVDictionary *optionsDict = NULL;
+    if (avcodec_open2(codec_context, codec, &optionsDict)<0)
+        return 0;
 
-    // Determine required buffer size and allocate buffer
-    numBytes = avpicture_get_size(PIX_FMT_RGB24, pCodecCtx->width, code->height);
-    buffer = (uint8_t *)av_malloc(numBytes*sizeof(uint8_t));
+    AVFrame *frame = NULL; 
+    frame = avcodec_alloc_frame();
 
-    numBytesWide =avpicture_get_size(PIX_FMT_RGB24, frameWidth*code->width, code->height);
-    bufferWide = (uint8_t *)av_malloc(numBytesWide*sizeof(uint8_t));
+    AVFrame *frame_wide = NULL;
+    frame_wide = avcodec_alloc_frame();
 
-    sws_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt,
-                             frameWidth, code->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
+    uint8_t *buffer = NULL;
+    buffer = (uint8_t *)av_malloc(avpicture_get_size(PIX_FMT_RGB24, codec_context->width, code->height)*sizeof(uint8_t));
 
-    sws_ctx2 = sws_getContext(frameWidth*code->width, code->height, PIX_FMT_RGB24,
-                              code->width, code->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
+    uint8_t *buffer_wide = NULL;
+    buffer_wide = (uint8_t *)av_malloc(avpicture_get_size(PIX_FMT_RGB24, frame_width*code->width, code->height)*sizeof(uint8_t));
 
-    // Assign appropriate parts of buffer to image planes in pFrameWide
-    // Note that pFrameWide is an AVFrame, but AVFrame is a superset
-    // of AVPicture
-    avpicture_fill((AVPicture *)pFrameWide, bufferWide, PIX_FMT_RGB24, frameWidth*code->width, code->height);
+    struct SwsContext *sws_ctx = NULL;
+    sws_ctx = sws_getContext(codec_context->width, codec_context->height, codec_context->pix_fmt,
+            frame_width, code->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
-    int64_t seconds_per_frame = pFormatCtx->duration/code->width;
+    struct SwsContext *sws_ctx2 = NULL;
+    sws_ctx2 = sws_getContext(frame_width*code->width, code->height, PIX_FMT_RGB24,
+            code->width, code->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
-    uint8_t *orig = pFrameWide->data[0];
+    avpicture_fill((AVPicture *)frame_wide, buffer_wide, PIX_FMT_RGB24, frame_width*code->width, code->height);
+
+    int64_t seconds_per_frame = format_context->duration/code->width;
+    uint8_t *orig = frame_wide->data[0];
 
     for (i=0; i<code->width; i++) {
-    /* int stepSize = code->width; */
-    /* while (stepSize>1) { */
-    /*     for (i = stepSize/2; i<code->width-stepSize/2+1; i+=stepSize) { */
         code->progress = (float)i/code->width;
 
-            if (decode_frame(pFrame, pFormatCtx, pCodecCtx, videoStream, i*seconds_per_frame)) {
-                pFrameWide->data[0] = orig+i*frameWidth*3;
-                // Convert the image from its native format to RGB
-                sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data, pFrame->linesize, 0, pCodecCtx->height,
-                        pFrameWide->data, pFrameWide->linesize);
-            }
-        /* stepSize /= 2; */
+        if (decode_frame(frame, format_context, codec_context, video_stream, i*seconds_per_frame)) {
+            frame_wide->data[0] = orig+i*frame_width*3;
+            sws_scale(sws_ctx, (uint8_t const * const *)frame->data, frame->linesize, 0, codec_context->height,
+                    frame_wide->data, frame_wide->linesize);
+        }
 
-            if (i%100 == 0 || i == code->width-1) {
-                pFrameWide->data[0] = orig;
-                sws_scale(sws_ctx2, (uint8_t const * const *)pFrameWide->data, pFrameWide->linesize, 0, code->height,
-                        code->frame->data, code->frame->linesize);
-                /* redrawFunc(); */
-            }
+        if (i%100 == 0 || i == code->width-1) {
+            frame_wide->data[0] = orig;
+            sws_scale(sws_ctx2, (uint8_t const * const *)frame_wide->data, frame_wide->linesize, 0, code->height,
+                    code->frame->data, code->frame->linesize);
+        }
     }
 
     av_free(buffer);
-    av_free(bufferWide);
-    av_free(pFrame);
-    av_free(pFrameWide);
+    av_free(buffer_wide);
+    av_free(frame);
+    av_free(frame_wide);
 
-    // Close the codec
-    avcodec_close(pCodecCtx);
-
-    // Close the video file
-    avformat_close_input(&pFormatCtx);
-
-    /* doneFunc(); */
+    avcodec_close(codec_context);
+    avformat_close_input(&format_context);
 }
 
 int vidcode_input(vidcode *code, char *file_path) {
@@ -196,7 +164,6 @@ int vidcode_input(vidcode *code, char *file_path) {
     }
 
     code->input_file_path = file_path;
-
     pthread_create(&code->input_thread, NULL, &threaded_input, code);
 }
 
@@ -206,7 +173,7 @@ int vidcode_is_done(vidcode *code) {
 }
 
 float vidcode_progress(vidcode *code) {
-
+    return code->progress;
 }
 
 #endif
