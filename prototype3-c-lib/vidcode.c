@@ -115,6 +115,9 @@ void *threaded_input(void *arg) {
 }
 
 int vidcode_create(vidcode **code_ptr, int width, int height) {
+    if (width <= 0 || height <= 0)
+        return 1;
+
     init_libav();
 
     vidcode *code;
@@ -138,6 +141,7 @@ int vidcode_free(vidcode *code) {
     av_free(code->buffer);
     avcodec_free_frame(&code->frame);
     free(code);
+    return 0;
 }
 
 int vidcode_input(vidcode *code, char *file_path) {

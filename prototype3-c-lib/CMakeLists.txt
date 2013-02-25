@@ -14,6 +14,9 @@ target_link_libraries(vidcode ${FFMPEG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 add_executable(main main.c)
 target_link_libraries(main vidcode)
 
+add_executable(test test.c)
+target_link_libraries(test vidcode)
+
 install(TARGETS vidcode DESTINATION lib)
 install(FILES vidcode.h DESTINATION include)
 install(FILES vidcode.pc DESTINATION lib/pkgconfig)
