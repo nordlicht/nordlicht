@@ -8,11 +8,16 @@
 
 typedef struct vidcode {
     int width, height;
-    float progress;
+    int frames_read;
+    int frames_written;
     AVFrame *frame;
+    AVFrame *frame_wide;
     uint8_t *buffer;
+    uint8_t *buffer_wide;
     char *input_file_path;
+    char *output_file_path;
     pthread_t input_thread;
+    pthread_t output_thread;
 } vidcode;
 
 int vidcode_create(vidcode **code_ptr, int width, int height);
