@@ -21,6 +21,10 @@ int vidcode_free(vidcode *code);
 
 int vidcode_input(vidcode *code, char *file_path);
 
+int vidcode_output(vidcode *code, char *file_path);
+
+int vidcode_stop(vidcode *code);
+
 int vidcode_is_done(vidcode *code);
 
 float vidcode_progress(vidcode *code);

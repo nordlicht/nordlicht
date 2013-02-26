@@ -137,7 +137,15 @@ int vidcode_create(vidcode **code_ptr, int width, int height) {
     return 0;
 }
 
+int vidcode_stop(vidcode *code) {
+    if (!vidcode_is_done(code)) {
+        pthread_cancel(code->input_thread);
+    }
+    return 0;
+}
+
 int vidcode_free(vidcode *code) {
+    vidcode_stop(code);
     av_free(code->buffer);
     avcodec_free_frame(&code->frame);
     free(code);
@@ -148,12 +156,26 @@ int vidcode_input(vidcode *code, char *file_path) {
     if (code->input_file_path != NULL && strcmp(file_path, code->input_file_path) == 0)
         return 0;
 
-    if (!vidcode_is_done(code)) {
-        pthread_cancel(code->input_thread);
-    }
+    vidcode_stop(code);
 
     code->input_file_path = file_path;
     pthread_create(&code->input_thread, NULL, &threaded_input, code);
+}
+
+int vidcode_output(vidcode *code, char *file_path) {
+    FILE *file;
+    int y;
+
+    file = fopen(file_path, "wb");
+    if (!file)
+        return 1;
+
+    fprintf(file, "P6\n%d %d\n255\n", code->width, code->height);
+    for(y=0; y<code->height; y++)
+        fwrite(code->frame->data[0]+y*code->frame->linesize[0], 1, code->width*3, file);
+
+    fclose(file);
+    return 0;
 }
 
 int vidcode_is_done(vidcode *code) {
