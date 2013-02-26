@@ -1,0 +1,39 @@
+# Maintainer: Sebastian Morr <sebastian@morr.cc>
+pkgname=vidcode
+pkgver=0.01
+pkgrel=1
+epoch=
+pkgdesc=""
+arch=('any')
+url=""
+license=('GPL')
+groups=()
+depends=()
+makedepends=()
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=($pkgname-$pkgver.tar.gz)
+noextract=()
+md5sums=()
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+  mkdir -p build && cd build
+  cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+  make
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+  cd build
+  make DESTDIR="$pkgdir/" install
+}
+
+# vim:set ts=2 sw=2 et:
