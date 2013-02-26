@@ -1,0 +1,8 @@
+libdir=@CMAKE_INSTALL_PREFIX@/lib
+includedir=@CMAKE_INSTALL_PREFIX@/include
+
+Name: mediabarcode
+Description: A library for creating video barcodes
+Requires:
+Libs: -L${libdir} -lmediabarcode
+Cflags: -I${includedir}
