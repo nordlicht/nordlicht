@@ -105,7 +105,7 @@ void *threaded_output(void *arg) {
 
     file = fopen(code->output_file_path, "wb");
     if (!file) {
-        return 1;
+        return;
     }
 
     while(code->frames_written < code->width-1) {
@@ -124,8 +124,6 @@ void *threaded_output(void *arg) {
     }
 
     fclose(file);
-
-    return 0;
 }
 
 int vidcode_create(vidcode **code_ptr, int width, int height) {
