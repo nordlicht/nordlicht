@@ -19,7 +19,7 @@ target_link_libraries(main mediabarcode)
 add_executable(test-mediabarcode test/test.c)
 target_link_libraries(test-mediabarcode mediabarcode)
 
-CONFIGURE_FILE(mediabarcode.pc.in mediabarcode.pc)
+CONFIGURE_FILE(mediabarcode.pc.in mediabarcode.pc @ONLY)
 
 install(TARGETS mediabarcode DESTINATION lib)
 install(FILES include/mediabarcode.h DESTINATION include)
