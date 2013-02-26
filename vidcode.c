@@ -103,24 +103,28 @@ void *threaded_output(void *arg) {
     sws_ctx2 = sws_getContext(FRAME_WIDTH*code->width, code->height, PIX_FMT_RGB24,
             code->width, code->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
+    file = fopen(code->output_file_path, "wb");
+    if (!file) {
+        return 1;
+    }
+
     while(code->frames_written < code->width-1) {
-        //code->frame_wide->data[0] = orig;
+        rewind(file);
+        fprintf(file, "P6\n%d %d\n255\n", code->width, code->height);
+
         code->frames_written = code->frames_read;
         sws_scale(sws_ctx2, (uint8_t const * const *)code->frame_wide->data, code->frame_wide->linesize, 0, code->height,
                 code->frame->data, code->frame->linesize);
 
-        file = fopen(code->output_file_path, "wb");
-        if (!file) {
-            return 1;
+        for(y=0; y<code->height; y++) {
+            fwrite(code->frame->data[0]+y*code->frame->linesize[0], 1, code->width*3, file);
         }
 
-        fprintf(file, "P6\n%d %d\n255\n", code->width, code->height);
-        for(y=0; y<code->height; y++)
-            fwrite(code->frame->data[0]+y*code->frame->linesize[0], 1, code->width*3, file);
-
-        fclose(file);
-        //sleep(1);
+        sleep(1);
     }
+
+    fclose(file);
+
     return 0;
 }
 
@@ -182,6 +186,7 @@ int vidcode_input(vidcode *code, char *file_path) {
 
 int vidcode_output(vidcode *code, char *file_path) {
     code->output_file_path = file_path;
+    return 0;
 }
 
 int vidcode_is_done(vidcode *code) {

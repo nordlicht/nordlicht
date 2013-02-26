@@ -35,12 +35,12 @@ void test_create() {
 void test_input() {
     vidcode *code;
     vidcode_create(&code, 1024, 100);
+    assert_pass(vidcode_output(code, CODE));
 
     assert_pass(vidcode_input(code, VID));
     assert_pass(vidcode_input(code, VID));
     assert_pass(vidcode_input(code, VID));
     usleep(100000);
-    assert(vidcode_progress(code) > 0);
     assert(!vidcode_is_done(code));
     assert_pass(vidcode_input(code, VID));
 
