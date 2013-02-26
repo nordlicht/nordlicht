@@ -1,4 +1,4 @@
-project(vidcode C)
+project(mediabarcode C)
 cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
@@ -8,15 +8,17 @@ include_directories(${FFMPEG_INCLUDE_DIRS})
 
 find_package(Threads REQUIRED)
 
-add_library(vidcode SHARED src/vidcode.c)
-target_link_libraries(vidcode ${FFMPEG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+include_directories(include)
+
+add_library(mediabarcode SHARED src/mediabarcode.c)
+target_link_libraries(mediabarcode ${FFMPEG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(main bin/main.c)
-target_link_libraries(main vidcode)
+target_link_libraries(main mediabarcode)
 
 add_executable(test test/test.c)
-target_link_libraries(test vidcode)
+target_link_libraries(test mediabarcode)
 
-install(TARGETS vidcode DESTINATION lib)
-install(FILES include/vidcode.h DESTINATION include)
-install(FILES vidcode.pc DESTINATION lib/pkgconfig)
+install(TARGETS mediabarcode DESTINATION lib)
+install(FILES include/mediabarcode.h DESTINATION include)
+install(FILES mediabarcode.pc DESTINATION lib/pkgconfig)

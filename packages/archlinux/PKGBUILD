@@ -1,5 +1,5 @@
 # Maintainer: Sebastian Morr <sebastian@morr.cc>
-pkgname=vidcode
+pkgname=mediabarcode
 pkgver=0.01
 pkgrel=1
 epoch=

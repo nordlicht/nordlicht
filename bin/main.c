@@ -1,4 +1,4 @@
-#include "vidcode.h"
+#include "mediabarcode.h"
 #include "stdio.h"
 #include "unistd.h"
 
@@ -19,17 +19,17 @@ int main(int argc, char** argv) {
     }
     file_path = argv[1];
 
-    vidcode *code;
-    vidcode_create(&code, width, height);
+    mediabarcode *code;
+    mbc_create(&code, width, height);
 
-    vidcode_output(code, "barcode.ppm");
-    vidcode_input(code, file_path);
+    mbc_output(code, "barcode.ppm");
+    mbc_input(code, file_path);
 
-    while (!vidcode_is_done(code)) {
-        printf("%02.0f%\n", vidcode_progress(code)*100);
+    while (!mbc_is_done(code)) {
+        printf("%02.0f%\n", mbc_progress(code)*100);
         sleep(1);
     }
 
-    vidcode_free(code);
+    mbc_free(code);
     return 0;
 }

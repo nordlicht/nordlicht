@@ -1,4 +1,4 @@
-#include "vidcode.h"
+#include "mediabarcode.h"
 
 #define FRAME_WIDTH 16
 
@@ -31,7 +31,7 @@ int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext 
 }
 
 void *threaded_input(void *arg) {
-    vidcode *code = arg;
+    mediabarcode *code = arg;
     int i;
 
 
@@ -96,7 +96,7 @@ void *threaded_input(void *arg) {
 void *threaded_output(void *arg) {
     FILE *file;
     int y;
-    vidcode *code = arg;
+    mediabarcode *code = arg;
     int i;
 
     struct SwsContext *sws_ctx2 = NULL;
@@ -126,14 +126,14 @@ void *threaded_output(void *arg) {
     fclose(file);
 }
 
-int vidcode_create(vidcode **code_ptr, int width, int height) {
+int mbc_create(mediabarcode **code_ptr, int width, int height) {
     if (width <= 0 || height <= 0)
         return 1;
 
     init_libav();
 
-    vidcode *code;
-    code = malloc(sizeof(vidcode));
+    mediabarcode *code;
+    code = malloc(sizeof(mediabarcode));
 
     code->width = width;
     code->height = height;
@@ -155,15 +155,15 @@ int vidcode_create(vidcode **code_ptr, int width, int height) {
     return 0;
 }
 
-int vidcode_stop(vidcode *code) {
-    if (!vidcode_is_done(code)) {
+int mbc_stop(mediabarcode *code) {
+    if (!mbc_is_done(code)) {
         pthread_cancel(code->input_thread);
     }
     return 0;
 }
 
-int vidcode_free(vidcode *code) {
-    vidcode_stop(code);
+int mbc_free(mediabarcode *code) {
+    mbc_stop(code);
     av_free(code->buffer);
     av_free(code->buffer_wide);
     avcodec_free_frame(&code->frame);
@@ -172,28 +172,28 @@ int vidcode_free(vidcode *code) {
     return 0;
 }
 
-int vidcode_input(vidcode *code, char *file_path) {
+int mbc_input(mediabarcode *code, char *file_path) {
     if (code->input_file_path != NULL && strcmp(file_path, code->input_file_path) == 0)
         return 0;
     code->input_file_path = file_path;
 
-    vidcode_stop(code);
+    mbc_stop(code);
     pthread_create(&code->input_thread, NULL, &threaded_input, code);
     pthread_create(&code->output_thread, NULL, &threaded_output, code);
 }
 
-int vidcode_output(vidcode *code, char *file_path) {
+int mbc_output(mediabarcode *code, char *file_path) {
     code->output_file_path = file_path;
     return 0;
 }
 
-int vidcode_is_done(vidcode *code) {
+int mbc_is_done(mediabarcode *code) {
     // TODO there are many problems with this
     return code->input_thread == 0 || 
         (pthread_kill(code->input_thread, 0) == ESRCH &&
         pthread_kill(code->output_thread, 0) == ESRCH);
 }
 
-float vidcode_progress(vidcode *code) {
+float mbc_progress(mediabarcode *code) {
     return ((float)code->frames_written)/((float)code->width);
 }

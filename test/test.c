@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#include "vidcode.h"
+#include "mediabarcode.h"
 
 #define assert_pass(expr) assert((expr) == 0)
 #define assert_fail(expr) assert((expr) != 0)
@@ -20,51 +20,51 @@ void meta_test_assets() {
 }
 
 void test_create() {
-    vidcode *code = NULL;
+    mediabarcode *code = NULL;
 
-    assert_fail(vidcode_create(&code, 0, 100));
-    assert_fail(vidcode_create(&code, 1024, 0));
-    assert_pass(vidcode_create(&code, 1024, 100));
+    assert_fail(mbc_create(&code, 0, 100));
+    assert_fail(mbc_create(&code, 1024, 0));
+    assert_pass(mbc_create(&code, 1024, 100));
     assert(code != NULL);
-    assert(vidcode_progress(code) == 0);
-    assert(vidcode_is_done(code));
+    assert(mbc_progress(code) == 0);
+    assert(mbc_is_done(code));
 
-    assert_pass(vidcode_free(code));
+    assert_pass(mbc_free(code));
 }
 
 void test_input() {
-    vidcode *code;
-    vidcode_create(&code, 1024, 100);
-    assert_pass(vidcode_output(code, CODE));
+    mediabarcode *code;
+    mbc_create(&code, 1024, 100);
+    assert_pass(mbc_output(code, CODE));
 
-    assert_pass(vidcode_input(code, VID));
-    assert_pass(vidcode_input(code, VID));
-    assert_pass(vidcode_input(code, VID));
+    assert_pass(mbc_input(code, VID));
+    assert_pass(mbc_input(code, VID));
+    assert_pass(mbc_input(code, VID));
     usleep(100000);
-    assert(!vidcode_is_done(code));
-    assert_pass(vidcode_input(code, VID));
+    assert(!mbc_is_done(code));
+    assert_pass(mbc_input(code, VID));
 
-    assert_pass(vidcode_free(code));
+    assert_pass(mbc_free(code));
 }
 
 void test_output() {
     remove(CODE);
     assert(!file_exists(CODE));
 
-    vidcode *code;
-    vidcode_create(&code, 1024, 100);
-    vidcode_input(code, VID);
+    mediabarcode *code;
+    mbc_create(&code, 1024, 100);
+    mbc_input(code, VID);
 
-    vidcode_output(code, CODE);
+    mbc_output(code, CODE);
     usleep(100000);
     assert(file_exists(CODE));
 
-    vidcode_stop(code);
+    mbc_stop(code);
     remove(CODE);
     assert(!file_exists(CODE));
 
 
-    vidcode_free(code);
+    mbc_free(code);
 }
 
 int main() {
