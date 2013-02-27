@@ -1,27 +1,33 @@
 # Maintainer: Sebastian Morr <sebastian@morr.cc>
 
-pkgname=mediastrip
-pkgver=0.0.1
+pkgname=mediastrip-git
+pkgver=20130227
 pkgrel=1
 pkgdesc="A library that creates video barcodes"
 arch=('i686' 'x86_64')
-url=""
+url="http://github.com/blinry/mediastrip"
 license=('GPL')
 depends=('ffmpeg')
-makedepends=('cmake')
+makedepends=('git' 'cmake')
 optdepends=()
-options=()
-source=($pkgname-$pkgver.tar.gz)
-noextract=()
-md5sums=()
+_gitroot=http://github.com/blinry/mediastrip.git
+_gitname=mediastrip
 
 build() {
-  cd "$srcdir/$pkgname-$pkgver"
+  cd "$srcdir"
+
+  if [[ -d $_gitname ]]; then
+      cd $_gitname && git pull origin && cd ..
+  else
+      git clone $_gitroot
+  fi
+
+  cd "$srcdir/$_gitname"
   cmake -DCMAKE_INSTALL_PREFIX=/usr
   make
 }
 
 package() {
-  cd "$srcdir/$pkgname-$pkgver"
+  cd "$srcdir/$_gitname"
   make DESTDIR="$pkgdir" install
 }
