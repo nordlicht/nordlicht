@@ -1,4 +1,4 @@
-#include "mediabarcode.h"
+#include "mediastrip.h"
 #include "stdio.h"
 #include "unistd.h"
 
@@ -19,17 +19,17 @@ int main(int argc, char** argv) {
     }
     file_path = argv[1];
 
-    mediabarcode *code;
-    mbc_create(&code, width, height);
+    mediastrip *code;
+    mediastrip_create(&code, width, height);
 
-    mbc_output(code, "barcode.ppm");
-    mbc_input(code, file_path);
+    mediastrip_output(code, "mediastrip.ppm");
+    mediastrip_input(code, file_path);
 
-    while (!mbc_is_done(code)) {
-        printf("%02.0f%\n", mbc_progress(code)*100);
+    while (!mediastrip_is_done(code)) {
+        printf("%02.0f%\n", mediastrip_progress(code)*100);
         sleep(1);
     }
 
-    mbc_free(code);
+    mediastrip_free(code);
     return 0;
 }

@@ -1,4 +1,4 @@
-#include "mediabarcode.h"
+#include "mediastrip.h"
 
 #define FRAME_WIDTH 16
 
@@ -31,7 +31,7 @@ int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext 
 }
 
 void *threaded_input(void *arg) {
-    mediabarcode *code = arg;
+    mediastrip *code = arg;
     int i;
 
 
@@ -96,7 +96,7 @@ void *threaded_input(void *arg) {
 void *threaded_output(void *arg) {
     FILE *file;
     int y;
-    mediabarcode *code = arg;
+    mediastrip *code = arg;
     int i;
 
     struct SwsContext *sws_ctx2 = NULL;
@@ -126,14 +126,14 @@ void *threaded_output(void *arg) {
     fclose(file);
 }
 
-int mbc_create(mediabarcode **code_ptr, int width, int height) {
+int mediastrip_create(mediastrip **code_ptr, int width, int height) {
     if (width <= 0 || height <= 0)
         return 1;
 
     init_libav();
 
-    mediabarcode *code;
-    code = malloc(sizeof(mediabarcode));
+    mediastrip *code;
+    code = malloc(sizeof(mediastrip));
 
     code->width = width;
     code->height = height;
@@ -155,15 +155,15 @@ int mbc_create(mediabarcode **code_ptr, int width, int height) {
     return 0;
 }
 
-int mbc_stop(mediabarcode *code) {
-    if (!mbc_is_done(code)) {
+int mediastrip_stop(mediastrip *code) {
+    if (!mediastrip_is_done(code)) {
         pthread_cancel(code->input_thread);
     }
     return 0;
 }
 
-int mbc_free(mediabarcode *code) {
-    mbc_stop(code);
+int mediastrip_free(mediastrip *code) {
+    mediastrip_stop(code);
     av_free(code->buffer);
     av_free(code->buffer_wide);
     avcodec_free_frame(&code->frame);
@@ -172,28 +172,28 @@ int mbc_free(mediabarcode *code) {
     return 0;
 }
 
-int mbc_input(mediabarcode *code, char *file_path) {
+int mediastrip_input(mediastrip *code, char *file_path) {
     if (code->input_file_path != NULL && strcmp(file_path, code->input_file_path) == 0)
         return 0;
     code->input_file_path = file_path;
 
-    mbc_stop(code);
+    mediastrip_stop(code);
     pthread_create(&code->input_thread, NULL, &threaded_input, code);
     pthread_create(&code->output_thread, NULL, &threaded_output, code);
 }
 
-int mbc_output(mediabarcode *code, char *file_path) {
+int mediastrip_output(mediastrip *code, char *file_path) {
     code->output_file_path = file_path;
     return 0;
 }
 
-int mbc_is_done(mediabarcode *code) {
+int mediastrip_is_done(mediastrip *code) {
     // TODO there are many problems with this
     return code->input_thread == 0 || 
         (pthread_kill(code->input_thread, 0) == ESRCH &&
         pthread_kill(code->output_thread, 0) == ESRCH);
 }
 
-float mbc_progress(mediabarcode *code) {
+float mediastrip_progress(mediastrip *code) {
     return ((float)code->frames_written)/((float)code->width);
 }
