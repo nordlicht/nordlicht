@@ -13,8 +13,8 @@ include_directories(include)
 add_library(mediabarcode SHARED src/mediabarcode.c)
 target_link_libraries(mediabarcode ${FFMPEG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-add_executable(main bin/main.c)
-target_link_libraries(main mediabarcode)
+add_executable(mbc bin/mbc.c)
+target_link_libraries(mbc mediabarcode)
 
 add_executable(test-mediabarcode test/test.c)
 target_link_libraries(test-mediabarcode mediabarcode)
@@ -22,5 +22,6 @@ target_link_libraries(test-mediabarcode mediabarcode)
 CONFIGURE_FILE(mediabarcode.pc.in mediabarcode.pc @ONLY)
 
 install(TARGETS mediabarcode DESTINATION lib)
+install(TARGETS mbc DESTINATION bin)
 install(FILES include/mediabarcode.h DESTINATION include)
 install(FILES mediabarcode.pc DESTINATION lib/pkgconfig)
