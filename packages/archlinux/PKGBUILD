@@ -3,7 +3,7 @@
 pkgname=mediastrip
 pkgver=0.0.1
 pkgrel=1
-pkgdesc="A library that creates barcodes out of video files, that can be used for easy navigation"
+pkgdesc="A library that creates video barcodes"
 arch=('i686' 'x86_64')
 url=""
 license=('GPL')

@@ -3,7 +3,7 @@ includedir=@CMAKE_INSTALL_PREFIX@/include
 
 Name: mediastrip
 Version: 0.0.1
-Description: A library that creates barcodes out of video files, that can be used for navigation
+Description: A library that creates video barcodes
 Requires:
 Libs: -L${libdir} -lmediastrip
 Cflags: -I${includedir}
