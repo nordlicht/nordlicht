@@ -20,18 +20,39 @@ typedef struct mediabarcode {
     pthread_t output_thread;
 } mediabarcode;
 
+/*
+ * Allocate a new mediabarcode of size width x height
+ */
 int mbc_create(mediabarcode **code_ptr, int width, int height);
 
+/*
+ * Free a mediabarcode and all its resources.
+ */
 int mbc_free(mediabarcode *code);
 
+/*
+ * Set input media file. The barcode generation will start immediately.
+ */
 int mbc_input(mediabarcode *code, char *file_path);
 
+/*
+ * Set ouput file. So far, only PPM files are supported.
+ */
 int mbc_output(mediabarcode *code, char *file_path);
 
+/*
+ * Stop input and output threads
+ */
 int mbc_stop(mediabarcode *code);
 
+/*
+ * Returns 0 if the barcode is written completely, 1 otherwise
+ */
 int mbc_is_done(mediabarcode *code);
 
+/*
+ * Returns a float between 0 and 1 that represents the writing progress
+ */
 float mbc_progress(mediabarcode *code);
 
 #endif
