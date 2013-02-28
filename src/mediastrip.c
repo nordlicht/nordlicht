@@ -8,7 +8,7 @@ void init_libav() {
 }
 
 int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext *codecContext, int video_stream, long time) {
-    av_seek_frame(formatContext, -1, time+10000000 , 0);
+    av_seek_frame(formatContext, -1, time, 0);
 
     int frameFinished = 0;
     int try = 0;
