@@ -94,15 +94,14 @@ void *threaded_input(void *arg) {
 }
 
 void *threaded_output(void *arg) {
-    FILE *file;
     int y;
     mediabarcode *code = arg;
-    int i;
 
     struct SwsContext *sws_ctx2 = NULL;
     sws_ctx2 = sws_getContext(FRAME_WIDTH*code->width, code->height, PIX_FMT_RGB24,
             code->width, code->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
+    FILE *file;
     file = fopen(code->output_file_path, "wb");
     if (!file) {
         return;
@@ -150,6 +149,7 @@ int mediabarcode_create(mediabarcode **code_ptr, int width, int height) {
     avpicture_fill((AVPicture *)code->frame, code->buffer, PIX_FMT_RGB24, width, height);
     code->buffer_wide = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, FRAME_WIDTH*width, height));
     avpicture_fill((AVPicture *)code->frame_wide, code->buffer_wide, PIX_FMT_RGB24, FRAME_WIDTH*width, height);
+    memset(code->frame_wide->data[0], 0, code->frame_wide->linesize[0]*height);
 
     *code_ptr = code;
     return 0;
