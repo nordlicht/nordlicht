@@ -1,17 +1,17 @@
 # Maintainer: Sebastian Morr <sebastian@morr.cc>
 
-pkgname=mediastrip-git
+pkgname=mediabarcode-git
 pkgver=20130227
 pkgrel=1
 pkgdesc="A library that creates video barcodes"
 arch=('i686' 'x86_64')
-url="http://github.com/blinry/mediastrip"
+url="http://github.com/blinry/mediabarcode"
 license=('GPL')
 depends=('ffmpeg')
 makedepends=('git' 'cmake')
 optdepends=()
-_gitroot=http://github.com/blinry/mediastrip.git
-_gitname=mediastrip
+_gitroot=http://github.com/blinry/mediabarcode.git
+_gitname=mediabarcode
 
 build() {
   cd "$srcdir"

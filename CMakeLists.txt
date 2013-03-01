@@ -1,4 +1,4 @@
-project(mediastrip C)
+project(mediabarcode C)
 cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
@@ -10,19 +10,19 @@ find_package(Threads REQUIRED)
 
 include_directories(include)
 
-add_library(mediastrip SHARED src/mediastrip.c)
-target_link_libraries(mediastrip ${FFMPEG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+add_library(mediabarcode SHARED src/mediabarcode.c)
+target_link_libraries(mediabarcode ${FFMPEG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-add_executable(mediastrip-bin src/mediastrip-bin.c)
-set_target_properties(mediastrip-bin PROPERTIES OUTPUT_NAME mediastrip)
-target_link_libraries(mediastrip-bin mediastrip)
+add_executable(mediabarcode-bin src/mediabarcode-bin.c)
+set_target_properties(mediabarcode-bin PROPERTIES OUTPUT_NAME mediabarcode)
+target_link_libraries(mediabarcode-bin mediabarcode)
 
 add_executable(test src/test.c)
-target_link_libraries(test mediastrip)
+target_link_libraries(test mediabarcode)
 
-CONFIGURE_FILE(mediastrip.pc.in mediastrip.pc @ONLY)
+CONFIGURE_FILE(mediabarcode.pc.in mediabarcode.pc @ONLY)
 
-install(TARGETS mediastrip DESTINATION lib)
-install(TARGETS mediastrip-bin DESTINATION bin)
-install(FILES src/mediastrip.h DESTINATION include)
-install(FILES mediastrip.pc DESTINATION lib/pkgconfig)
+install(TARGETS mediabarcode DESTINATION lib)
+install(TARGETS mediabarcode-bin DESTINATION bin)
+install(FILES src/mediabarcode.h DESTINATION include)
+install(FILES mediabarcode.pc DESTINATION lib/pkgconfig)
