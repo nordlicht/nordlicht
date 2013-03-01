@@ -15,6 +15,6 @@ You'll need CMake and FFmpeg. Then issue
 Usage
 -----
 
-- API documentation: see `src/mediabarcode.h`
-- Simple usage example: see `src/mediabarcode-bin.c`
+- API documentation: see [src/mediabarcode.h](https://github.com/blinry/mediabarcode/blob/master/src/mediabarcode.h)
+- Simple usage example: see [src/mediabarcode-bin.c](https://github.com/blinry/mediabarcode/blob/master/src/mediabarcode-bin.c)
 - Command line tool usage: `mediabarcode videofile [width [height]]` creates `./mediabarcode.ppm`. Size defaults to 1024x400.
