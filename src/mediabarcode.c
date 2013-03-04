@@ -178,6 +178,8 @@ int mediabarcode_input(mediabarcode *code, char *file_path) {
     code->input_file_path = file_path;
 
     mediabarcode_stop(code);
+    memset(code->frame_wide->data[0], 0, code->frame_wide->linesize[0]*code->height);
+
     pthread_create(&code->input_thread, NULL, &threaded_input, code);
     pthread_create(&code->output_thread, NULL, &threaded_output, code);
 }
