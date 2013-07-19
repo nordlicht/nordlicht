@@ -1,14 +1,14 @@
-What can it do?
----------------
+Description
+-----------
 
-**mediabarcode** converts your video files into colorful barcodes. It's heavily inspired by the [moviebarcode tumblr](http://moviebarcode.tumblr.com/movie-index). It takes the video's frames in regular intervals, scales them to 1px width, and appends them. The resulting barcodes can be integrated into video players for simplified navigation.
+**mediabarcode** converts video files into colorful barcodes. It's heavily inspired by the [moviebarcode tumblr](http://moviebarcode.tumblr.com/movie-index). It takes the video's frames in regular intervals, scales them to 1px width, and appends them. The resulting barcodes can be integrated into video players for simplified navigation.
 
 Installation
 ------------
 
-If you're using Arch Linux, there's a PKGBUILD in `packages/archlinux`. Otherwise, read on.
+If you're using Arch Linux, there's a PKGBUILD in `packages/archlinux`.
 
-You'll need CMake and FFmpeg. Then issue
+Otherwise, get CMake and FFmpeg, and issue
 
     mkdir build && cd build && cmake .. && make && make install
 
