@@ -26,9 +26,11 @@ int main(int argc, char** argv) {
     nordlicht_input(code, file_path);
 
     while (!nordlicht_is_done(code)) {
-        printf("%02.0f%\n", nordlicht_progress(code)*100);
+        printf("\r%02.0f%%", nordlicht_progress(code)*100);
+        fflush(stdout);
         sleep(1);
     }
+    printf("\n");
 
     nordlicht_free(code);
     return 0;
