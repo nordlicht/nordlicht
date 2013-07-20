@@ -2,7 +2,7 @@
 
 pkgname=nordlicht-git
 _gitname=nordlicht
-pkgver=2600110
+pkgver=20130720
 pkgrel=1
 pkgdesc="A library/tool that creates colorful video barcodes"
 arch=('i686' 'x86_64')
@@ -12,12 +12,6 @@ depends=('ffmpeg')
 makedepends=('git' 'cmake')
 source=('git+https://github.com/blinry/nordlicht')
 sha1sums=('SKIP')
-
-pkgver() {
-  cd "$srcdir/$_gitname"
-  # Use the tag of the last commit
-  git describe --always | sed 's|-|.|g'
-}
 
 build() {
   cd "$srcdir/$_gitname"
