@@ -1,7 +1,7 @@
 # Maintainer: Sebastian Morr <sebastian@morr.cc>
 
-pkgname=mediabarcode-git
-pkgver=20130305
+pkgname=nordlicht-git
+pkgver=20130720
 pkgrel=1
 pkgdesc="A library that creates video barcodes"
 arch=('i686' 'x86_64')

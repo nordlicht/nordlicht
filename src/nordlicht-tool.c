@@ -1,4 +1,4 @@
-#include "mediabarcode.h"
+#include "nordlicht.h"
 #include "stdio.h"
 #include "unistd.h"
 
@@ -19,17 +19,17 @@ int main(int argc, char** argv) {
     }
     file_path = argv[1];
 
-    mediabarcode *code;
-    mediabarcode_create(&code, width, height);
+    nordlicht *code;
+    nordlicht_create(&code, width, height);
 
-    mediabarcode_output(code, "mediabarcode.png");
-    mediabarcode_input(code, file_path);
+    nordlicht_output(code, "nordlicht.png");
+    nordlicht_input(code, file_path);
 
-    while (!mediabarcode_is_done(code)) {
-        printf("%02.0f%\n", mediabarcode_progress(code)*100);
+    while (!nordlicht_is_done(code)) {
+        printf("%02.0f%\n", nordlicht_progress(code)*100);
         sleep(1);
     }
 
-    mediabarcode_free(code);
+    nordlicht_free(code);
     return 0;
 }

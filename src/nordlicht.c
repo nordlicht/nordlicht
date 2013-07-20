@@ -1,4 +1,4 @@
-#include "mediabarcode.h"
+#include "nordlicht.h"
 
 #define FRAME_WIDTH 16
 
@@ -31,7 +31,7 @@ int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext 
 }
 
 void *threaded_input(void *arg) {
-    mediabarcode *code = arg;
+    nordlicht *code = arg;
     int i;
 
 
@@ -96,7 +96,7 @@ void *threaded_input(void *arg) {
 void *threaded_output(void *arg) {
     sleep(1);
     int y;
-    mediabarcode *code = arg;
+    nordlicht *code = arg;
 
     struct SwsContext *sws_ctx2 = NULL;
     sws_ctx2 = sws_getContext(FRAME_WIDTH*code->width, code->height, PIX_FMT_RGB24,
@@ -147,14 +147,14 @@ void *threaded_output(void *arg) {
     fclose(file);
 }
 
-int mediabarcode_create(mediabarcode **code_ptr, int width, int height) {
+int nordlicht_create(nordlicht **code_ptr, int width, int height) {
     if (width <= 0 || height <= 0)
         return 1;
 
     init_libav();
 
-    mediabarcode *code;
-    code = malloc(sizeof(mediabarcode));
+    nordlicht *code;
+    code = malloc(sizeof(nordlicht));
 
     code->width = width;
     code->height = height;
@@ -177,15 +177,15 @@ int mediabarcode_create(mediabarcode **code_ptr, int width, int height) {
     return 0;
 }
 
-int mediabarcode_stop(mediabarcode *code) {
-    if (!mediabarcode_is_done(code)) {
+int nordlicht_stop(nordlicht *code) {
+    if (!nordlicht_is_done(code)) {
         pthread_cancel(code->input_thread);
     }
     return 0;
 }
 
-int mediabarcode_free(mediabarcode *code) {
-    mediabarcode_stop(code);
+int nordlicht_free(nordlicht *code) {
+    nordlicht_stop(code);
     av_free(code->buffer);
     av_free(code->buffer_wide);
     avcodec_free_frame(&code->frame);
@@ -194,30 +194,30 @@ int mediabarcode_free(mediabarcode *code) {
     return 0;
 }
 
-int mediabarcode_input(mediabarcode *code, char *file_path) {
+int nordlicht_input(nordlicht *code, char *file_path) {
     if (code->input_file_path != NULL && strcmp(file_path, code->input_file_path) == 0)
         return 0;
     code->input_file_path = file_path;
 
-    mediabarcode_stop(code);
+    nordlicht_stop(code);
     memset(code->frame_wide->data[0], 0, code->frame_wide->linesize[0]*code->height);
 
     pthread_create(&code->input_thread, NULL, &threaded_input, code);
     pthread_create(&code->output_thread, NULL, &threaded_output, code);
 }
 
-int mediabarcode_output(mediabarcode *code, char *file_path) {
+int nordlicht_output(nordlicht *code, char *file_path) {
     code->output_file_path = file_path;
     return 0;
 }
 
-int mediabarcode_is_done(mediabarcode *code) {
+int nordlicht_is_done(nordlicht *code) {
     // TODO there are many problems with this
     return code->input_thread == 0 || 
         (pthread_kill(code->input_thread, 0) == ESRCH &&
          pthread_kill(code->output_thread, 0) == ESRCH);
 }
 
-float mediabarcode_progress(mediabarcode *code) {
+float nordlicht_progress(nordlicht *code) {
     return ((float)code->frames_written)/((float)code->width);
 }

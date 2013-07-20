@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#include "mediabarcode.h"
+#include "nordlicht.h"
 
 #define assert_pass(expr) assert((expr) == 0)
 #define assert_fail(expr) assert((expr) != 0)
@@ -20,51 +20,51 @@ void meta_test_assets() {
 }
 
 void test_create() {
-    mediabarcode *code = NULL;
+    nordlicht *code = NULL;
 
-    assert_fail(mediabarcode_create(&code, 0, 100));
-    assert_fail(mediabarcode_create(&code, 1024, 0));
-    assert_pass(mediabarcode_create(&code, 1024, 100));
+    assert_fail(nordlicht_create(&code, 0, 100));
+    assert_fail(nordlicht_create(&code, 1024, 0));
+    assert_pass(nordlicht_create(&code, 1024, 100));
     assert(code != NULL);
-    assert(mediabarcode_progress(code) == 0);
-    assert(mediabarcode_is_done(code));
+    assert(nordlicht_progress(code) == 0);
+    assert(nordlicht_is_done(code));
 
-    assert_pass(mediabarcode_free(code));
+    assert_pass(nordlicht_free(code));
 }
 
 void test_input() {
-    mediabarcode *code;
-    mediabarcode_create(&code, 1024, 100);
-    assert_pass(mediabarcode_output(code, CODE));
+    nordlicht *code;
+    nordlicht_create(&code, 1024, 100);
+    assert_pass(nordlicht_output(code, CODE));
 
-    assert_pass(mediabarcode_input(code, VID));
-    assert_pass(mediabarcode_input(code, VID));
-    assert_pass(mediabarcode_input(code, VID));
+    assert_pass(nordlicht_input(code, VID));
+    assert_pass(nordlicht_input(code, VID));
+    assert_pass(nordlicht_input(code, VID));
     usleep(100000);
-    assert(!mediabarcode_is_done(code));
-    assert_pass(mediabarcode_input(code, VID));
+    assert(!nordlicht_is_done(code));
+    assert_pass(nordlicht_input(code, VID));
 
-    assert_pass(mediabarcode_free(code));
+    assert_pass(nordlicht_free(code));
 }
 
 void test_output() {
     remove(CODE);
     assert(!file_exists(CODE));
 
-    mediabarcode *code;
-    mediabarcode_create(&code, 1024, 100);
-    mediabarcode_input(code, VID);
+    nordlicht *code;
+    nordlicht_create(&code, 1024, 100);
+    nordlicht_input(code, VID);
 
-    mediabarcode_output(code, CODE);
+    nordlicht_output(code, CODE);
     usleep(100000);
     assert(file_exists(CODE));
 
-    mediabarcode_stop(code);
+    nordlicht_stop(code);
     remove(CODE);
     assert(!file_exists(CODE));
 
 
-    mediabarcode_free(code);
+    nordlicht_free(code);
 }
 
 int main() {

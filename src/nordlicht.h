@@ -1,5 +1,5 @@
-#ifndef INCLUDE_mediabarcode_h__
-#define INCLUDE_mediabarcode_h__
+#ifndef INCLUDE_nordlicht_h__
+#define INCLUDE_nordlicht_h__
 
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -8,7 +8,7 @@
 //#include <libgen.h>
 #include <string.h>
 
-typedef struct mediabarcode {
+typedef struct nordlicht {
     int width, height;
     int frames_read;
     int frames_written;
@@ -20,27 +20,27 @@ typedef struct mediabarcode {
     char *output_file_path;
     pthread_t input_thread;
     pthread_t output_thread;
-} mediabarcode;
+} nordlicht;
 
-// Allocate a new mediabarcode of specific width and height.
-int mediabarcode_create(mediabarcode **code_ptr, int width, int height);
+// Allocate a new nordlicht of specific width and height.
+int nordlicht_create(nordlicht **code_ptr, int width, int height);
 
-// Free a mediabarcode and all its resources.
-int mediabarcode_free(mediabarcode *code);
+// Free a nordlicht and all its resources.
+int nordlicht_free(nordlicht *code);
 
 // Set input media file. The barcode generation will start immediately.
-int mediabarcode_input(mediabarcode *code, char *file_path);
+int nordlicht_input(nordlicht *code, char *file_path);
 
 // Set ouput file. As for now, only PNG files are supported.
-int mediabarcode_output(mediabarcode *code, char *file_path);
+int nordlicht_output(nordlicht *code, char *file_path);
 
 // Stop barcode generation.
-int mediabarcode_stop(mediabarcode *code);
+int nordlicht_stop(nordlicht *code);
 
 // Returns 0 if the barcode is written completely, 1 otherwise.
-int mediabarcode_is_done(mediabarcode *code);
+int nordlicht_is_done(nordlicht *code);
 
 // Returns a float between 0 and 1 that represents the writing progress.
-float mediabarcode_progress(mediabarcode *code);
+float nordlicht_progress(nordlicht *code);
 
 #endif
