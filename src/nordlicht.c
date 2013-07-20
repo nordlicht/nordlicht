@@ -102,17 +102,7 @@ void *threaded_output(void *arg) {
     sws_ctx2 = sws_getContext(FRAME_WIDTH*code->width, code->height, PIX_FMT_RGB24,
             code->width, code->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
-    //char *basename = basename(code->output_file_path);
-
-    char *dot = strrchr(code->output_file_path, '.');
-
-    if (dot == NULL) {
-        return;
-    }
-    char *ext = dot + 1;
-
     FILE *file;
-
     file = fopen(code->output_file_path, "wb");
     if (!file) {
         return;
