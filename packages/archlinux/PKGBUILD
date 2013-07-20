@@ -1,25 +1,25 @@
 # Maintainer: Sebastian Morr <sebastian@morr.cc>
 
 pkgname=nordlicht-git
-pkgver=20130720
+_gitname=nordlicht
+pkgver=2600110
 pkgrel=1
-pkgdesc="A library/tool that creates video barcodes"
+pkgdesc="A library/tool that creates colorful video barcodes"
 arch=('i686' 'x86_64')
 url="http://github.com/blinry/nordlicht"
 license=('GPL')
 depends=('ffmpeg')
 makedepends=('git' 'cmake')
-_gitname=nordlicht
+source=('git+https://github.com/blinry/nordlicht')
+sha1sums=('SKIP')
+
+pkgver() {
+  cd "$srcdir/$_gitname"
+  # Use the tag of the last commit
+  git describe --always | sed 's|-|.|g'
+}
 
 build() {
-  cd "$srcdir"
-
-  if [[ -d $_gitname ]]; then
-      cd $_gitname && git pull origin && cd ..
-  else
-      git clone $url
-  fi
-
   cd "$srcdir/$_gitname"
   cmake -DCMAKE_INSTALL_PREFIX=/usr
   make
