@@ -8,8 +8,8 @@ char *gnu_basename(char *path) {
 }
 
 int main(int argc, char** argv) {
-    int width = 1024;
-    int height = 400;
+    int width = 1000;
+    int height = 150;
     char *file_path = NULL;
 
     if (argc < 2) {
@@ -31,6 +31,7 @@ int main(int argc, char** argv) {
         free(output_path);
         output_path = argv[4];
     }
+
 
     nordlicht *code;
     nordlicht_create(&code, width, height);

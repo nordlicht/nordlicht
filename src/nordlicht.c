@@ -1,6 +1,6 @@
 #include "nordlicht.h"
 
-#define FRAME_WIDTH 16
+#define FRAME_WIDTH 3
 
 void init_libav() {
     av_log_set_level(AV_LOG_QUIET);
