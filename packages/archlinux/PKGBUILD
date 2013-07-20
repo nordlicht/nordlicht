@@ -3,15 +3,13 @@
 pkgname=nordlicht-git
 pkgver=20130720
 pkgrel=1
-pkgdesc="A library that creates video barcodes"
+pkgdesc="A library/tool that creates video barcodes"
 arch=('i686' 'x86_64')
-url="http://github.com/blinry/mediabarcode"
+url="http://github.com/blinry/nordlicht"
 license=('GPL')
 depends=('ffmpeg')
 makedepends=('git' 'cmake')
-optdepends=()
-_gitroot=http://github.com/blinry/mediabarcode.git
-_gitname=mediabarcode
+_gitname=nordlicht
 
 build() {
   cd "$srcdir"
@@ -19,7 +17,7 @@ build() {
   if [[ -d $_gitname ]]; then
       cd $_gitname && git pull origin && cd ..
   else
-      git clone $_gitroot
+      git clone $url
   fi
 
   cd "$srcdir/$_gitname"
