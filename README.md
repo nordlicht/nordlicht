@@ -6,7 +6,7 @@ Here's the barcode of [Tears of Steel](http://tearsofsteel.org/):
 
 ![Barcode for "Tears of Steel"](res/tos-example.png)
 
-An experimental [VLC integration](https://github.com/blinry/vlc) exists, that uses nordlicht to generate these barcodes on the fly.
+An experimental [VLC integration](https://github.com/blinry/vlc) exists, that uses *nordlicht* to generate these barcodes on the fly.
 
 ## Installation
 
@@ -26,3 +26,7 @@ Run `nordlicht` to get usage instructions for the command line tool.
 
 - API documentation: see [src/nordlicht.h](src/nordlicht.h)
 - Simple usage example: see [src/nordlicht-tool.c](src/nordlicht-tool.c)
+
+## License
+
+*nordlicht* is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
