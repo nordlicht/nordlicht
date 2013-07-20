@@ -20,6 +20,7 @@ typedef struct nordlicht {
     char *output_file_path;
     pthread_t input_thread;
     pthread_t output_thread;
+    int is_done;
 } nordlicht;
 
 // Allocate a new nordlicht of specific width and height.
@@ -36,9 +37,6 @@ int nordlicht_output(nordlicht *code, char *file_path);
 
 // Stop barcode generation.
 int nordlicht_stop(nordlicht *code);
-
-// Returns 0 if the barcode is written completely, 1 otherwise.
-int nordlicht_is_done(nordlicht *code);
 
 // Returns a float between 0 and 1 that represents the writing progress.
 float nordlicht_progress(nordlicht *code);

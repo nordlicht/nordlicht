@@ -34,7 +34,6 @@ void *threaded_input(void *arg) {
     nordlicht *code = arg;
     int i;
 
-
     AVFormatContext *format_context = NULL;
     if (avformat_open_input(&format_context, code->input_file_path, NULL, NULL) != 0)
         return 0;
@@ -83,7 +82,7 @@ void *threaded_input(void *arg) {
             sws_scale(sws_ctx, (const uint8_t * const*)frame->data, frame->linesize, 0, codec_context->height,
                     &addr, code->frame_wide->linesize);
         }
-        code->frames_read = i;
+        code->frames_read = i+1;
     }
 
     av_free(buffer);
@@ -135,6 +134,7 @@ void *threaded_output(void *arg) {
     sleep(1);
 
     fclose(file);
+    code->is_done = 1;
 }
 
 int nordlicht_create(nordlicht **code_ptr, int width, int height) {
@@ -156,6 +156,7 @@ int nordlicht_create(nordlicht **code_ptr, int width, int height) {
     code->output_thread = 0;
     code->frame = avcodec_alloc_frame();
     code->frame_wide = avcodec_alloc_frame();
+    code->is_done = 0;
 
     code->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, width, height));
     avpicture_fill((AVPicture *)code->frame, code->buffer, PIX_FMT_RGB24, width, height);
@@ -168,8 +169,9 @@ int nordlicht_create(nordlicht **code_ptr, int width, int height) {
 }
 
 int nordlicht_stop(nordlicht *code) {
-    if (!nordlicht_is_done(code)) {
+    if (nordlicht_progress(code) < 1) {
         pthread_cancel(code->input_thread);
+        pthread_cancel(code->output_thread);
     }
     return 0;
 }
@@ -189,7 +191,7 @@ int nordlicht_input(nordlicht *code, char *file_path) {
         return 0;
     code->input_file_path = file_path;
 
-    nordlicht_stop(code);
+    //nordlicht_stop(code);
     memset(code->frame_wide->data[0], 0, code->frame_wide->linesize[0]*code->height);
 
     pthread_create(&code->input_thread, NULL, &threaded_input, code);
@@ -201,13 +203,11 @@ int nordlicht_output(nordlicht *code, char *file_path) {
     return 0;
 }
 
-int nordlicht_is_done(nordlicht *code) {
-    // TODO there are many problems with this
-    return code->input_thread == 0 || 
-        (pthread_kill(code->input_thread, 0) == ESRCH &&
-         pthread_kill(code->output_thread, 0) == ESRCH);
-}
-
 float nordlicht_progress(nordlicht *code) {
-    return ((float)code->frames_written)/((float)code->width);
+    float progress = ((float)code->frames_written)/((float)code->width);
+    if (progress == 1) {
+        return code->is_done ? 1 : 0.999;
+    } else {
+        return progress;
+    }
 }

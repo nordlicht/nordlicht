@@ -27,7 +27,6 @@ void test_create() {
     assert_pass(nordlicht_create(&code, 1024, 100));
     assert(code != NULL);
     assert(nordlicht_progress(code) == 0);
-    assert(nordlicht_is_done(code));
 
     assert_pass(nordlicht_free(code));
 }
@@ -41,7 +40,6 @@ void test_input() {
     assert_pass(nordlicht_input(code, VID));
     assert_pass(nordlicht_input(code, VID));
     usleep(100000);
-    assert(!nordlicht_is_done(code));
     assert_pass(nordlicht_input(code, VID));
 
     assert_pass(nordlicht_free(code));
