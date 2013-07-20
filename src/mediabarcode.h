@@ -5,6 +5,8 @@
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include <pthread.h>
+//#include <libgen.h>
+#include <string.h>
 
 typedef struct mediabarcode {
     int width, height;
@@ -29,7 +31,7 @@ int mediabarcode_free(mediabarcode *code);
 // Set input media file. The barcode generation will start immediately.
 int mediabarcode_input(mediabarcode *code, char *file_path);
 
-// Set ouput file. So far, only PPM files are supported.
+// Set ouput file. As for now, only PNG files are supported.
 int mediabarcode_output(mediabarcode *code, char *file_path);
 
 // Stop barcode generation.

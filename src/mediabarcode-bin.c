@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     mediabarcode *code;
     mediabarcode_create(&code, width, height);
 
-    mediabarcode_output(code, "mediabarcode.ppm");
+    mediabarcode_output(code, "mediabarcode.png");
     mediabarcode_input(code, file_path);
 
     while (!mediabarcode_is_done(code)) {
