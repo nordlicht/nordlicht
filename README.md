@@ -10,7 +10,7 @@ An experimental [VLC integration](https://github.com/blinry/vlc) exists, that us
 
 ## Installation
 
-If you're using Arch Linux, there's a PKGBUILD in `packages/archlinux`.
+If you're using Arch Linux, you can install the [**`nordlicht-git`**](https://aur.archlinux.org/packages/nordlicht-git/) package from the AUR.
 
 Otherwise, get CMake and FFmpeg, and issue
 
