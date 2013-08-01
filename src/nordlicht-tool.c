@@ -7,6 +7,17 @@ char *gnu_basename(char *path) {
     return base ? base+1 : path;
 }
 
+void update(nordlicht *code, float progress) {
+    printf("\r%02.0f%%", progress*100);
+    fflush(stdout);
+}
+
+void done(nordlicht *code) {
+    printf("\n");
+    nordlicht_free(code);
+    exit(0);
+}
+
 int main(int argc, char** argv) {
     int width = 1000;
     int height = 150;
@@ -34,18 +45,18 @@ int main(int argc, char** argv) {
 
 
     nordlicht *code;
-    nordlicht_create(&code, width, height);
+    nordlicht_create(&code);
+    nordlicht_size(code, width, height);
 
     nordlicht_output(code, output_path);
     nordlicht_input(code, file_path);
 
-    while (nordlicht_progress(code) < 1) {
-        printf("\r%02.0f%%", nordlicht_progress(code)*100);
-        fflush(stdout);
-        sleep(1);
-    }
-    printf("\n");
+    nordlicht_update_callback(code, update);
+    nordlicht_done_callback(code, done);
 
-    nordlicht_free(code);
+    while (1) {
+        sleep(1000);
+    }
+
     return 0;
 }

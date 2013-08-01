@@ -1,6 +1,6 @@
 #include "nordlicht.h"
 
-#define FRAME_WIDTH 3
+#define FRAME_WIDTH 20
 
 void init_libav() {
     av_log_set_level(AV_LOG_QUIET);
@@ -112,8 +112,6 @@ void *threaded_output(void *arg) {
         sws_scale(sws_ctx2, (uint8_t const * const *)code->frame_wide->data, code->frame_wide->linesize, 0, code->height,
                 code->frame->data, code->frame->linesize);
 
-        rewind(file);
-
         int gotPacket = 0;
         AVPacket packet;
         AVFormatContext *formatContext = NULL;
@@ -128,26 +126,24 @@ void *threaded_output(void *arg) {
             return;
         }
         int ret = avcodec_encode_video2(codecContext, &packet, code->frame, &gotPacket);
+        rewind(file);
         fwrite(packet.data, 1, packet.size, file);
         av_free_packet(&packet);
+        code->update_callback(code, (float)(code->frames_written)/code->width);
     }
-    sleep(1);
 
     fclose(file);
-    code->is_done = 1;
+    code->done_callback(code);
 }
 
-int nordlicht_create(nordlicht **code_ptr, int width, int height) {
-    if (width <= 0 || height <= 0)
-        return 1;
-
+int nordlicht_create(nordlicht **code_ptr) {
     init_libav();
 
     nordlicht *code;
     code = malloc(sizeof(nordlicht));
 
-    code->width = width;
-    code->height = height;
+    code->width = 1000;
+    code->height = 150;
     code->frames_read = 0;
     code->frames_written = 0;
     code->input_file_path = NULL;
@@ -156,28 +152,24 @@ int nordlicht_create(nordlicht **code_ptr, int width, int height) {
     code->output_thread = 0;
     code->frame = avcodec_alloc_frame();
     code->frame_wide = avcodec_alloc_frame();
-    code->is_done = 0;
 
-    code->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, width, height));
-    avpicture_fill((AVPicture *)code->frame, code->buffer, PIX_FMT_RGB24, width, height);
-    code->buffer_wide = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, FRAME_WIDTH*width, height));
-    avpicture_fill((AVPicture *)code->frame_wide, code->buffer_wide, PIX_FMT_RGB24, FRAME_WIDTH*width, height);
-    memset(code->frame_wide->data[0], 0, code->frame_wide->linesize[0]*height);
+    code->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, code->width, code->height));
+    avpicture_fill((AVPicture *)code->frame, code->buffer, PIX_FMT_RGB24, code->width, code->height);
+    code->buffer_wide = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, FRAME_WIDTH*code->width, code->height));
+    avpicture_fill((AVPicture *)code->frame_wide, code->buffer_wide, PIX_FMT_RGB24, FRAME_WIDTH*code->width, code->height);
+    memset(code->frame_wide->data[0], 0, code->frame_wide->linesize[0]*code->height);
 
     *code_ptr = code;
     return 0;
 }
 
-int nordlicht_stop(nordlicht *code) {
-    if (nordlicht_progress(code) < 1) {
-        pthread_cancel(code->input_thread);
-        pthread_cancel(code->output_thread);
-    }
+int nordlicht_size(nordlicht *code, int width, int height) {
+    code->width = width;
+    code->height = height;
     return 0;
 }
 
 int nordlicht_free(nordlicht *code) {
-    nordlicht_stop(code);
     av_free(code->buffer);
     av_free(code->buffer_wide);
     avcodec_free_frame(&code->frame);
@@ -191,7 +183,6 @@ int nordlicht_input(nordlicht *code, char *file_path) {
         return 0;
     code->input_file_path = file_path;
 
-    //nordlicht_stop(code);
     memset(code->frame_wide->data[0], 0, code->frame_wide->linesize[0]*code->height);
 
     pthread_create(&code->input_thread, NULL, &threaded_input, code);
@@ -203,12 +194,10 @@ int nordlicht_output(nordlicht *code, char *file_path) {
     return 0;
 }
 
-float nordlicht_progress(nordlicht *code) {
-    float progress = ((float)code->frames_written)/((float)code->width);
-    if (progress == 1) {
-        // ugly, dirty hack. We only want to return 1 when the output process has finished:
-        return code->is_done ? 1 : 0.999;
-    } else {
-        return progress;
-    }
+int nordlicht_update_callback(nordlicht *code, void (*update)(nordlicht *code, float progress)) {
+    code->update_callback = update;
+}
+
+int nordlicht_done_callback(nordlicht *code, void (*done)(nordlicht *code)) {
+    code->done_callback = done;
 }
