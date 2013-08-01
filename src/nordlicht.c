@@ -206,6 +206,7 @@ int nordlicht_output(nordlicht *code, char *file_path) {
 float nordlicht_progress(nordlicht *code) {
     float progress = ((float)code->frames_written)/((float)code->width);
     if (progress == 1) {
+        // ugly, dirty hack. We only want to return 1 when the output process has finished:
         return code->is_done ? 1 : 0.999;
     } else {
         return progress;
