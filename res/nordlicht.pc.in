@@ -2,7 +2,6 @@ libdir=@CMAKE_INSTALL_PREFIX@/lib
 includedir=@CMAKE_INSTALL_PREFIX@/include
 
 Name: nordlicht
-Version: 0.0.1
 Description: A library that creates video barcodes
 Requires:
 Libs: -L${libdir} -lnordlicht
