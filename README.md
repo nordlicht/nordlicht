@@ -2,7 +2,7 @@
 
 **nordlicht** converts video files into colorful barcodes. It's heavily inspired by the [moviebarcode tumblr](http://moviebarcode.tumblr.com/movie-index). It takes the video's frames in regular intervals, scales them to 1px width, and appends them. The resulting barcodes can be integrated into video players for simplified navigation.
 
-Here's the barcode of [Tears of Steel](http://tearsofsteel.org/):
+Here's the barcode of [Tears of Steel](http://tearsofsteel.org/). You can differentiate inside and outside scenes, see the credits and the closing scene:
 
 ![Barcode for "Tears of Steel"](res/tos-example.png)
 
