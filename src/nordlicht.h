@@ -4,13 +4,6 @@
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
-#include <pthread.h>
-//#include <libgen.h>
-#include <string.h>
-#include <stdbool.h>
-#include <unistd.h>
-
-struct nordlicht;
 
 typedef struct nordlicht {
     int width, height;
@@ -23,11 +16,10 @@ typedef struct nordlicht {
     char *input_file_path;
     char *output_file_path;
     pthread_t input_thread;
-    pthread_t output_thread;
-    int is_done;
 } nordlicht;
 
-// Allocate a new nordlicht of specific width and height.
+// Allocate a new nordlicht of specific width and height. Use
+// `nordlicht_free` to free it again.
 nordlicht* nordlicht_create(int width, int height);
 
 // Free a nordlicht.
@@ -39,7 +31,8 @@ int nordlicht_input(nordlicht *code, char *file_path);
 // Set ouput file. As for now, only PNG files are supported.
 int nordlicht_output(nordlicht *code, char *file_path);
 
-// Do one "step" of generation, producing a usable but incomplete output.
+// Do one "step" of generation, producing a usable but possibly
+// incomplete output.
 float nordlicht_step(nordlicht *code);
 
 // Returns 1 if the nordlicht is complete, and 0 otherwise.

@@ -7,6 +7,7 @@ void init_libav() {
     av_register_all();
 }
 
+// Seek to a specific time in the formatContext and decode that frame to `frame`.
 int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext *codecContext, int video_stream, long time) {
     av_seek_frame(formatContext, -1, time, 0);
 
@@ -16,6 +17,7 @@ int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext 
     while(!frameFinished) {
         try++;
         if (try > 100) {
+            fprintf(stderr, "nordlicht: Could not decode frame.\n");
             return 0;
         }
         while(av_read_frame(formatContext, &packet) >= 0) {
@@ -30,6 +32,10 @@ int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext 
     return 1;
 }
 
+// Use decode_frame to get one frame for every pixel of the nordlicht's width.
+// Scale those to FRAME_WIDTH px width and put them in `code->frame_wide`. We
+// have to do this intermediate step because libswscale has a limitation of how
+// extreme it can downscale.
 void *threaded_input(void *arg) {
     nordlicht *code = arg;
     int i;
@@ -57,7 +63,7 @@ void *threaded_input(void *arg) {
     AVCodec *codec = NULL;
     codec = avcodec_find_decoder(codec_context->codec_id);
     if (codec == NULL) {
-        fprintf(stderr, "Unsupported codec!\n");
+        fprintf(stderr, "nordlicht: Unsupported codec!\n");
         return 0;
     }
     AVDictionary *optionsDict = NULL;
@@ -105,7 +111,6 @@ nordlicht* nordlicht_create(int width, int height) {
     code->input_file_path = NULL;
     code->output_file_path = NULL;
     code->input_thread = 0;
-    code->output_thread = 0;
     code->frame = avcodec_alloc_frame();
     code->frame_wide = avcodec_alloc_frame();
 
@@ -116,12 +121,6 @@ nordlicht* nordlicht_create(int width, int height) {
     memset(code->frame_wide->data[0], 0, code->frame_wide->linesize[0]*code->height);
 
     return code;
-}
-
-int nordlicht_size(nordlicht *code, int width, int height) {
-    code->width = width;
-    code->height = height;
-    return 0;
 }
 
 int nordlicht_free(nordlicht *code) {
@@ -138,9 +137,12 @@ int nordlicht_input(nordlicht *code, char *file_path) {
         return 0;
     code->input_file_path = file_path;
 
+    // Fill `frame_wide` black.
     memset(code->frame_wide->data[0], 0, code->frame_wide->linesize[0]*code->height);
-
+    // Start to read the frames to `frame_wide`.
     pthread_create(&code->input_thread, NULL, &threaded_input, code);
+
+    // Sleep to avoid calling nordlicht_step before there
     sleep(1);
 }
 
@@ -149,50 +151,45 @@ int nordlicht_output(nordlicht *code, char *file_path) {
     return 0;
 }
 
+// Scale the `frame_wide` to the desired width and write the result to `output_file_path`.
 float nordlicht_step(nordlicht *code) {
     struct SwsContext *sws_ctx2 = NULL;
     sws_ctx2 = sws_getContext(FRAME_WIDTH*code->width, code->height, PIX_FMT_RGB24,
             code->width, code->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
-    FILE *file;
-    file = fopen(code->output_file_path, "wb");
-    if (!file) {
+    sws_scale(sws_ctx2, (uint8_t const * const *)code->frame_wide->data,
+            code->frame_wide->linesize, 0, code->height, code->frame->data,
+            code->frame->linesize);
+
+    AVCodec *codec = avcodec_find_encoder_by_name("png");
+    AVCodecContext *codecContext = avcodec_alloc_context3(codec);
+    codecContext->width = code->width;
+    codecContext->height = code->height;
+    codecContext->pix_fmt = PIX_FMT_RGB24;
+    if (avcodec_open2(codecContext, codec, NULL) < 0) {
+        fprintf(stderr, "nordlicht: Could not open output codec.\n");
         return -1;
     }
-
 
     AVPacket packet;
     av_init_packet(&packet);
     packet.data = NULL;
     packet.size = 0;
-
     int gotPacket = 0;
-    int ret = -1;
+    avcodec_encode_video2(codecContext, &packet, code->frame, &gotPacket);
 
-    while (ret != 0 || gotPacket != 1) {
-        sws_scale(sws_ctx2, (uint8_t const * const *)code->frame_wide->data, code->frame_wide->linesize, 0, code->height,
-                code->frame->data, code->frame->linesize);
-
-        AVFormatContext *formatContext = NULL;
-
-        AVCodec *codec = avcodec_find_encoder_by_name("png");
-        AVCodecContext *codecContext = avcodec_alloc_context3(codec);
-        codecContext->width = code->width;
-        codecContext->height = code->height;
-        codecContext->pix_fmt = PIX_FMT_RGB24;
-        if (avcodec_open2(codecContext, codec, NULL) < 0) {
-            fprintf(stderr, "Could not open output codec.\n");
-            return -1;
-        }
-
-        ret = avcodec_encode_video2(codecContext, &packet, code->frame, &gotPacket);
+    FILE *file;
+    file = fopen(code->output_file_path, "wb");
+    if (!file) {
+        fprintf(stderr, "nordlicht: Could not open output file.\n");
+        return -1;
     }
     fwrite(packet.data, 1, packet.size, file);
     fclose(file);
-    code->frames_written = code->frames_read;
 
     av_free_packet(&packet);
 
+    code->frames_written = code->frames_read;
     return (float)code->frames_written/code->width;
 }
 

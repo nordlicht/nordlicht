@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     char *file_path = NULL;
 
     if (argc < 2) {
-        printf("Usage: nordlicht VIDEOFILE [WIDTH [HEIGHT [BARCODEFILE.png]]]\nDefault size is %dx%d, default BARCODEFILE is \"$(basename VIDEOFILE).png\".\n", width, height);
+        printf("Usage: nordlicht VIDEOFILE [WIDTH [HEIGHT [OUTPUTFILE.png]]]\nDefault size is %dx%d, default output file is \"$(basename VIDEOFILE).png\".\n", width, height);
         return 1;
     }
 
