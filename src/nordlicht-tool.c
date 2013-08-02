@@ -1,6 +1,5 @@
 #include "nordlicht.h"
 #include <stdio.h>
-#include <unistd.h>
 
 char *gnu_basename(char *path) {
     char *base = strrchr(path, '/');
@@ -8,14 +7,6 @@ char *gnu_basename(char *path) {
 }
 
 void update(nordlicht *code, float progress) {
-    printf("\r%02.0f%%", progress*100);
-    fflush(stdout);
-}
-
-void done(nordlicht *code) {
-    printf("\n");
-    nordlicht_free(code);
-    exit(0);
 }
 
 int main(int argc, char** argv) {
@@ -43,20 +34,18 @@ int main(int argc, char** argv) {
         output_path = argv[4];
     }
 
-
-    nordlicht *code;
-    nordlicht_create(&code);
-    nordlicht_size(code, width, height);
-
-    nordlicht_output(code, output_path);
+    nordlicht *code = nordlicht_create(width, height);
     nordlicht_input(code, file_path);
+    nordlicht_output(code, output_path);
 
-    nordlicht_update_callback(code, update);
-    nordlicht_done_callback(code, done);
-
-    while (1) {
-        sleep(1000);
+    while (!nordlicht_done(code)) {
+        float progress = nordlicht_step(code);
+        printf("\r%02.0f%%", progress*100);
+        fflush(stdout);
     }
+
+    printf("\n");
+    nordlicht_free(code);
 
     return 0;
 }

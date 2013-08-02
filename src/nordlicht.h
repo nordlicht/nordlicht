@@ -7,6 +7,8 @@
 #include <pthread.h>
 //#include <libgen.h>
 #include <string.h>
+#include <stdbool.h>
+#include <unistd.h>
 
 struct nordlicht;
 
@@ -23,29 +25,24 @@ typedef struct nordlicht {
     pthread_t input_thread;
     pthread_t output_thread;
     int is_done;
-    void (*update_callback)(struct nordlicht *code, float progress);
-    void (*done_callback)(struct nordlicht *code);
 } nordlicht;
 
-// Allocate a new nordlicht.
-int nordlicht_create(nordlicht **code_ptr);
+// Allocate a new nordlicht of specific width and height.
+nordlicht* nordlicht_create(int width, int height);
 
-// Set the nordlicht's size. Default is ???.
-int nordlicht_size(nordlicht *code, int width, int height);
-
-// Free a nordlicht and all its resources.
+// Free a nordlicht.
 int nordlicht_free(nordlicht *code);
 
-// Set input media file. The barcode generation will start immediately.
+// Set input media file.
 int nordlicht_input(nordlicht *code, char *file_path);
 
 // Set ouput file. As for now, only PNG files are supported.
 int nordlicht_output(nordlicht *code, char *file_path);
 
-// Set callback to be called on an update.
-int nordlicht_update_callback(nordlicht *code, void (*update)(nordlicht *code, float progress));
+// Do one "step" of generation, producing a usable but incomplete output.
+float nordlicht_step(nordlicht *code);
 
-// Set callback to be called on completion.
-int nordlicht_done_callback(nordlicht *code, void (*done)(nordlicht *code));
+// Returns 1 if the nordlicht is complete, and 0 otherwise.
+int nordlicht_done(nordlicht *code);
 
 #endif
