@@ -1,5 +1,6 @@
 #include "nordlicht.h"
 #include <stdio.h>
+#include <unistd.h>
 
 char *gnu_basename(char *path) {
     char *base = strrchr(path, '/');
@@ -42,6 +43,7 @@ int main(int argc, char** argv) {
         float progress = nordlicht_step(code);
         printf("\r%02.0f%%", progress*100);
         fflush(stdout);
+        sleep(3);
     }
 
     printf("\n");
