@@ -17,7 +17,6 @@ int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext 
     while(!frameFinished) {
         try++;
         if (try > 100) {
-            fprintf(stderr, "nordlicht: Could not decode frame.\n");
             return 0;
         }
         while(av_read_frame(formatContext, &packet) >= 0) {
