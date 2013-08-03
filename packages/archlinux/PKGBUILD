@@ -2,9 +2,9 @@
 
 pkgname=nordlicht-git
 _gitname=nordlicht
-pkgver=20130720
+pkgver=20130802
 pkgrel=1
-pkgdesc="A library/tool that creates colorful video barcodes"
+pkgdesc="A library + tool that creates colorful moviebarcodes"
 arch=('i686' 'x86_64')
 url="http://github.com/blinry/nordlicht"
 license=('GPL')
