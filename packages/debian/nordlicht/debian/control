@@ -1,0 +1,13 @@
+Source: nordlicht
+Priority: extra
+Maintainer: Sebastian Morr <sebastian@morr.cc>
+Build-Depends: debhelper (>= 8.0.0), cmake, libavcodec-dev, libavformat-dev, libswscale-dev
+Standards-Version: 3.9.3
+Section: libs
+Homepage: https://github.com/blinry/nordlicht
+
+Package: nordlicht
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Library + tool that creates colorful video barcodes
+ nordlicht converts video files into colorful barcodes. It's heavily inspired by the "moviebarcode" tumblr. It takes the video's frames in regular intervals, scales them to 1px width, and appends them. The resulting barcodes can be integrated into video players for simplified navigation.

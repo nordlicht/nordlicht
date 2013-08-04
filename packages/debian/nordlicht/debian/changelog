@@ -1,0 +1,11 @@
+nordlicht (0.1.1-1) unstable; urgency=low
+
+  * Package now actually works for the first time.
+
+ -- Sebastian Morr <sebastian@morr.cc>  Sun, 04 Aug 2013 20:43:55 +0200
+
+nordlicht (0.1.0-1) unstable; urgency=low
+
+  * Initial release.
+
+ -- Sebastian Morr <sebastian@morr.cc>  Sun, 04 Aug 2013 16:24:15 +0200
