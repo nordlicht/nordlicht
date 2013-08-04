@@ -181,11 +181,11 @@ float nordlicht_step(nordlicht *code) {
     int gotPacket = 0;
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
-    avcodec_encode_video2(codecContext, &packet, code->frame, &gotPacket);
-#else
     uint8_t buffer[200000]; // TODO: Why this size?
     packet.size = avcodec_encode_video(codecContext, buffer, 200000, code->frame);
     packet.data = buffer;
+#else
+    avcodec_encode_video2(codecContext, &packet, code->frame, &gotPacket);
 #endif
 
     FILE *file;
