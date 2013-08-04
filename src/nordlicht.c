@@ -1,6 +1,10 @@
 #include "nordlicht.h"
 
-#define FRAME_WIDTH 20
+#define FRAME_WIDTH 10
+
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
+#define avcodec_free_frame av_freep
+#endif
 
 void init_libav() {
     av_log_set_level(AV_LOG_QUIET);
@@ -176,7 +180,14 @@ float nordlicht_step(nordlicht *code) {
     packet.data = NULL;
     packet.size = 0;
     int gotPacket = 0;
+
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
     avcodec_encode_video2(codecContext, &packet, code->frame, &gotPacket);
+#else
+    uint8_t buffer[200000]; // TODO: Why this size?
+    packet.size = avcodec_encode_video(codecContext, buffer, 200000, code->frame);
+    packet.data = buffer;
+#endif
 
     FILE *file;
     file = fopen(code->output_file_path, "wb");
