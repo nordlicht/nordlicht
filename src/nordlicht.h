@@ -25,10 +25,12 @@ nordlicht* nordlicht_create(int width, int height);
 // Free a nordlicht.
 int nordlicht_free(nordlicht *code);
 
-// Set input media file.
+// Set input video file. All codecs supported by ffmpeg should work.
 int nordlicht_input(nordlicht *code, char *file_path);
 
-// Set ouput file. As for now, only PNG files are supported.
+// Set ouput file. As for now, only PNG files are supported. Plan is to
+// overload this function to support direct generation to in-memory data
+// structures.
 int nordlicht_output(nordlicht *code, char *file_path);
 
 // Do one "step" of generation, producing a usable but possibly
