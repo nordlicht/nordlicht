@@ -15,7 +15,6 @@ typedef struct nordlicht {
     uint8_t *buffer_wide;
     char *input_file_path;
     char *output_file_path;
-    pthread_t input_thread;
 } nordlicht;
 
 // Allocate a new nordlicht of specific width and height. Use

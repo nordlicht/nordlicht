@@ -1,6 +1,7 @@
 #include "nordlicht.h"
 
 #define FRAME_WIDTH 10
+#define STEP_SIZE 100
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
 #define avcodec_free_frame av_freep
@@ -35,12 +36,56 @@ int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext 
     return 1;
 }
 
-// Use decode_frame to get one frame for every pixel of the nordlicht's width.
-// Scale those to FRAME_WIDTH px width and put them in `code->frame_wide`. We
-// have to do this intermediate step because libswscale has a limitation of how
-// extreme it can downscale.
-void *threaded_input(void *arg) {
-    nordlicht *code = arg;
+
+nordlicht* nordlicht_create(int width, int height) {
+    init_libav();
+
+    nordlicht *code;
+    code = malloc(sizeof(nordlicht));
+
+    code->width = width;
+    code->height = height;
+    code->frames_read = 0;
+    code->frames_written = 0;
+    code->input_file_path = NULL;
+    code->output_file_path = NULL;
+    code->frame = avcodec_alloc_frame();
+    code->frame_wide = avcodec_alloc_frame();
+
+    code->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, code->width, code->height));
+    avpicture_fill((AVPicture *)code->frame, code->buffer, PIX_FMT_RGB24, code->width, code->height);
+    code->buffer_wide = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, FRAME_WIDTH*code->width, code->height));
+    avpicture_fill((AVPicture *)code->frame_wide, code->buffer_wide, PIX_FMT_RGB24, FRAME_WIDTH*code->width, code->height);
+    memset(code->frame_wide->data[0], 0, code->frame_wide->linesize[0]*code->height);
+
+    return code;
+}
+
+int nordlicht_free(nordlicht *code) {
+    av_free(code->buffer);
+    av_free(code->buffer_wide);
+    avcodec_free_frame(&code->frame);
+    avcodec_free_frame(&code->frame_wide);
+    free(code);
+    return 0;
+}
+
+int nordlicht_set_input(nordlicht *code, char *file_path) {
+    if (code->input_file_path != NULL && strcmp(file_path, code->input_file_path) == 0)
+        return 0;
+    code->input_file_path = file_path;
+}
+
+int nordlicht_set_output(nordlicht *code, char *file_path) {
+    code->output_file_path = file_path;
+    return 0;
+}
+
+float nordlicht_step(nordlicht *code) {
+    // Use decode_frame to get one frame for every pixel of the nordlicht's width.
+    // Scale those to FRAME_WIDTH px width and put them in `code->frame_wide`. We
+    // have to do this intermediate step because libswscale has a limitation of how
+    // extreme it can downscale.
     int i;
 
     AVFormatContext *format_context = NULL;
@@ -85,7 +130,12 @@ void *threaded_input(void *arg) {
 
     int64_t seconds_per_frame = format_context->duration/code->width;
 
-    for (i=0; i<code->width; i++) {
+    int from_frame = code->frames_read + 1;
+    int to_frame = from_frame + STEP_SIZE;
+    if (to_frame > code->width)
+        to_frame = code->width;
+
+    for (i=from_frame; i<to_frame; i++) {
         if (decode_frame(frame, format_context, codec_context, video_stream, i*seconds_per_frame)) {
             uint8_t *addr = code->frame_wide->data[0]+i*FRAME_WIDTH*3;
             sws_scale(sws_ctx, (const uint8_t * const*)frame->data, frame->linesize, 0, codec_context->height,
@@ -99,63 +149,11 @@ void *threaded_input(void *arg) {
 
     avcodec_close(codec_context);
     avformat_close_input(&format_context);
-}
 
-nordlicht* nordlicht_create(int width, int height) {
-    init_libav();
+    ////////
 
-    nordlicht *code;
-    code = malloc(sizeof(nordlicht));
+    // Scale the `frame_wide` to the desired width and write the result to `output_file_path`.
 
-    code->width = width;
-    code->height = height;
-    code->frames_read = 0;
-    code->frames_written = 0;
-    code->input_file_path = NULL;
-    code->output_file_path = NULL;
-    code->input_thread = 0;
-    code->frame = avcodec_alloc_frame();
-    code->frame_wide = avcodec_alloc_frame();
-
-    code->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, code->width, code->height));
-    avpicture_fill((AVPicture *)code->frame, code->buffer, PIX_FMT_RGB24, code->width, code->height);
-    code->buffer_wide = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, FRAME_WIDTH*code->width, code->height));
-    avpicture_fill((AVPicture *)code->frame_wide, code->buffer_wide, PIX_FMT_RGB24, FRAME_WIDTH*code->width, code->height);
-    memset(code->frame_wide->data[0], 0, code->frame_wide->linesize[0]*code->height);
-
-    return code;
-}
-
-int nordlicht_free(nordlicht *code) {
-    av_free(code->buffer);
-    av_free(code->buffer_wide);
-    avcodec_free_frame(&code->frame);
-    avcodec_free_frame(&code->frame_wide);
-    free(code);
-    return 0;
-}
-
-int nordlicht_set_input(nordlicht *code, char *file_path) {
-    if (code->input_file_path != NULL && strcmp(file_path, code->input_file_path) == 0)
-        return 0;
-    code->input_file_path = file_path;
-
-    // Fill `frame_wide` black.
-    memset(code->frame_wide->data[0], 0, code->frame_wide->linesize[0]*code->height);
-    // Start to read the frames to `frame_wide`.
-    pthread_create(&code->input_thread, NULL, &threaded_input, code);
-
-    // Sleep to avoid calling nordlicht_step before there
-    sleep(1);
-}
-
-int nordlicht_set_output(nordlicht *code, char *file_path) {
-    code->output_file_path = file_path;
-    return 0;
-}
-
-// Scale the `frame_wide` to the desired width and write the result to `output_file_path`.
-float nordlicht_step(nordlicht *code) {
     struct SwsContext *sws_ctx2 = NULL;
     sws_ctx2 = sws_getContext(FRAME_WIDTH*code->width, code->height, PIX_FMT_RGB24,
             code->width, code->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
@@ -164,12 +162,12 @@ float nordlicht_step(nordlicht *code) {
             code->frame_wide->linesize, 0, code->height, code->frame->data,
             code->frame->linesize);
 
-    AVCodec *codec = avcodec_find_encoder_by_name("png");
-    AVCodecContext *codecContext = avcodec_alloc_context3(codec);
+    AVCodec *encoder = avcodec_find_encoder_by_name("png");
+    AVCodecContext *codecContext = avcodec_alloc_context3(encoder);
     codecContext->width = code->width;
     codecContext->height = code->height;
     codecContext->pix_fmt = PIX_FMT_RGB24;
-    if (avcodec_open2(codecContext, codec, NULL) < 0) {
+    if (avcodec_open2(codecContext, encoder, NULL) < 0) {
         fprintf(stderr, "nordlicht: Could not open output codec.\n");
         return -1;
     }
