@@ -81,6 +81,18 @@ int nordlicht_set_output(nordlicht *code, char *file_path) {
     return 0;
 }
 
+void write(nordlicht *code, AVPacket* packet) {
+    FILE *file;
+    file = fopen(code->output_file_path, "wb");
+    if (!file) {
+        fprintf(stderr, "nordlicht: Could not open output file.\n");
+        exit(-1);
+    }
+    fwrite(packet->data, 1, packet->size, file);
+    fclose(file);
+
+}
+
 float nordlicht_step(nordlicht *code) {
     // Use decode_frame to get one frame for every pixel of the nordlicht's width.
     // Scale those to FRAME_WIDTH px width and put them in `code->frame_wide`. We
@@ -121,9 +133,6 @@ float nordlicht_step(nordlicht *code) {
     AVFrame *frame = NULL; 
     frame = avcodec_alloc_frame();
 
-    uint8_t *buffer = NULL;
-    buffer = (uint8_t *)av_malloc(avpicture_get_size(PIX_FMT_RGB24, codec_context->width, code->height)*sizeof(uint8_t));
-
     struct SwsContext *sws_ctx = NULL;
     sws_ctx = sws_getContext(codec_context->width, codec_context->height, codec_context->pix_fmt,
             FRAME_WIDTH, code->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
@@ -144,7 +153,6 @@ float nordlicht_step(nordlicht *code) {
         code->frames_read = i+1;
     }
 
-    av_free(buffer);
     av_free(frame);
 
     avcodec_close(codec_context);
@@ -186,15 +194,7 @@ float nordlicht_step(nordlicht *code) {
     avcodec_encode_video2(codecContext, &packet, code->frame, &gotPacket);
 #endif
 
-    FILE *file;
-    file = fopen(code->output_file_path, "wb");
-    if (!file) {
-        fprintf(stderr, "nordlicht: Could not open output file.\n");
-        return -1;
-    }
-    fwrite(packet.data, 1, packet.size, file);
-    fclose(file);
-
+    write(code, &packet);
     av_free_packet(&packet);
 
     code->frames_written = code->frames_read;
