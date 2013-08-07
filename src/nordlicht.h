@@ -15,6 +15,14 @@ typedef struct nordlicht {
     uint8_t *buffer_wide;
     char *input_file_path;
     char *output_file_path;
+
+    AVFormatContext *format_context;
+    AVCodecContext *decoder_context;
+    int video_stream;
+    struct SwsContext *sws_ctx;
+
+    struct SwsContext *sws_ctx2;
+    AVCodecContext *encoder_context;
 } nordlicht;
 
 // Allocate a new nordlicht of specific width and height. Use
