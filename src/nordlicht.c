@@ -135,7 +135,7 @@ int nordlicht_free(nordlicht *code) {
     return 0;
 }
 
-int nordlicht_input(nordlicht *code, char *file_path) {
+int nordlicht_set_input(nordlicht *code, char *file_path) {
     if (code->input_file_path != NULL && strcmp(file_path, code->input_file_path) == 0)
         return 0;
     code->input_file_path = file_path;
@@ -149,7 +149,7 @@ int nordlicht_input(nordlicht *code, char *file_path) {
     sleep(1);
 }
 
-int nordlicht_output(nordlicht *code, char *file_path) {
+int nordlicht_set_output(nordlicht *code, char *file_path) {
     code->output_file_path = file_path;
     return 0;
 }
@@ -203,6 +203,6 @@ float nordlicht_step(nordlicht *code) {
     return (float)code->frames_written/code->width;
 }
 
-int nordlicht_done(nordlicht *code) {
+int nordlicht_is_done(nordlicht *code) {
     return code->frames_written == code->width;
 }
