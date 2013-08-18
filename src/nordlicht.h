@@ -40,11 +40,9 @@ int nordlicht_set_input(nordlicht *code, char *file_path);
 // structures.
 int nordlicht_set_output(nordlicht *code, char *file_path);
 
-// Do one "step" of generation, producing a usable but possibly
-// incomplete output.
+// Do one "step" of generation, producing a usable but possibly incomplete
+// output. Returns a float between 0 and 1 representing how much of the
+// nordlicht was generated. A value of 1 means the nordlicht is done.
 float nordlicht_step(nordlicht *code);
-
-// Returns 1 if the nordlicht is complete, and 0 otherwise.
-int nordlicht_is_done(nordlicht *code);
 
 #endif

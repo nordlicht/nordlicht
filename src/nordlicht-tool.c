@@ -40,8 +40,9 @@ int main(int argc, char** argv) {
     nordlicht_set_output(code, output_path);
     free(output_path);
 
-    while (!nordlicht_is_done(code)) {
-        float progress = nordlicht_step(code);
+    float progress = 0;
+    while (progress < 1) {
+        progress = nordlicht_step(code);
         printf("\r%02.0f%%", progress*100);
         fflush(stdout);
     }

@@ -207,7 +207,3 @@ float nordlicht_step(nordlicht *code) {
     code->frames_written = code->frames_read;
     return (float)code->frames_written/code->width;
 }
-
-int nordlicht_is_done(nordlicht *code) {
-    return code->frames_written == code->width;
-}
