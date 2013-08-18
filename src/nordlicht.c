@@ -14,24 +14,26 @@ void init_libav() {
 
 // Seek to a specific time in the formatContext and decode that frame to `frame`.
 int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext *codecContext, int video_stream, long time) {
-    av_seek_frame(formatContext, -1, time, 0);
+    time /= AV_TIME_BASE;
 
-    int frameFinished = 0;
-    int try = 0;
     AVPacket packet;
-    while(!frameFinished) {
-        try++;
-        if (try > 100) {
-            return 0;
-        }
-        while(av_read_frame(formatContext, &packet) >= 0) {
-            if (packet.stream_index == video_stream) {
-                avcodec_decode_video2(codecContext, frame, &frameFinished, &packet);
-                break;
+    long frameTime = 0;
+    while(frameTime != time) {
+        int frameFinished = 0;
+        int try = 0;
+            try++;
+            if (try > 100) {
+                return 0;
+            }
+            while(av_read_frame(formatContext, &packet) >= 0) {
+                if (packet.stream_index == video_stream) {
+                    avcodec_decode_video2(codecContext, frame, &frameFinished, &packet);
+                    frameTime = packet.pts*av_q2d(formatContext->streams[video_stream]->time_base);
+                    break;
+                }
+                av_free_packet(&packet);
             }
             av_free_packet(&packet);
-        }
-        av_free_packet(&packet);
     }
     return 1;
 }
@@ -170,13 +172,13 @@ float nordlicht_step(nordlicht *code) {
     if (to_frame > code->width)
         to_frame = code->width;
 
-    for (i=from_frame; i<to_frame; i++) {
+    for (i=from_frame; i<=to_frame; i++) {
         if (decode_frame(frame, code->format_context, code->decoder_context, code->video_stream, i*seconds_per_frame)) {
             uint8_t *addr = code->frame_wide->data[0]+i*FRAME_WIDTH*3;
             sws_scale(code->sws_ctx, (const uint8_t * const*)frame->data, frame->linesize, 0, code->decoder_context->height,
                     &addr, code->frame_wide->linesize);
         }
-        code->frames_read = i+1;
+        code->frames_read = i;
     }
 
     av_free(frame);
