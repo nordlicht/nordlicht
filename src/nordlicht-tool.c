@@ -38,6 +38,7 @@ int main(int argc, char** argv) {
     nordlicht *code = nordlicht_create(width, height);
     nordlicht_set_input(code, file_path);
     nordlicht_set_output(code, output_path);
+    free(output_path);
 
     while (!nordlicht_is_done(code)) {
         float progress = nordlicht_step(code);

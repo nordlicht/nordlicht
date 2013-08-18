@@ -72,10 +72,14 @@ int nordlicht_free(nordlicht *code) {
     avcodec_close(code->decoder_context);
     avformat_close_input(&code->format_context);
 
+    sws_freeContext(code->sws_ctx);
+    sws_freeContext(code->sws_ctx2);
     av_free(code->buffer);
     av_free(code->buffer_wide);
     avcodec_free_frame(&code->frame);
     avcodec_free_frame(&code->frame_wide);
+    avcodec_close(code->encoder_context);
+    av_free(code->encoder_context);
     free(code);
     return 0;
 }
