@@ -1,7 +1,7 @@
 #include "nordlicht.h"
 
 #define FRAME_WIDTH 10
-#define STEP_SIZE 100
+#define STEP_SIZE 10
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
 #define avcodec_free_frame av_freep
@@ -14,11 +14,11 @@ void init_libav() {
 
 // Seek to a specific time in the formatContext and decode that frame to `frame`.
 int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext *codecContext, int video_stream, long time) {
-    time /= AV_TIME_BASE;
+    //av_seek_frame(formatContext, video_stream, time*(1/av_q2d(formatContext->streams[video_stream]->time_base)*av_q2d(formatContext->streams[video_stream]->codec->time_base)), AVSEEK_FLAG_BACKWARD);
 
     AVPacket packet;
-    long frameTime = 0;
-    while(frameTime != time) {
+    int64_t frameTime = -1;
+    do {
         int frameFinished = 0;
         int try = 0;
             try++;
@@ -28,13 +28,14 @@ int decode_frame(AVFrame *frame, AVFormatContext *formatContext, AVCodecContext 
             while(av_read_frame(formatContext, &packet) >= 0) {
                 if (packet.stream_index == video_stream) {
                     avcodec_decode_video2(codecContext, frame, &frameFinished, &packet);
-                    frameTime = packet.pts*av_q2d(formatContext->streams[video_stream]->time_base);
+                    frameTime = packet.dts*av_q2d(formatContext->streams[video_stream]->time_base)/av_q2d(formatContext->streams[video_stream]->codec->time_base)/2;
+                    printf("%ld/%ld\n", frameTime, time);
                     break;
                 }
                 av_free_packet(&packet);
             }
             av_free_packet(&packet);
-    }
+    } while(frameTime != time);
     return 1;
 }
 
@@ -97,13 +98,7 @@ int nordlicht_set_input(nordlicht *code, char *file_path) {
     if (avformat_find_stream_info(code->format_context, NULL) < 0)
         return 0;
 
-    int i;
-    for (i=0; i<code->format_context->nb_streams; i++) {
-        if (code->format_context->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
-            code->video_stream = i;
-            break;
-        }
-    }
+    code->video_stream = av_find_best_stream(code->format_context, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
     if (code->video_stream == -1)
         return 0;
 
@@ -151,7 +146,6 @@ void write(nordlicht *code, AVPacket* packet) {
     }
     fwrite(packet->data, 1, packet->size, file);
     fclose(file);
-
 }
 
 float nordlicht_step(nordlicht *code) {
@@ -162,7 +156,12 @@ float nordlicht_step(nordlicht *code) {
 
     int i;
 
-    int64_t seconds_per_frame = code->format_context->duration/code->width;
+    //frameTime = packet.dts*av_q2d(formatContext->streams[video_stream]->time_base);
+    double fps = 1.0/av_q2d(code->format_context->streams[code->video_stream]->codec->time_base);
+    double total_frames = code->format_context->duration/AV_TIME_BASE*fps;
+    double frames_step = total_frames/code->width;
+
+    //printf("%f tb, %f fps, %f frames, %f fs", 1.0/av_q2d(code->format_context->streams[code->video_stream]->time_base), fps, total_frames, frames_step);
 
     AVFrame *frame = NULL;
     frame = avcodec_alloc_frame();
@@ -173,7 +172,7 @@ float nordlicht_step(nordlicht *code) {
         to_frame = code->width;
 
     for (i=from_frame; i<=to_frame; i++) {
-        if (decode_frame(frame, code->format_context, code->decoder_context, code->video_stream, i*seconds_per_frame)) {
+        if (decode_frame(frame, code->format_context, code->decoder_context, code->video_stream, round(i*frames_step))) {
             uint8_t *addr = code->frame_wide->data[0]+i*FRAME_WIDTH*3;
             sws_scale(code->sws_ctx, (const uint8_t * const*)frame->data, frame->linesize, 0, code->decoder_context->height,
                     &addr, code->frame_wide->linesize);
