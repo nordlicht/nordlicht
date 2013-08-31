@@ -50,7 +50,7 @@ void frame_copy(frame *f1, frame *f2, int offset_x, int offset_y) {
     }
 }
 
-frame* frame_scale(frame *f, int width, int height) {
+frame* frame_scale_unsafe(frame *f, int width, int height) {
     frame *f2 = frame_create(width, height, 0);
     struct SwsContext *sws_context = sws_getContext(f->frame->width, f->frame->height, f->frame->format,
             f2->frame->width, f2->frame->height, f2->frame->format, SWS_AREA, NULL, NULL, NULL);
@@ -59,6 +59,24 @@ frame* frame_scale(frame *f, int width, int height) {
             f2->frame->linesize);
     sws_freeContext(sws_context);
     return f2;
+}
+
+frame* frame_scale(frame *f, int width, int height) {
+    frame *tmp;
+    while (f->frame->width != width || f->frame->height != height) {
+        int w = f->frame->width/(MAX_FILTER_SIZE/2);
+        if (w < width) {
+            w = width;
+        }
+
+        int h = f->frame->height/(MAX_FILTER_SIZE/2);
+        if (h < height)
+            h = height;
+
+        tmp = frame_scale_unsafe(f, w, h);
+        f = tmp;
+    }
+    return f;
 }
 
 void frame_write(frame *f, char *file_path) {
@@ -174,26 +192,6 @@ frame* get_frame(nordlicht *n, int column) {
     return frame_scale(f, f->frame->width, f->frame->height);
 }
 
-frame* get_slice(nordlicht *n, int column) {
-    frame *f = get_frame(n, column+1);
-    frame *tmp;
-
-    while (f->frame->width != SLICE_WIDTH || f->frame->height != n->height) {
-        int w = f->frame->width/(MAX_FILTER_SIZE/2);
-        if (w < SLICE_WIDTH) {
-            w = SLICE_WIDTH;
-        }
-        int h = f->frame->height/(MAX_FILTER_SIZE/2);
-        if (h < n->height)
-            h = n->height;
-
-    //frame_write(tmp, "debug.png");
-        tmp = frame_scale(f, w, h);
-        f = tmp;
-    }
-    return f;
-}
-
 //////////////////////////////////////////////////////////
 
 nordlicht* nordlicht_create(int width, int height) {
@@ -257,9 +255,10 @@ float nordlicht_step(nordlicht *n) {
     }
 
     int i;
-    frame *s;
+    frame *s, *f;
     for(i = n->frames_written; i < last_frame; i+=SLICE_WIDTH) {
-        s = get_slice(n, i);
+        f = get_frame(n, i);
+        s = frame_scale(f, SLICE_WIDTH, n->height);
         frame_copy(s, n->code, i, 0);
     }
 
