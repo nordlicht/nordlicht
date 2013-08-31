@@ -1,10 +1,6 @@
 #ifndef INCLUDE_nordlicht_h__
 #define INCLUDE_nordlicht_h__
 
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
-
 typedef struct nordlicht nordlicht;
 
 // Allocate a new nordlicht of specific width and height. Use

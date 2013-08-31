@@ -10,7 +10,7 @@ find_package(Threads REQUIRED)
 
 include_directories(include)
 
-add_library(nordlicht SHARED src/nordlicht.c)
+add_library(nordlicht SHARED src/nordlicht.c src/frame.c src/common.c)
 target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(nordlicht-tool src/nordlicht-tool.c)
