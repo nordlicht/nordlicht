@@ -1,6 +1,7 @@
 #include "nordlicht.h"
 
 #define MAX_FILTER_SIZE 256
+#define SLICE_WIDTH 1
 
 void die(char *message) {
     fprintf(stderr, "nordlicht: %s\n", message);
@@ -20,6 +21,7 @@ frame* frame_create(int width, int height, int fill_color) {
     f->frame = avcodec_alloc_frame();
     f->frame->width = width;
     f->frame->height = height;
+    f->frame->format = PIX_FMT_RGB24;
 
     f->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, width, height));
     avpicture_fill((AVPicture *)f->frame, f->buffer, PIX_FMT_RGB24, width, height);
@@ -50,8 +52,8 @@ void frame_copy(frame *f1, frame *f2, int offset_x, int offset_y) {
 
 frame* frame_scale(frame *f, int width, int height) {
     frame *f2 = frame_create(width, height, 0);
-    struct SwsContext *sws_context = sws_getContext(f->frame->width, f->frame->height, PIX_FMT_RGB24,
-            f2->frame->width, f2->frame->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
+    struct SwsContext *sws_context = sws_getContext(f->frame->width, f->frame->height, f->frame->format,
+            f2->frame->width, f2->frame->height, f2->frame->format, SWS_AREA, NULL, NULL, NULL);
     sws_scale(sws_context, (uint8_t const * const *)f->frame->data,
             f->frame->linesize, 0, f->frame->height, f2->frame->data,
             f2->frame->linesize);
@@ -157,7 +159,7 @@ frame* get_frame(nordlicht *n, int column) {
         if (packet.stream_index == n->video_stream) {
             avcodec_decode_video2(n->decoder_context, avframe, &frameFinished, &packet);
             frameTime = packet.dts*av_q2d(n->format_context->streams[n->video_stream]->time_base)/av_q2d(n->format_context->streams[n->video_stream]->codec->time_base)/2;
-            printf("%ld/%ld\n", frameTime, target_frame);
+            //printf("%ld/%ld\n", frameTime, target_frame);
             break;
         }
         av_free_packet(&packet);
@@ -166,24 +168,26 @@ frame* get_frame(nordlicht *n, int column) {
 
     avframe->width = n->decoder_context->width;
     avframe->height = n->decoder_context->height;
-    frame *f = frame_create(n->decoder_context->width, n->decoder_context->height, 0);
+    avframe->format = PIX_FMT_YUV420P;
+    frame *f = malloc(sizeof(frame));
     f->frame = avframe;
-    return f;
+    return frame_scale(f, f->frame->width, f->frame->height);
 }
 
 frame* get_slice(nordlicht *n, int column) {
     frame *f = get_frame(n, column+1);
     frame *tmp;
 
-    while (f->frame->width != 1 || f->frame->height != n->height) {
+    while (f->frame->width != SLICE_WIDTH || f->frame->height != n->height) {
         int w = f->frame->width/(MAX_FILTER_SIZE/2);
-        if (w < 1) {
-            w = 1;
+        if (w < SLICE_WIDTH) {
+            w = SLICE_WIDTH;
         }
         int h = f->frame->height/(MAX_FILTER_SIZE/2);
         if (h < n->height)
             h = n->height;
 
+    //frame_write(tmp, "debug.png");
         tmp = frame_scale(f, w, h);
         f = tmp;
     }
@@ -222,7 +226,6 @@ int nordlicht_set_input(nordlicht *n, char *file_path) {
 
     if (avformat_open_input(&n->format_context, n->input_file_path, NULL, NULL) != 0)
         return 0;
-    printf("i\n");
     if (avformat_find_stream_info(n->format_context, NULL) < 0)
         return 0;
     n->video_stream = av_find_best_stream(n->format_context, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
@@ -255,7 +258,7 @@ float nordlicht_step(nordlicht *n) {
 
     int i;
     frame *s;
-    for(i = n->frames_written; i < last_frame; i++) {
+    for(i = n->frames_written; i < last_frame; i+=SLICE_WIDTH) {
         s = get_slice(n, i);
         frame_copy(s, n->code, i, 0);
     }
