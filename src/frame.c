@@ -28,9 +28,7 @@ void frame_copy(frame *f1, frame *f2, int offset_x, int offset_y) {
         for (y = 0; y < f1->frame->height; y++) {
             int f2_pos = (y+offset_y)*f2->frame->linesize[0]+(x+offset_x)*3;
             int f1_pos = y*f1->frame->linesize[0]+x*3;
-            f2->frame->data[0][f2_pos] = f1->frame->data[0][f1_pos];
-            f2->frame->data[0][f2_pos+1] = f1->frame->data[0][f1_pos+1];
-            f2->frame->data[0][f2_pos+2] = f1->frame->data[0][f1_pos+2];
+            memcpy(f2->frame->data[0]+f2_pos, f1->frame->data[0]+f1_pos, sizeof(uint8_t)*3);
         }
     }
 }
