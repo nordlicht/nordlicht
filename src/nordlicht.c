@@ -8,6 +8,7 @@ struct nordlicht {
     int width, height;
     int frames_written;
     int mutable;
+    int exact;
 
     char *input_file_path;
     char *output_file_path;
@@ -26,7 +27,7 @@ void assert_mutable(nordlicht *n) {
     }
 }
 
-frame* get_frame(nordlicht *n, int column) {
+frame* get_frame(nordlicht *n, int column, int exact) {
     AVFrame *avframe= NULL;
     avframe = avcodec_alloc_frame();
 
@@ -34,9 +35,11 @@ frame* get_frame(nordlicht *n, int column) {
     double total_frames = n->format_context->duration/AV_TIME_BASE*fps;
     double frames_step = total_frames/n->width;
 
-    long target_frame = frames_step*(column+0.5);
+    long min_frame = frames_step*(column);
+    long max_frame = frames_step*(column+1)-1;
+    long target_frame = max_frame;
 
-    av_seek_frame(n->format_context, n->video_stream, target_frame*(1/av_q2d(n->format_context->streams[n->video_stream]->time_base)*av_q2d(n->format_context->streams[n->video_stream]->codec->time_base)), 0);
+    av_seek_frame(n->format_context, n->video_stream, target_frame*(1/av_q2d(n->format_context->streams[n->video_stream]->time_base)*av_q2d(n->format_context->streams[n->video_stream]->codec->time_base)), AVSEEK_FLAG_BACKWARD);
 
     AVPacket packet;
     int64_t frameTime = -1;
@@ -51,9 +54,11 @@ frame* get_frame(nordlicht *n, int column) {
     while(av_read_frame(n->format_context, &packet) >= 0) {
         if (packet.stream_index == n->video_stream) {
             avcodec_decode_video2(n->decoder_context, avframe, &frameFinished, &packet);
-            frameTime = packet.dts*av_q2d(n->format_context->streams[n->video_stream]->time_base)/av_q2d(n->format_context->streams[n->video_stream]->codec->time_base)/2;
-            //printf("%ld/%ld\n", frameTime, target_frame);
-            break;
+            frameTime = packet.dts*av_q2d(n->format_context->streams[n->video_stream]->time_base)/av_q2d(n->format_context->streams[n->video_stream]->codec->time_base);
+            //printf("found %ld, target %ld, min %ld, max %ld\n", frameTime, target_frame, min_frame, max_frame);
+            if (!exact || (frameTime >= min_frame && frameTime <= max_frame)) {
+                break;
+            }
         }
         av_free_packet(&packet);
     }
@@ -80,6 +85,7 @@ nordlicht* nordlicht_create(int width, int height) {
     n->height = height;
     n->frames_written = 0;
     n->mutable = 1;
+    n->exact = 0;
     n->code = frame_create(width, height, 0);
 
     n->format_context = NULL;
@@ -124,6 +130,12 @@ int nordlicht_set_output(nordlicht *n, char *file_path) {
 float nordlicht_step(nordlicht *n) {
     n->mutable = 0;
 
+    if (!n->exact && n->frames_written == n->width) {
+        n->exact = 1;
+        n->frames_written = 0;
+        av_seek_frame(n->format_context, n->video_stream, 0, AVSEEK_FLAG_FRAME);
+    }
+
     int last_frame = n->frames_written + 100;
     if (last_frame > n->width) {
         last_frame = n->width;
@@ -132,12 +144,15 @@ float nordlicht_step(nordlicht *n) {
     int i;
     frame *s, *f;
     for(i = n->frames_written; i < last_frame; i+=SLICE_WIDTH) {
-        f = get_frame(n, i);
+        f = get_frame(n, i, n->exact);
+        if (f == NULL) {
+            continue;
+        }
         s = frame_scale(f, SLICE_WIDTH, n->height);
         frame_copy(s, n->code, i, 0);
     }
 
     frame_write(n->code, n->output_file_path);
     n->frames_written = last_frame;
-    return 1.0*n->frames_written/n->width;
+    return (1.0*n->frames_written/n->width)/2+0.5*n->exact;
 }
