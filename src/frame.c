@@ -36,7 +36,7 @@ void frame_copy(frame *f1, frame *f2, int offset_x, int offset_y) {
 frame* frame_scale_unsafe(frame *f, int width, int height) {
     frame *f2 = frame_create(width, height, 0);
     struct SwsContext *sws_context = sws_getContext(f->frame->width, f->frame->height, f->frame->format,
-            f2->frame->width, f2->frame->height, f2->frame->format, SWS_AREA, NULL, NULL, NULL);
+            f2->frame->width, f2->frame->height, f2->frame->format, SWS_FAST_BILINEAR, NULL, NULL, NULL);
     sws_scale(sws_context, (uint8_t const * const *)f->frame->data,
             f->frame->linesize, 0, f->frame->height, f2->frame->data,
             f2->frame->linesize);

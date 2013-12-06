@@ -130,11 +130,13 @@ int nordlicht_set_output(nordlicht *n, char *file_path) {
 float nordlicht_step(nordlicht *n) {
     n->mutable = 0;
 
+    /*
     if (!n->exact && n->frames_written == n->width) {
         n->exact = 1;
         n->frames_written = 0;
         av_seek_frame(n->format_context, n->video_stream, 0, AVSEEK_FLAG_FRAME);
     }
+    */
 
     int last_frame = n->frames_written + 100;
     if (last_frame > n->width) {
@@ -154,5 +156,5 @@ float nordlicht_step(nordlicht *n) {
 
     frame_write(n->code, n->output_file_path);
     n->frames_written = last_frame;
-    return (1.0*n->frames_written/n->width)/2+0.5*n->exact;
+    return (1.0*n->frames_written/n->width);
 }
