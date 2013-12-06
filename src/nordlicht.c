@@ -34,7 +34,7 @@ frame* get_frame(nordlicht *n, int column) {
     double total_frames = n->format_context->duration/AV_TIME_BASE*fps;
     double frames_step = total_frames/n->width;
 
-    long target_frame = frames_step*column;
+    long target_frame = frames_step*(column+0.5);
 
     av_seek_frame(n->format_context, n->video_stream, target_frame*(1/av_q2d(n->format_context->streams[n->video_stream]->time_base)*av_q2d(n->format_context->streams[n->video_stream]->codec->time_base)), 0);
 
