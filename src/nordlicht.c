@@ -37,9 +37,9 @@ frame* get_frame(nordlicht *n, int column, int exact) {
 
     long min_frame = frames_step*(column);
     long max_frame = frames_step*(column+1)-1;
-    long target_frame = max_frame;
+    long target_frame = (max_frame+min_frame)/2;
 
-    av_seek_frame(n->format_context, n->video_stream, target_frame*(1/av_q2d(n->format_context->streams[n->video_stream]->time_base)*av_q2d(n->format_context->streams[n->video_stream]->codec->time_base)), AVSEEK_FLAG_BACKWARD);
+    av_seek_frame(n->format_context, n->video_stream, max_frame*(1/av_q2d(n->format_context->streams[n->video_stream]->time_base)*av_q2d(n->format_context->streams[n->video_stream]->codec->time_base)), AVSEEK_FLAG_BACKWARD);
 
     AVPacket packet;
     int64_t frameTime = -1;
@@ -56,7 +56,7 @@ frame* get_frame(nordlicht *n, int column, int exact) {
             avcodec_decode_video2(n->decoder_context, avframe, &frameFinished, &packet);
             frameTime = packet.dts*av_q2d(n->format_context->streams[n->video_stream]->time_base)/av_q2d(n->format_context->streams[n->video_stream]->codec->time_base);
             //printf("found %ld, target %ld, min %ld, max %ld\n", frameTime, target_frame, min_frame, max_frame);
-            if (!exact || (frameTime >= min_frame && frameTime <= max_frame)) {
+            if (!exact || abs(frameTime-target_frame) < 0.5*frames_step) {
                 break;
             }
         }
