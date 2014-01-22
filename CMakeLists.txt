@@ -19,7 +19,10 @@ target_link_libraries(nordlicht-tool nordlicht)
 
 configure_file(res/nordlicht.pc.in res/nordlicht.pc @ONLY)
 
-install(TARGETS nordlicht DESTINATION lib)
+set(LIB_SUFFIX "" CACHE STRING "Suffix of library directory name (for example '32' or '64')")
+set(LIB_INSTALL_DIR "lib${LIB_SUFFIX}" CACHE STRING "Directory where library will be installed")
+
+install(TARGETS nordlicht DESTINATION ${LIB_INSTALL_DIR})
 install(TARGETS nordlicht-tool DESTINATION bin)
 install(FILES src/nordlicht.h DESTINATION include)
 install(FILES ${CMAKE_BINARY_DIR}/res/nordlicht.pc DESTINATION lib/pkgconfig)
