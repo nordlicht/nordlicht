@@ -17,7 +17,7 @@ add_executable(nordlicht-tool src/nordlicht-tool.c)
 set_target_properties(nordlicht-tool PROPERTIES OUTPUT_NAME nordlicht)
 target_link_libraries(nordlicht-tool nordlicht)
 
-CONFIGURE_FILE(res/nordlicht.pc.in res/nordlicht.pc @ONLY)
+configure_file(res/nordlicht.pc.in res/nordlicht.pc @ONLY)
 
 install(TARGETS nordlicht DESTINATION lib)
 install(TARGETS nordlicht-tool DESTINATION bin)
