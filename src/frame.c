@@ -35,12 +35,34 @@ void frame_copy(frame *f1, frame *f2, int offset_x, int offset_y) {
 
 frame* frame_scale_unsafe(frame *f, int width, int height) {
     frame *f2 = frame_create(width, height, 0);
-    struct SwsContext *sws_context = sws_getContext(f->frame->width, f->frame->height, f->frame->format,
-            f2->frame->width, f2->frame->height, f2->frame->format, SWS_AREA, NULL, NULL, NULL);
-    sws_scale(sws_context, (uint8_t const * const *)f->frame->data,
-            f->frame->linesize, 0, f->frame->height, f2->frame->data,
-            f2->frame->linesize);
-    sws_freeContext(sws_context);
+    if (width < 8) {
+        if (width == 1) {
+            if (f->frame->height != height) {
+                f = frame_scale(f, f->frame->width, height);
+            }
+            int x, y;
+            for (y = 0; y < height; y++) {
+                int r = 0, b = 0, g = 0;
+                for (x = 0; x < f->frame->width; x++) {
+                    r += f->frame->data[0][y*f->frame->linesize[0]+3*x+0];
+                    g += f->frame->data[0][y*f->frame->linesize[0]+3*x+1];
+                    b += f->frame->data[0][y*f->frame->linesize[0]+3*x+2];
+                }
+                f2->frame->data[0][y*f2->frame->linesize[0]+0] = r/f->frame->width;
+                f2->frame->data[0][y*f2->frame->linesize[0]+1] = g/f->frame->width;
+                f2->frame->data[0][y*f2->frame->linesize[0]+2] = b/f->frame->width;
+            }
+        } else {
+            // TODO
+        }
+    } else {
+        struct SwsContext *sws_context = sws_getContext(f->frame->width, f->frame->height, f->frame->format,
+                f2->frame->width, f2->frame->height, f2->frame->format, SWS_AREA, NULL, NULL, NULL);
+        sws_scale(sws_context, (uint8_t const * const *)f->frame->data,
+                f->frame->linesize, 0, f->frame->height, f2->frame->data,
+                f2->frame->linesize);
+        sws_freeContext(sws_context);
+    }
     return f2;
 }
 
@@ -56,6 +78,9 @@ frame* frame_scale(frame *f, int width, int height) {
         if (h < height)
             h = height;
 
+        if (width == 1) {
+            w = 1;
+        }
         tmp = frame_scale_unsafe(f, w, h);
         f = tmp;
     }
