@@ -6,8 +6,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 find_package(FFmpeg COMPONENTS AVUTIL AVFORMAT AVCODEC SWSCALE REQUIRED)
 include_directories(${FFMPEG_INCLUDE_DIRS})
 
-find_package(Threads REQUIRED)
-
 include_directories(include)
 
 add_library(nordlicht SHARED src/nordlicht.c src/frame.c src/common.c)
