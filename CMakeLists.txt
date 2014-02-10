@@ -6,10 +6,13 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 find_package(FFmpeg COMPONENTS AVUTIL AVFORMAT AVCODEC SWSCALE REQUIRED)
 include_directories(${FFMPEG_INCLUDE_DIRS})
 
+find_package(FreeImage REQUIRED)
+include_directories(${FreeImage_INCLUDE_DIRS})
+
 include_directories(include)
 
-add_library(nordlicht SHARED src/nordlicht.c src/frame.c src/common.c)
-target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+add_library(nordlicht SHARED src/nordlicht.c)
+target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${FreeImage_LIBRARIES})
 
 add_executable(nordlicht-tool src/nordlicht-tool.c)
 set_target_properties(nordlicht-tool PROPERTIES OUTPUT_NAME nordlicht)

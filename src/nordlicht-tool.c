@@ -36,19 +36,11 @@ int main(int argc, char** argv) {
         output_path = argv[4];
     }
 
-    nordlicht *code = nordlicht_create(width, height);
-    nordlicht_set_input(code, file_path);
-    nordlicht_set_output(code, output_path);
-
-    float progress = 0;
-    while (progress < 1) {
-        progress = nordlicht_step(code);
-        printf("\r%02.0f%%", progress*100);
-        fflush(stdout);
-    }
-
-    printf("\n");
+    nordlicht *code = nordlicht_init(file_path, width, height);
+    nordlicht_generate(code);
+    nordlicht_write(code, "/tmp/nordlicht.png");
     nordlicht_free(code);
+
     free(output_path);
 
     return 0;
