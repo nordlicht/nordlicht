@@ -4,6 +4,7 @@
 typedef struct frame {
     AVFrame *frame;
     uint8_t *buffer;
+    long pts;
 } frame;
 
 #define MAX_FILTER_SIZE 256

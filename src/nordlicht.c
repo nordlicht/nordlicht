@@ -27,55 +27,76 @@ void assert_mutable(nordlicht *n) {
     }
 }
 
-frame* get_frame(nordlicht *n, int column, int exact) {
-    AVFrame *avframe= NULL;
+double fps(nordlicht *n) {
+    return av_q2d(n->format_context->streams[n->video_stream]->r_frame_rate);
+}
+
+double duration_sec(nordlicht *n) {
+    return (double)n->format_context->duration / (double)AV_TIME_BASE;
+}
+
+int total_number_of_frames(nordlicht *n) {
+    return fps(n)*duration_sec(n);
+}
+
+frame* grab_frame(nordlicht *n, int scale) {
+    int valid = 0;
+    int got_frame = 0;
+
+    AVFrame *avframe = NULL;
     avframe = avcodec_alloc_frame();
-
-    double fps = 1.0/av_q2d(n->format_context->streams[n->video_stream]->codec->time_base);
-    double total_frames = n->format_context->duration/AV_TIME_BASE*fps;
-    double frames_step = total_frames/n->width;
-
-    long min_frame = frames_step*(column);
-    long max_frame = frames_step*(column+1)-1;
-    long target_frame = (max_frame+min_frame)/2;
-
-    av_seek_frame(n->format_context, n->video_stream, max_frame*(1/av_q2d(n->format_context->streams[n->video_stream]->time_base)*av_q2d(n->format_context->streams[n->video_stream]->codec->time_base)), AVSEEK_FLAG_BACKWARD);
-
     AVPacket packet;
-    int64_t frameTime = -1;
 
-    int frameFinished = 0;
-    int try = 0;
-    try++;
-    if (try > 100) {
-        printf("giving up\n");
-        return 0;
-    }
-    while(av_read_frame(n->format_context, &packet) >= 0) {
-        if (packet.stream_index == n->video_stream) {
-            avcodec_decode_video2(n->decoder_context, avframe, &frameFinished, &packet);
-            frameTime = packet.dts*av_q2d(n->format_context->streams[n->video_stream]->time_base)/av_q2d(n->format_context->streams[n->video_stream]->codec->time_base);
-            //printf("found %ld, target %ld, min %ld, max %ld\n", frameTime, target_frame, min_frame, max_frame);
-            if (!exact || abs(frameTime-target_frame) < 0.5*frames_step) {
-                break;
-            }
+    double pts;
+
+    while (!valid) {
+        av_read_frame(n->format_context, &packet);
+        avcodec_decode_video2(n->decoder_context, avframe, &got_frame, &packet);
+        if (got_frame) {
+            pts = packet.pts;
+            // to sec:
+            pts = pts*(double)av_q2d(n->format_context->streams[n->video_stream]->time_base);
+            // to frame number:
+            pts = pts*fps(n);
+            valid = 1;
         }
         av_free_packet(&packet);
     }
-    av_free_packet(&packet);
 
-    avframe->width = n->decoder_context->width;
-    avframe->height = n->decoder_context->height;
-    avframe->format = PIX_FMT_YUV420P;
     frame *f = malloc(sizeof(frame));
     f->frame = avframe;
-    return frame_scale(f, f->frame->width, f->frame->height);
+    f->pts = pts;
+    if (scale) {
+        return frame_scale(f, f->frame->width, f->frame->height);
+    } else {
+        return f;
+    }
 }
 
-//////////////////////////////////////////////////////////
+int seek(nordlicht *n, long frame_nr) {
+    double sec = frame_nr/fps(n);
+    double time_stamp = n->format_context->streams[n->video_stream]->start_time;
+    double time_base = av_q2d(n->format_context->streams[n->video_stream]->time_base);
+    time_stamp += sec/time_base + 0.5;
+    av_seek_frame(n->format_context, n->video_stream, time_stamp, AVSEEK_FLAG_BACKWARD);
+    avcodec_flush_buffers(n->format_context->streams[n->video_stream]->codec);
+
+    long grabbed_frame_nr = -1;
+    frame *theframe;
+    while (grabbed_frame_nr < frame_nr) {
+        theframe = grab_frame(n, 0);
+        grabbed_frame_nr = theframe->pts;
+        //return 0;
+    }
+}
+
+frame* get_frame(nordlicht *n, long frame) {
+    seek(n, frame);
+    return grab_frame(n, 1);
+}
 
 nordlicht* nordlicht_create(int width, int height) {
-    //av_log_set_level(AV_LOG_QUIET);
+    av_log_set_level(AV_LOG_QUIET);
     av_register_all();
 
     nordlicht *n;
@@ -130,13 +151,7 @@ int nordlicht_set_output(nordlicht *n, char *file_path) {
 float nordlicht_step(nordlicht *n) {
     n->mutable = 0;
 
-    /*
-    if (!n->exact && n->frames_written == n->width) {
-        n->exact = 1;
-        n->frames_written = 0;
-        av_seek_frame(n->format_context, n->video_stream, 0, AVSEEK_FLAG_FRAME);
-    }
-    */
+    int fr = total_number_of_frames(n);
 
     int last_frame = n->frames_written + 100;
     if (last_frame > n->width) {
@@ -146,7 +161,7 @@ float nordlicht_step(nordlicht *n) {
     int i;
     frame *s, *f;
     for(i = n->frames_written; i < last_frame; i+=SLICE_WIDTH) {
-        f = get_frame(n, i, n->exact);
+        f = get_frame(n, i*fr/n->width);
         if (f == NULL) {
             continue;
         }

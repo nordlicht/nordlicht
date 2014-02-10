@@ -13,6 +13,9 @@ frame* frame_create(int width, int height, int fill_color) {
     f->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, width, height));
     avpicture_fill((AVPicture *)f->frame, f->buffer, PIX_FMT_RGB24, width, height);
     memset(f->frame->data[0], fill_color, f->frame->linesize[0]*height);
+
+    f->pts = -1;
+
     return f;
 }
 
