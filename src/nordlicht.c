@@ -39,7 +39,7 @@ int total_number_of_frames(nordlicht *n) {
     return fps(n)*duration_sec(n);
 }
 
-frame* grab_frame(nordlicht *n, int scale) {
+frame* grab_next_frame(nordlicht *n, int scale) {
     int valid = 0;
     int got_frame = 0;
 
@@ -84,7 +84,7 @@ int seek(nordlicht *n, long frame_nr) {
     long grabbed_frame_nr = -1;
     frame *theframe;
     while (grabbed_frame_nr < frame_nr) {
-        theframe = grab_frame(n, 0);
+        theframe = grab_next_frame(n, 0);
         grabbed_frame_nr = theframe->pts;
         //return 0;
     }
@@ -92,7 +92,7 @@ int seek(nordlicht *n, long frame_nr) {
 
 frame* get_frame(nordlicht *n, long frame) {
     seek(n, frame);
-    return grab_frame(n, 1);
+    return grab_next_frame(n, 1);
 }
 
 nordlicht* nordlicht_create(int width, int height) {
