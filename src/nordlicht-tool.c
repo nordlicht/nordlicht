@@ -8,9 +8,6 @@ char *gnu_basename(char *path) {
     return base ? base+1 : path;
 }
 
-void update(nordlicht *code, float progress) {
-}
-
 int main(int argc, char** argv) {
     int width = 1000;
     int height = 150;

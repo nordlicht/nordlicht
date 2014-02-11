@@ -84,7 +84,6 @@ void seek(video *f, long min_frame_nr, long max_frame_nr) {
 }
 
 image* get_frame(video *f, double min_percent, double max_percent) {
-    printf("%f%\n", min_percent);
     seek(f, min_percent*total_number_of_frames(f), max_percent*total_number_of_frames(f));
 
     image *i;
