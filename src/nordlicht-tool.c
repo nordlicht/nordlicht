@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
 
     nordlicht *code = nordlicht_init(file_path, width, height);
     nordlicht_generate(code);
-    nordlicht_write(code, "/tmp/nordlicht.png");
+    nordlicht_write(code, output_path);
     nordlicht_free(code);
 
     free(output_path);

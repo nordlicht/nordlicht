@@ -13,6 +13,11 @@ typedef struct {
 } ffmpeg;
 
 typedef struct {
+    int length;
+    unsigned char *data;
+} column;
+
+typedef struct {
     int width, height;
     unsigned char *data;
 } image;
@@ -83,39 +88,23 @@ double grab_next_frame(ffmpeg *f) {
     return pts;
 }
 
-void seek(ffmpeg *f, long frame_nr) {
-    //printf("seek: %d\n", frame_nr);
-    double sec = frame_nr/fps(f);
+void seek(ffmpeg *f, long min_frame_nr, long max_frame_nr) {
+    double sec = (min_frame_nr+max_frame_nr)/2/fps(f);
     double time_stamp = f->format_context->streams[f->video_stream]->start_time;
     double time_base = av_q2d(f->format_context->streams[f->video_stream]->time_base);
     time_stamp += sec/time_base + 0.5;
     av_seek_frame(f->format_context, f->video_stream, time_stamp, AVSEEK_FLAG_BACKWARD);
-    avcodec_flush_buffers(f->format_context->streams[f->video_stream]->codec);
 
     long grabbed_frame_nr = -1;
-    while (grabbed_frame_nr < frame_nr) {
+    while (grabbed_frame_nr < min_frame_nr) {
         grabbed_frame_nr = grab_next_frame(f);
-        //printf("frame: %d\n", grabbed_frame_nr);
-        return 0;
+        return;
     }
 }
 
 image* ffmpeg_get_frame(ffmpeg *f, double min_percent, double max_percent) {
-    /*
-    image *i;
-    i = malloc(sizeof(image));
-    i->width = 200;
-    i->height = 300;
-    i->data = malloc(i->height*i->width*3);
-    int x,y;
-    for (x=0; x<i->width; x++) {
-        for (y=0; y<i->height; y++) {
-            i->data[3*y*i->width+3*x] = y;
-        }
-    }
-    */
-    printf("%: %f\n", min_percent);
-    seek(f, 1.0*total_number_of_frames(f)*min_percent);
+    printf("%f%\n", min_percent);
+    seek(f, min_percent*total_number_of_frames(f), max_percent*total_number_of_frames(f));
 
     image *i;
     i = malloc(sizeof(image));
@@ -124,7 +113,6 @@ image* ffmpeg_get_frame(ffmpeg *f, double min_percent, double max_percent) {
     i->height = f->frame->height;
     i->data = malloc(i->height*i->width*3);
 
-    ////////
     AVFrame *frame;
     frame = avcodec_alloc_frame();
     frame->width = i->width;
@@ -134,7 +122,6 @@ image* ffmpeg_get_frame(ffmpeg *f, double min_percent, double max_percent) {
     uint8_t *buffer;
     buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, i->width, i->height));
     avpicture_fill((AVPicture *)frame, buffer, PIX_FMT_RGB24, i->width, i->height);
-    //memset(frame->data[0], fill_color, frame->linesize[0]*i->height);
 
     struct SwsContext *sws_context = sws_getContext(f->frame->width, f->frame->height, f->frame->format,
             f->frame->width, f->frame->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
@@ -142,19 +129,23 @@ image* ffmpeg_get_frame(ffmpeg *f, double min_percent, double max_percent) {
             f->frame->linesize, 0, f->frame->height, frame->data,
             frame->linesize);
     sws_freeContext(sws_context);
-    ///////
 
     int y;
     for (y=0; y<i->height; y++) {
         memcpy(i->data+y*i->width*3, frame->data[0]+y*frame->linesize[0], frame->linesize[0]);
     }
 
+    av_free(buffer);
+    avcodec_free_frame(&frame);
+
     return i;
 }
 
-unsigned char* compress_to_column(image *i) {
-    unsigned char *column;
-    column = malloc(i->height*3);
+column* compress_to_column(image *i) {
+    column *c;
+    c = malloc(sizeof(column));
+    c->data = malloc(i->height*3);
+    c->length = i->height;
 
     int x, y;
     for (y=0; y<i->height; y++) {
@@ -166,32 +157,51 @@ unsigned char* compress_to_column(image *i) {
             gsum += i->data[y*i->width*3+3*x+1];
             rsum += i->data[y*i->width*3+3*x+2];
         }
-        column[3*y+0] = 1.0*rsum/i->width;
-        column[3*y+1] = 1.0*gsum/i->width;
-        column[3*y+2] = 1.0*bsum/i->width;
-        /*
-        column[3*y+0] = i->data[3*y*i->width+3*200+2];
-        column[3*y+1] = i->data[3*y*i->width+3*200+1];
-        column[3*y+2] = i->data[3*y*i->width+3*200+0];
-        */
+        c->data[3*y+0] = 1.0*rsum/i->width;
+        c->data[3*y+1] = 1.0*gsum/i->width;
+        c->data[3*y+2] = 1.0*bsum/i->width;
     }
-    //memset(column, 0, n->height*3);
-    //memcpy(column, i->data, n->height*3);
 
-    return column;
+    return c;
 }
 
-unsigned char* ffmpeg_get_column(ffmpeg *f, double min_percent, double max_percent) {
-    /*
-    char *column;
-    column = malloc(300*3);
-    memset(column, 255*min_percent, 300*3);
-    return column;
-    */
-
-
+column* ffmpeg_get_column(ffmpeg *f, double min_percent, double max_percent) {
     image *i = ffmpeg_get_frame(f, min_percent, max_percent);
-    return compress_to_column(i);
+    column *c = compress_to_column(i);
+    free(i->data);
+    free(i);
+    return c;
+}
+
+void ffmpeg_free(ffmpeg *f) {
+    avcodec_close(f->decoder_context);
+    avformat_close_input(&f->format_context);
+    free(f);
+}
+
+column* column_scale(column *c, int length) {
+    column *c2;
+    c2 = malloc(sizeof(column));
+    c2->data = malloc(length*3);
+    c2->length = length;
+
+    float factor = 1.0*c->length/length;
+
+    int i;
+    for(i=0; i<length; i++) {
+        int nn = factor*3*i;
+        nn -= nn%3;
+        c2->data[3*i] = c->data[nn];
+        c2->data[3*i+1] = c->data[nn+1];
+        c2->data[3*i+2] = c->data[nn+2];
+    }
+
+    return c2;
+}
+
+void column_free(column *c) {
+    free(c->data);
+    free(c);
 }
 
 #endif

@@ -32,11 +32,17 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
 
 void nordlicht_free(nordlicht *n) {
     free(n->data);
+    ffmpeg_free(n->source);
     free(n);
 }
 
 unsigned char* get_column(nordlicht *n, int i) {
-    return ffmpeg_get_column(n->source, 1.0*i/n->width, 1.0*(i+1)/n->width);
+    column *c = ffmpeg_get_column(n->source, 1.0*i/n->width, 1.0*(i+1)/n->width);
+    column *c2 = column_scale(c, n->height);
+    unsigned char *data = c2->data;
+    free(c2);
+    column_free(c);
+    return data;
 }
 
 int nordlicht_generate(nordlicht *n) {
@@ -44,6 +50,7 @@ int nordlicht_generate(nordlicht *n) {
     for (x=0; x<n->width; x++) {
         unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
         memcpy(n->data+n->height*3*x, column, n->height*3);
+        free(column);
     }
     return 0;
 }
