@@ -17,7 +17,7 @@ struct video {
 };
 
 video* video_init(char *filename) {
-    av_log_set_level(AV_LOG_QUIET);
+    av_log_set_level(AV_LOG_ERROR);
     av_register_all();
 
     video *f;
