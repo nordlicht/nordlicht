@@ -63,6 +63,6 @@ int nordlicht_write(nordlicht *n, char *filename) {
     FIBITMAP *bitmap = FreeImage_ConvertFromRawBits(n->data, n->height, n->width, n->height*3, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK, 1);
     bitmap = FreeImage_Rotate(bitmap, -90, 0);
     FreeImage_FlipHorizontal(bitmap);
-    FreeImage_Save(FIF_PNG, bitmap, filename, 0);
+    FreeImage_Save(FreeImage_GetFIFFromMime("image/png"), bitmap, filename, 0);
     return 0;
 }
