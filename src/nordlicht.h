@@ -4,7 +4,7 @@
 typedef struct nordlicht nordlicht;
 
 // Allocate a new nordlicht of specific width and height, for a given video
-// file. Use `nordlicht_free` to free it again.
+// file. Use `nordlicht_free` to free it again. Returns NULL on errors.
 nordlicht* nordlicht_init(char *filename, int width, int height);
 
 // Free a nordlicht.

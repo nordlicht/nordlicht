@@ -64,4 +64,5 @@ int nordlicht_write(nordlicht *n, char *filename) {
     bitmap = FreeImage_Rotate(bitmap, -90, 0);
     FreeImage_FlipHorizontal(bitmap);
     FreeImage_Save(FIF_PNG, bitmap, filename, 0);
+    return 0;
 }
