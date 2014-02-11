@@ -1,6 +1,6 @@
 ## Description
 
-**nordlicht** converts video files into colorful barcodes. It's heavily inspired by the [moviebarcode tumblr](http://moviebarcode.tumblr.com/movie-index). It takes the video's frames in regular intervals, scales them to 1px width, and appends them. The resulting barcodes can be integrated into video players for simplified navigation.
+**nordlicht** is a C library that converts your video files into colorful barcodes. It was inspired by the [moviebarcode tumblr](http://moviebarcode.tumblr.com/). It takes the video's frames in regular intervals, scales them to 1px width, and appends them. You can integrate the resulting barcodes into video players for faster navigation.
 
 Here's the barcode of [Tears of Steel](http://tearsofsteel.org/). You can differentiate inside and outside scenes, see the credits and the closing scene:
 
@@ -10,15 +10,15 @@ An experimental [VLC integration](https://github.com/blinry/vlc) exists, that us
 
 ## Installation
 
-If you're using Arch Linux, you can install the [**`nordlicht-git`**](https://aur.archlinux.org/packages/nordlicht-git/) package from the AUR.
+If you are using Arch Linux, you can install the [**`nordlicht-git`**](https://aur.archlinux.org/packages/nordlicht-git/) package from the AUR.
 
-Otherwise, get CMake and FFmpeg, and issue
+Otherwise, get CMake, FFmpeg, and FreeImage, and issue
 
     mkdir build && cd build && cmake .. && make && make install
 
 ## Usage
 
-### Tool
+### Command line tool
 
 Run `nordlicht` to get usage instructions for the command line tool.
 
