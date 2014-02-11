@@ -18,7 +18,6 @@ video* video_init(char *filename) {
 
     video *f;
     f = malloc(sizeof(video));
-    f->frame = avcodec_alloc_frame();
 
     if (avformat_open_input(&f->format_context, filename, NULL, NULL) != 0)
         return NULL;
@@ -38,6 +37,11 @@ video* video_init(char *filename) {
     if (avcodec_open2(f->decoder_context, codec, &optionsDict) < 0)
         return NULL;
 
+    f->frame = avcodec_alloc_frame();
+    uint8_t *buffer;
+    buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(f->decoder_context->pix_fmt, f->decoder_context->width, f->decoder_context->height));
+    avpicture_fill((AVPicture *)f->frame, buffer, f->decoder_context->pix_fmt, f->decoder_context->width, f->decoder_context->height);
+
     return f;
 }
 
@@ -55,6 +59,7 @@ double grab_next_frame(video *f) {
     int got_frame = 0;
 
     AVPacket packet;
+    av_init_packet(&packet);
 
     double pts;
 
@@ -147,6 +152,7 @@ column* compress_to_column(image *i) {
 }
 
 column* video_get_column(video *f, double min_percent, double max_percent) {
+    printf("%f %%\n", min_percent);
     image *i = get_frame(f, min_percent, max_percent);
     column *c = compress_to_column(i);
     free(i->data);
