@@ -1,9 +1,10 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <FreeImage.h>
 
 #include "nordlicht.h"
+
+#include "common.h"
 #include "ffmpeg.h"
 
 struct nordlicht {
@@ -14,6 +15,10 @@ struct nordlicht {
 };
 
 nordlicht* nordlicht_init(char *filename, int width, int height) {
+    if (width < 1 || height < 1) {
+        error("Dimensions must be positive");
+        return NULL;
+    }
     nordlicht *n;
     n = malloc(sizeof(nordlicht));
 
@@ -24,9 +29,10 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     n->source = ffmpeg_init(filename);
 
     if (n->source == NULL) {
-        printf("OMG!\n");
-        exit(0);
+        error("Could not open video file");
+        return NULL;
     }
+
     return n;
 }
 

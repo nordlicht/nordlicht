@@ -37,6 +37,11 @@ int main(int argc, char** argv) {
     }
 
     nordlicht *code = nordlicht_init(file_path, width, height);
+
+    if (code == NULL) {
+        return -1;
+    }
+
     nordlicht_generate(code);
     nordlicht_write(code, output_path);
     nordlicht_free(code);
