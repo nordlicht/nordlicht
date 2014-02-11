@@ -9,6 +9,7 @@ struct nordlicht {
     int width, height;
     char *filename;
     unsigned char *data;
+    float progress;
     video *source;
 };
 
@@ -55,7 +56,9 @@ int nordlicht_generate(nordlicht *n) {
         unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
         memcpy(n->data+n->height*3*x, column, n->height*3);
         free(column);
+        n->progress = 1.0*x/n->width;
     }
+    n->progress = 1.0;
     return 0;
 }
 
@@ -67,4 +70,8 @@ int nordlicht_write(nordlicht *n, char *filename) {
     FreeImage_Unload(bitmap);
     FreeImage_Unload(bitmap2);
     return 0;
+}
+
+float nordlicht_progress(nordlicht *n) {
+    return n->progress;
 }

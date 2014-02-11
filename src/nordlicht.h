@@ -13,6 +13,9 @@ void nordlicht_free(nordlicht *n);
 // Generate the nordlicht. Returns 0 on success.
 int nordlicht_generate(nordlicht *n);
 
+// Returns a value between 0 and 1 indicating how much of the nordlicht is done.
+float nordlicht_progress(nordlicht *n);
+
 // Write the nordlicht to a PNG file. Return 0 on success.
 int nordlicht_write(nordlicht *n, char *filename);
 

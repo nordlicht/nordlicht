@@ -161,7 +161,6 @@ column* compress_to_column(image *i) {
 }
 
 column* video_get_column(video *f, double min_percent, double max_percent) {
-    printf("%f %%\n", min_percent);
     image *i = get_frame(f, min_percent, max_percent);
     column *c = compress_to_column(i);
     free(i->data);

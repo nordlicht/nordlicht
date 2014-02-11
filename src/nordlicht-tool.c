@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <pthread.h>
 
 char *gnu_basename(char *path) {
     char *base = strrchr(path, '/');
@@ -39,10 +41,20 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    nordlicht_generate(code);
+    pthread_t thread;
+    pthread_create(&thread, NULL, (void*(*)(void*))nordlicht_generate, code);
+
+    float progress = 0;
+    while (progress < 1) {
+        progress = nordlicht_progress(code);
+        printf("\r%02.0f%%", progress*100);
+        usleep(1000);
+    }
+
     nordlicht_write(code, output_path);
     nordlicht_free(code);
 
+    printf(" -> '%s'\n", output_path);
     free(output_path);
 
     return 0;
