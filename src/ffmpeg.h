@@ -142,7 +142,7 @@ column* compress_to_column(image *i) {
     c->length = i->height;
 
     int x, y;
-    int step = i->width/5;
+    int step = i->width/20;
     for (y=0; y<i->height; y++) {
         long rsum = 0;
         long gsum = 0;
