@@ -22,6 +22,7 @@ video* video_init(char *filename) {
 
     video *f;
     f = malloc(sizeof(video));
+    f->format_context = NULL;
 
     if (avformat_open_input(&f->format_context, filename, NULL, NULL) != 0)
         return NULL;
