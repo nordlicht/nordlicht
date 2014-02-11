@@ -167,6 +167,6 @@ column* video_get_column(video *f, double min_percent, double max_percent) {
 void video_free(video *f) {
     avcodec_close(f->decoder_context);
     avformat_close_input(&f->format_context);
-    av_frame_free(&f->frame);
+    avcodec_free_frame(&f->frame);
     free(f);
 }
