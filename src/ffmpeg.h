@@ -89,17 +89,11 @@ double grab_next_frame(ffmpeg *f) {
 }
 
 void seek(ffmpeg *f, long min_frame_nr, long max_frame_nr) {
-    double sec = (min_frame_nr+max_frame_nr)/2/fps(f);
-    double time_stamp = f->format_context->streams[f->video_stream]->start_time;
     double time_base = av_q2d(f->format_context->streams[f->video_stream]->time_base);
-    time_stamp += sec/time_base + 0.5;
-    av_seek_frame(f->format_context, f->video_stream, time_stamp, AVSEEK_FLAG_BACKWARD);
 
-    long grabbed_frame_nr = -1;
-    while (grabbed_frame_nr < min_frame_nr) {
-        grabbed_frame_nr = grab_next_frame(f);
-        return;
-    }
+    avformat_seek_file(f->format_context, f->video_stream, min_frame_nr/fps(f)/time_base, (min_frame_nr+max_frame_nr)/2/fps(f)/time_base, max_frame_nr/fps(f)/time_base, AVSEEK_FLAG_BACKWARD);
+
+    grab_next_frame(f);
 }
 
 image* ffmpeg_get_frame(ffmpeg *f, double min_percent, double max_percent) {
@@ -148,18 +142,19 @@ column* compress_to_column(image *i) {
     c->length = i->height;
 
     int x, y;
+    int step = i->width/5;
     for (y=0; y<i->height; y++) {
         long rsum = 0;
         long gsum = 0;
         long bsum = 0;
-        for (x=0; x<i->width; x++) {
+        for (x=0; x<i->width; x+=step) {
             bsum += i->data[y*i->width*3+3*x+0];
             gsum += i->data[y*i->width*3+3*x+1];
             rsum += i->data[y*i->width*3+3*x+2];
         }
-        c->data[3*y+0] = 1.0*rsum/i->width;
-        c->data[3*y+1] = 1.0*gsum/i->width;
-        c->data[3*y+2] = 1.0*bsum/i->width;
+        c->data[3*y+0] = 1.0*rsum*step/i->width;
+        c->data[3*y+1] = 1.0*gsum*step/i->width;
+        c->data[3*y+2] = 1.0*bsum*step/i->width;
     }
 
     return c;
@@ -191,9 +186,7 @@ column* column_scale(column *c, int length) {
     for(i=0; i<length; i++) {
         int nn = factor*3*i;
         nn -= nn%3;
-        c2->data[3*i] = c->data[nn];
-        c2->data[3*i+1] = c->data[nn+1];
-        c2->data[3*i+2] = c->data[nn+2];
+        memcpy(c2->data+3*i, c->data+nn, 3);
     }
 
     return c2;
