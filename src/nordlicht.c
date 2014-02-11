@@ -1,17 +1,15 @@
-#include <stdlib.h>
-#include <string.h>
 #include <FreeImage.h>
 
 #include "nordlicht.h"
 
 #include "common.h"
-#include "ffmpeg.h"
+#include "video.h"
 
 struct nordlicht {
     int width, height;
     char *filename;
     unsigned char *data;
-    ffmpeg *source;
+    video *source;
 };
 
 nordlicht* nordlicht_init(char *filename, int width, int height) {
@@ -26,7 +24,7 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     n->height = height;
     n->filename = filename;
     n->data = calloc(width*height*3, 1);
-    n->source = ffmpeg_init(filename);
+    n->source = video_init(filename);
 
     if (n->source == NULL) {
         error("Could not open video file");
@@ -38,12 +36,12 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
 
 void nordlicht_free(nordlicht *n) {
     free(n->data);
-    ffmpeg_free(n->source);
+    video_free(n->source);
     free(n);
 }
 
 unsigned char* get_column(nordlicht *n, int i) {
-    column *c = ffmpeg_get_column(n->source, 1.0*i/n->width, 1.0*(i+1)/n->width);
+    column *c = video_get_column(n->source, 1.0*i/n->width, 1.0*(i+1)/n->width);
     column *c2 = column_scale(c, n->height);
     unsigned char *data = c2->data;
     free(c2);

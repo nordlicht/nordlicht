@@ -1,33 +1,23 @@
-#ifndef INCLUDE_ffmpeg_h__
-#define INCLUDE_ffmpeg_h__
+#include "common.h"
+#include "video.h"
 
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 
-typedef struct {
+struct video {
     AVFormatContext *format_context;
     AVCodecContext *decoder_context;
     int video_stream;
     AVFrame *frame;
-} ffmpeg;
+};
 
-typedef struct {
-    int length;
-    unsigned char *data;
-} column;
-
-typedef struct {
-    int width, height;
-    unsigned char *data;
-} image;
-
-ffmpeg* ffmpeg_init(char *filename) {
+video* video_init(char *filename) {
     av_log_set_level(AV_LOG_QUIET);
     av_register_all();
 
-    ffmpeg *f;
-    f = malloc(sizeof(ffmpeg));
+    video *f;
+    f = malloc(sizeof(video));
     f->frame = avcodec_alloc_frame();
 
     if (avformat_open_input(&f->format_context, filename, NULL, NULL) != 0)
@@ -41,7 +31,7 @@ ffmpeg* ffmpeg_init(char *filename) {
     AVCodec *codec = NULL;
     codec = avcodec_find_decoder(f->decoder_context->codec_id);
     if (codec == NULL) {
-        //die("Unsupported codec!");
+        error("Unsupported codec!");
         return NULL;
     }
     AVDictionary *optionsDict = NULL;
@@ -51,19 +41,16 @@ ffmpeg* ffmpeg_init(char *filename) {
     return f;
 }
 
-double fps(ffmpeg *f) {
+double fps(video *f) {
     return av_q2d(f->format_context->streams[f->video_stream]->r_frame_rate);
 }
 
-double duration_sec(ffmpeg *f) {
-    return (double)f->format_context->duration / (double)AV_TIME_BASE;
+int total_number_of_frames(video *f) {
+    double duration_sec = 1.0*f->format_context->duration/AV_TIME_BASE;
+    return fps(f)*duration_sec;
 }
 
-int total_number_of_frames(ffmpeg *f) {
-    return fps(f)*duration_sec(f);
-}
-
-double grab_next_frame(ffmpeg *f) {
+double grab_next_frame(video *f) {
     int valid = 0;
     int got_frame = 0;
 
@@ -88,7 +75,7 @@ double grab_next_frame(ffmpeg *f) {
     return pts;
 }
 
-void seek(ffmpeg *f, long min_frame_nr, long max_frame_nr) {
+void seek(video *f, long min_frame_nr, long max_frame_nr) {
     double time_base = av_q2d(f->format_context->streams[f->video_stream]->time_base);
 
     avformat_seek_file(f->format_context, f->video_stream, min_frame_nr/fps(f)/time_base, (min_frame_nr+max_frame_nr)/2/fps(f)/time_base, max_frame_nr/fps(f)/time_base, AVSEEK_FLAG_BACKWARD);
@@ -96,7 +83,7 @@ void seek(ffmpeg *f, long min_frame_nr, long max_frame_nr) {
     grab_next_frame(f);
 }
 
-image* ffmpeg_get_frame(ffmpeg *f, double min_percent, double max_percent) {
+image* get_frame(video *f, double min_percent, double max_percent) {
     printf("%f%\n", min_percent);
     seek(f, min_percent*total_number_of_frames(f), max_percent*total_number_of_frames(f));
 
@@ -160,41 +147,16 @@ column* compress_to_column(image *i) {
     return c;
 }
 
-column* ffmpeg_get_column(ffmpeg *f, double min_percent, double max_percent) {
-    image *i = ffmpeg_get_frame(f, min_percent, max_percent);
+column* video_get_column(video *f, double min_percent, double max_percent) {
+    image *i = get_frame(f, min_percent, max_percent);
     column *c = compress_to_column(i);
     free(i->data);
     free(i);
     return c;
 }
 
-void ffmpeg_free(ffmpeg *f) {
+void video_free(video *f) {
     avcodec_close(f->decoder_context);
     avformat_close_input(&f->format_context);
     free(f);
 }
-
-column* column_scale(column *c, int length) {
-    column *c2;
-    c2 = malloc(sizeof(column));
-    c2->data = malloc(length*3);
-    c2->length = length;
-
-    float factor = 1.0*c->length/length;
-
-    int i;
-    for(i=0; i<length; i++) {
-        int nn = factor*3*i;
-        nn -= nn%3;
-        memcpy(c2->data+3*i, c->data+nn, 3);
-    }
-
-    return c2;
-}
-
-void column_free(column *c) {
-    free(c->data);
-    free(c);
-}
-
-#endif

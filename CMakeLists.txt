@@ -11,7 +11,7 @@ include_directories(${FreeImage_INCLUDE_DIRS})
 
 include_directories(include)
 
-add_library(nordlicht SHARED src/nordlicht.c src/common.c)
+add_library(nordlicht SHARED src/common.c src/graphics.c src/nordlicht.c src/video.c)
 target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${FreeImage_LIBRARIES})
 
 add_executable(nordlicht-tool src/nordlicht-tool.c)
