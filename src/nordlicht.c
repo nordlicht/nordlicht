@@ -63,6 +63,11 @@ int nordlicht_generate(nordlicht *n) {
 }
 
 int nordlicht_write(nordlicht *n, char *filename) {
+    if (strcmp(filename, "") == 0) {
+        error("Output filename must not be empty");
+        return -1;
+    }
+
     FIBITMAP *bitmap = FreeImage_ConvertFromRawBits(n->data, n->height, n->width, n->height*3, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK, 1);
     FIBITMAP *bitmap2 = FreeImage_Rotate(bitmap, -90, 0);
     FreeImage_FlipHorizontal(bitmap2);
