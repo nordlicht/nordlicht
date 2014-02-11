@@ -60,18 +60,25 @@ double grab_next_frame(video *f) {
 
     double pts;
 
-    while (!valid && packet.size > 0) {
-        av_read_frame(f->format_context, &packet);
-        avcodec_decode_video2(f->decoder_context, f->frame, &got_frame, &packet);
-        if (got_frame) {
-            pts = packet.pts;
-            // to sec:
-            pts = pts*(double)av_q2d(f->format_context->streams[f->video_stream]->time_base);
-            // to frame number:
-            pts = pts*fps(f);
-            valid = 1;
+    while (!valid) {
+        if (av_read_frame(f->format_context, &packet) >= 0) {
+            if(packet.stream_index == f->video_stream) {
+                avcodec_decode_video2(f->decoder_context, f->frame, &got_frame, &packet);
+                if (got_frame) {
+                    pts = packet.pts;
+                    // to sec:
+                    pts = pts*(double)av_q2d(f->format_context->streams[f->video_stream]->time_base);
+                    // to frame number:
+                    pts = pts*fps(f);
+                    valid = 1;
+                }
+                av_free_packet(&packet);
+            } else {
+                av_free_packet(&packet);
+            }
+        } else {
+            return -1;
         }
-        av_free_packet(&packet);
     }
 
     return pts;
@@ -159,7 +166,6 @@ column* video_get_column(video *f, double min_percent, double max_percent) {
 
 void video_free(video *f) {
     avcodec_close(f->decoder_context);
-    av_free(f->decoder_context);
     avformat_close_input(&f->format_context);
     av_frame_free(&f->frame);
     free(f);
