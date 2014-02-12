@@ -1,3 +1,9 @@
+nordlicht (0.2.0-1) unstable; urgency=low
+
+  * Update to version 0.2.0
+
+ -- Sebastian Morr <sebastian@morr.cc>  Tue, 11 Feb 2014 22:30:12 +0200
+
 nordlicht (0.1.1-1) unstable; urgency=low
 
   * Package now actually works for the first time.
