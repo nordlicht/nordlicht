@@ -12,6 +12,8 @@ An experimental [VLC integration](https://github.com/blinry/vlc) exists, that us
 
 If you are using Arch Linux, you can install the [**`nordlicht-git`**](https://aur.archlinux.org/packages/nordlicht-git/) package from the AUR.
 
+On Gentoo, install the **`media-video/nordlicht`** package from the [multimedia overlay](https://gitorious.org/gentoo-multimedia/gentoo-multimedia).
+
 Otherwise, get CMake, FFmpeg, and FreeImage, and issue
 
     mkdir build && cd build && cmake .. && make && make install
