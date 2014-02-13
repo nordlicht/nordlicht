@@ -31,7 +31,7 @@ Run `nordlicht` to get usage instructions for the command line tool.
 
 ### mpv
 
-Are you using a recent [mpv](http://mpv.io/)? Would you like to try how navigating a video with a *nordlicht* feels like? Do you fancy hacky scripts? [mpv-nordlicht](/res/mpv-nordlicht) is for you! It generates a barcode for its only argument, then starts mpv and sets up the keybindings `n`/`N` to display/hide the barcode at the top of the video using mpv's `overlay_add` command. The OSD progress bar (which is displayed when using the arrow keys) is positioned below that. The barcode is adapted to your monitor resolution, so please activate fullscreen.
+Are you using a recent [mpv](http://mpv.io/)? Would you like to try how navigating a video with a *nordlicht* feels like? Do you fancy hacky scripts? [mpv-nordlicht](/res/mpv-nordlicht) is for you! It generates a barcode for its last argument, then starts mpv and sets up the keybindings `n`/`N` to display/hide the barcode at the top of the video using mpv's `overlay_add` command. The OSD progress bar (which is displayed when using the arrow keys) is positioned below that. The barcode is adapted to your monitor resolution, so please activate fullscreen.
 
 ### VLC
 

@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+VIDEO="${!#}"
 
 SCREEN_WIDTH=$(xrandr -q | grep Screen | cut -d" " -f8)
 SCREEN_HEIGHT=$(xrandr -q | grep Screen | cut -d" " -f10 | sed "s/,//")
@@ -9,6 +11,6 @@ cp -f ~/.mpv/input.conf /tmp/mpv_input.conf 2> /dev/null
 echo "n overlay_add 0 0 0 /tmp/nordlicht.bgra 0 bgra $SCREEN_WIDTH $NORDLICHT_HEIGHT $(($SCREEN_WIDTH*4))
 N overlay_remove 0" >> /tmp/mpv_input.conf
 
-nordlicht "$1" $SCREEN_WIDTH $NORDLICHT_HEIGHT /tmp/nordlicht.png
+nordlicht "$VIDEO" $SCREEN_WIDTH $NORDLICHT_HEIGHT /tmp/nordlicht.png
 convert /tmp/nordlicht.png BGRA:/tmp/nordlicht.bgra
-mpv --input-conf=/tmp/mpv_input.conf --osd-border-size=0 --osd-bar-align-y=$OSD_Y --osd-bar-w=100 "$1"
+mpv --input-conf=/tmp/mpv_input.conf --osd-border-size=0 --osd-bar-align-y=$OSD_Y --osd-bar-w=100 $@
