@@ -53,8 +53,9 @@ int main(int argc, char** argv) {
     float progress = 0;
     while (progress < 1) {
         progress = nordlicht_progress(code);
-        printf("\r%02.0f%%", progress*100);
-        usleep(1000);
+        printf("\rnordlicht: %02.0f%%", progress*100);
+        fflush(stdout);
+        usleep(100000);
     }
 
     nordlicht_write(code, output_file);
