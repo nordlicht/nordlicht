@@ -29,6 +29,7 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
 
     if (n->source == NULL) {
         error("Could not open video file");
+        free(n);
         return NULL;
     }
 
@@ -51,7 +52,7 @@ unsigned char* get_column(nordlicht *n, int i) {
 }
 
 int nordlicht_generate(nordlicht *n) {
-    int x, y;
+    int x;
     for (x=0; x<n->width; x++) {
         unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
         memcpy(n->data+n->height*3*x, column, n->height*3);

@@ -24,23 +24,32 @@ video* video_init(char *filename) {
     f = malloc(sizeof(video));
     f->format_context = NULL;
 
-    if (avformat_open_input(&f->format_context, filename, NULL, NULL) != 0)
+    if (avformat_open_input(&f->format_context, filename, NULL, NULL) != 0) {
+        free(f);
         return NULL;
-    if (avformat_find_stream_info(f->format_context, NULL) < 0)
+    }
+    if (avformat_find_stream_info(f->format_context, NULL) < 0) {
+        avformat_close_input(&f->format_context);
         return NULL;
+    }
     f->video_stream = av_find_best_stream(f->format_context, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
-    if (f->video_stream == -1)
+    if (f->video_stream == -1) {
+        avformat_close_input(&f->format_context);
         return NULL;
+    }
     f->decoder_context = f->format_context->streams[f->video_stream]->codec;
     AVCodec *codec = NULL;
     codec = avcodec_find_decoder(f->decoder_context->codec_id);
     if (codec == NULL) {
         error("Unsupported codec!");
+        avformat_close_input(&f->format_context);
         return NULL;
     }
     AVDictionary *optionsDict = NULL;
-    if (avcodec_open2(f->decoder_context, codec, &optionsDict) < 0)
+    if (avcodec_open2(f->decoder_context, codec, &optionsDict) < 0) {
+        avformat_close_input(&f->format_context);
         return NULL;
+    }
 
     f->frame = avcodec_alloc_frame();
 
