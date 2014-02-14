@@ -27,9 +27,9 @@ int main(int argc, const char **argv) {
 
     struct poptOption optionsTable[] = {
         {"help", '\0', 0, &help, 0, NULL, NULL},
-        {"width", 'w', POPT_ARG_INT, &width, 0, NULL, NULL},
-        {"height", 'h', POPT_ARG_INT, &height, 0, NULL, NULL},
-        {"output", 'o', POPT_ARG_STRING, &output_file, 0, NULL, "FILENAME"},
+        {"width", 'w', POPT_ARG_INT, &width, 0, "Override default width of 1000 pixels.", NULL},
+        {"height", 'h', POPT_ARG_INT, &height, 0, "Override default height of 150 pixels.", NULL},
+        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "Set filename of output PNG. Default: $(basename VIDEOFILE).png", "FILENAME"},
         POPT_TABLEEND
     };
 
@@ -47,6 +47,7 @@ int main(int argc, const char **argv) {
     }
 
     if (help) {
+        fprintf(stderr, "nordlicht creates colorful barcodes from video files.\n\n");
         print_help(popt, 0);
     }
 
