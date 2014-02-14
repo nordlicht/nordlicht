@@ -11,10 +11,13 @@ include_directories(${FFMPEG_INCLUDE_DIRS})
 find_package(FreeImage REQUIRED)
 include_directories(${FreeImage_INCLUDE_DIRS})
 
+find_package(Popt REQUIRED)
+include_directories(${POPT_INCLUDES})
+
 include_directories(include)
 
 add_library(nordlicht SHARED src/common.c src/graphics.c src/nordlicht.c src/video.c)
-target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${FreeImage_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${FreeImage_LIBRARIES} ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(nordlicht-tool src/nordlicht-tool.c)
 set_target_properties(nordlicht-tool PROPERTIES OUTPUT_NAME nordlicht)

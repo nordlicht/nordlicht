@@ -5,46 +5,79 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <popt.h>
 
-char *gnu_basename(char *path) {
+const char *gnu_basename(const char *path) {
     char *base = strrchr(path, '/');
     return base ? base+1 : path;
 }
 
-int main(int argc, char** argv) {
+void print_help(poptContext popt, int ret) {
+    poptPrintHelp(popt, stderr, 0);
+    exit(ret);
+}
+
+int main(int argc, const char **argv) {
     int width = 1000;
     int height = 150;
-    char *filename = NULL;
+    char *output_file = NULL;
+    int free_output_file = 0;
 
-    if (argc < 2 || argc > 5) {
-        printf("Usage: nordlicht VIDEOFILE [WIDTH [HEIGHT [OUTPUTFILE.png]]]\nDefault size is %dx%d, default output file is \"$(basename VIDEOFILE).png\".\n", width, height);
+    int help = 0;
+
+    struct poptOption optionsTable[] = {
+        {"help", '\0', 0, &help, 0, NULL, NULL},
+        {"width", 'w', POPT_ARG_INT, &width, 0, NULL, NULL},
+        {"height", 'h', POPT_ARG_INT, &height, 0, NULL, NULL},
+        {"output", 'o', POPT_ARG_STRING, &output_file, 0, NULL, "FILENAME"},
+        POPT_TABLEEND
+    };
+
+    poptContext popt = poptGetContext(NULL, argc, argv, optionsTable, 0);
+    poptSetOtherOptionHelp(popt, "VIDEOFILE");
+
+    char c;
+
+    // The next line leaks 3 bytes, blame popt!
+    while ((c = poptGetNextOpt(popt)) >= 0) { }
+
+    if (c < -1) {
+        fprintf(stderr, "nordlicht: %s: %s\n", poptBadOption(popt, POPT_BADOPTION_NOALIAS), poptStrerror(c));
         return 1;
     }
 
-    filename = argv[1];
-    char *output_file = malloc(snprintf(NULL, 0, "%s.png", gnu_basename(filename)) + 1);
-    sprintf(output_file, "%s.png", gnu_basename(filename));
+    if (help) {
+        print_help(popt, 0);
+    }
 
-    if (argc >= 3) {
-        width = atoi(argv[2]);
+    char *filename = (char*)poptGetArg(popt);
+
+    if (filename == NULL) {
+        error("Please specify an input file.");
+        print_help(popt, 1);
     }
-    if (argc >= 4) {
-        height = atoi(argv[3]);
+
+    if (poptGetArg(popt) != NULL) {
+        error("Please specify only one input file.");
+        print_help(popt, 1);
     }
-    if (argc >= 5) {
-        free(output_file);
-        output_file = argv[4];
+
+    if (output_file == NULL) {
+        output_file = malloc(snprintf(NULL, 0, "%s.png", gnu_basename(filename)) + 1);
+        sprintf(output_file, "%s.png", gnu_basename(filename));
+        free_output_file = 1;
     }
 
     if (strcmp(output_file, "") == 0) {
-        error("Output filename must not be empty");
-        return -1;
+        error("Output filename must not be empty.");
+        return 1;
     }
+
 
     nordlicht *code = nordlicht_init(filename, width, height);
 
     if (code == NULL) {
-        return -1;
+        return 1;
     }
 
     pthread_t thread;
@@ -74,9 +107,10 @@ int main(int argc, char** argv) {
     nordlicht_free(code);
     printf(" -> '%s'\n", output_file);
 
-    if (argc < 5) {
+    if (free_output_file) {
         free(output_file);
     }
 
+    poptFreeContext(popt);
     return 0;
 }

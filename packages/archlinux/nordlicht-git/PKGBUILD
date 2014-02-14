@@ -2,13 +2,13 @@
 
 pkgname=nordlicht-git
 _gitname=nordlicht
-pkgver=20140211
+pkgver=20140214
 pkgrel=1
 pkgdesc="A library + tool that creates colorful moviebarcodes"
 arch=('i686' 'x86_64')
 url="http://github.com/blinry/nordlicht"
 license=('GPL')
-depends=('ffmpeg' 'freeimage')
+depends=('ffmpeg' 'freeimage' 'popt')
 makedepends=('git' 'cmake')
 source=('git+https://github.com/blinry/nordlicht')
 sha1sums=('SKIP')
