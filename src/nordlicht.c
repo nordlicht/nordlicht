@@ -25,6 +25,7 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     n->height = height;
     n->filename = filename;
     n->data = calloc(width*height*3, 1);
+    n->progress = 0;
     n->source = video_init(filename);
 
     if (n->source == NULL) {

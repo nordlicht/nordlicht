@@ -57,12 +57,15 @@ int main(int argc, char** argv) {
         fflush(stdout);
         usleep(100000);
     }
+    pthread_join(thread, NULL);
 
     nordlicht_write(code, output_file);
-
     nordlicht_free(code);
-
     printf(" -> '%s'\n", output_file);
+
+    if (argc < 5) {
+        free(output_file);
+    }
 
     return 0;
 }
