@@ -53,7 +53,18 @@ int main(int argc, char** argv) {
     float progress = 0;
     while (progress < 1) {
         progress = nordlicht_progress(code);
-        printf("\rnordlicht: %02.0f%%", progress*100);
+        printf("\r");
+        printf("[0;34m"); printf("n");
+        printf("[1;32m"); printf("o");
+        printf("[0;33m"); printf("r");
+        printf("[1;31m"); printf("d");
+        printf("[0;35m"); printf("l");
+        printf("[1;32m"); printf("i");
+        printf("[0;31m"); printf("c");
+        printf("[1;34m"); printf("h");
+        printf("[0;33m"); printf("t");
+        printf("[0m");
+        printf(": %02.0f%%", progress*100);
         fflush(stdout);
         usleep(100000);
     }
