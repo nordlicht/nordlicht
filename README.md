@@ -12,7 +12,7 @@ If you are using Arch Linux, you can install the [**`nordlicht-git`**](https://a
 
 On Gentoo, install the **`media-video/nordlicht`** package from the [multimedia overlay](https://gitorious.org/gentoo-multimedia/gentoo-multimedia).
 
-Otherwise, get CMake, FFmpeg, and FreeImage, and issue
+Otherwise, get CMake, FFmpeg, FreeImage, and [popt](http://freecode.com/projects/popt), and issue
 
     mkdir build && cd build && cmake .. && make && make install
 
