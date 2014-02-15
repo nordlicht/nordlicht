@@ -1,7 +1,5 @@
-#include <FreeImage.h>
-
 #include "nordlicht.h"
-
+#include <FreeImage.h>
 #include "common.h"
 #include "video.h"
 

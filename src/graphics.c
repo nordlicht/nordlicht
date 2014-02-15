@@ -1,5 +1,5 @@
-#include "common.h"
 #include "graphics.h"
+#include "common.h"
 
 column* column_scale(column *c, int length) {
     column *c2;

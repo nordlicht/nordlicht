@@ -1,9 +1,8 @@
-#include "common.h"
 #include "video.h"
-
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
+#include "common.h"
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
 #define avcodec_free_frame av_freep

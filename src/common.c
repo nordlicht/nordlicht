@@ -1,5 +1,5 @@
-#include <stdarg.h>
 #include "common.h"
+#include <stdarg.h>
 
 void error(char *message, ...) {
    fprintf(stderr, "nordlicht: ");

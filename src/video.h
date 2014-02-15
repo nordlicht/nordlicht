@@ -1,6 +1,8 @@
 #ifndef INCLUDE_video_h__
 #define INCLUDE_video_h__
 
+#include "graphics.h"
+
 typedef struct video video;
 
 video* video_init(char *filename);

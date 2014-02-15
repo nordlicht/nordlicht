@@ -1,11 +1,8 @@
+#include <pthread.h>
+#include <unistd.h>
+#include <popt.h>
 #include "nordlicht.h"
 #include "common.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <popt.h>
 
 const char *gnu_basename(const char *path) {
     char *base = strrchr(path, '/');
