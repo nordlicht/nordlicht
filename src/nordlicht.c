@@ -1,8 +1,4 @@
 #include <FreeImage.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <libgen.h>
 
 #include "nordlicht.h"
 
@@ -74,22 +70,13 @@ int nordlicht_write(nordlicht *n, char *filename) {
         return -1;
     }
 
-    struct stat s;
-    int err = stat(filename, &s);
-    if(err != -1 && S_ISDIR(s.st_mode)) {
-        error("Output file '%s' is a directory", filename);
-        return -1;
-    }
-
-    if (access(dirname(filename), W_OK) != 0) {
-        error("No write permissions to '%s'", dirname(filename));
-        return -1;
-    }
-
     FIBITMAP *bitmap = FreeImage_ConvertFromRawBits(n->data, n->height, n->width, n->height*3, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK, 1);
     FIBITMAP *bitmap2 = FreeImage_Rotate(bitmap, -90, 0);
     FreeImage_FlipHorizontal(bitmap2);
-    FreeImage_Save(FreeImage_GetFIFFromMime("image/png"), bitmap2, filename, 0);
+    if (!FreeImage_Save(FreeImage_GetFIFFromMime("image/png"), bitmap2, filename, 0)) {
+        error("Could not write to '%s'", filename);
+        return -1;
+    }
     FreeImage_Unload(bitmap);
     FreeImage_Unload(bitmap2);
     return 0;
