@@ -6,6 +6,6 @@
 #include <string.h>
 #include "graphics.h"
 
-void error(char *message);
+void error(char *message, ...);
 
 #endif

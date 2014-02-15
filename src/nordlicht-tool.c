@@ -69,15 +69,16 @@ int main(int argc, const char **argv) {
         free_output_file = 1;
     }
 
-    if (strcmp(output_file, "") == 0) {
-        error("Output filename must not be empty.");
-        return 1;
-    }
-
+    // MAIN PART
 
     nordlicht *code = nordlicht_init(filename, width, height);
 
     if (code == NULL) {
+        return 1;
+    }
+
+    // Try to write the empty code to fail early if this does not work
+    if (nordlicht_write(code, output_file) != 0) {
         return 1;
     }
 

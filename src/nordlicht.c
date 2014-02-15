@@ -1,4 +1,8 @@
 #include <FreeImage.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <libgen.h>
 
 #include "nordlicht.h"
 
@@ -15,7 +19,7 @@ struct nordlicht {
 
 nordlicht* nordlicht_init(char *filename, int width, int height) {
     if (width < 1 || height < 1) {
-        error("Dimensions must be positive");
+        error("Dimensions must be positive (got %dx%d)", width, height);
         return NULL;
     }
     nordlicht *n;
@@ -29,7 +33,7 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     n->source = video_init(filename);
 
     if (n->source == NULL) {
-        error("Could not open video file");
+        error("Could not open video file '%s'", filename);
         free(n);
         return NULL;
     }
@@ -67,6 +71,18 @@ int nordlicht_generate(nordlicht *n) {
 int nordlicht_write(nordlicht *n, char *filename) {
     if (strcmp(filename, "") == 0) {
         error("Output filename must not be empty");
+        return -1;
+    }
+
+    struct stat s;
+    int err = stat(filename, &s);
+    if(err != -1 && S_ISDIR(s.st_mode)) {
+        error("Output file '%s' is a directory", filename);
+        return -1;
+    }
+
+    if (access(dirname(filename), W_OK) != 0) {
+        error("No write permissions to '%s'", dirname(filename));
         return -1;
     }
 
