@@ -12,6 +12,6 @@ cp -f ~/.mpv/input.conf /tmp/mpv_input.conf 2> /dev/null
 echo "n overlay_add 0 0 0 /tmp/nordlicht.bgra 0 bgra $SCREEN_WIDTH $NORDLICHT_HEIGHT $(($SCREEN_WIDTH*4))
 N overlay_remove 0" >> /tmp/mpv_input.conf
 
-nordlicht "$VIDEO" $SCREEN_WIDTH $NORDLICHT_HEIGHT /tmp/nordlicht.png
+nordlicht "$VIDEO" -w $SCREEN_WIDTH -h $NORDLICHT_HEIGHT -o /tmp/nordlicht.png
 convert /tmp/nordlicht.png BGRA:/tmp/nordlicht.bgra
 mpv --input-conf=/tmp/mpv_input.conf --osd-border-size=0 --osd-bar-align-y=$OSD_Y --osd-bar-w=100 --osd-duration=3600000 "$@"
