@@ -18,6 +18,8 @@ int main(int argc, const char **argv) {
     int width = 1000;
     int height = 150;
     char *output_file = NULL;
+    char *style_string = NULL;
+    nordlicht_style style;
     int free_output_file = 0;
 
     int help = 0;
@@ -27,6 +29,7 @@ int main(int argc, const char **argv) {
         {"width", 'w', POPT_ARG_INT, &width, 0, "Override default width of 1000 pixels.", NULL},
         {"height", 'h', POPT_ARG_INT, &height, 0, "Override default height of 150 pixels.", NULL},
         {"output", 'o', POPT_ARG_STRING, &output_file, 0, "Set filename of output PNG. Default: $(basename VIDEOFILE).png", "FILENAME"},
+        {"style", 's', POPT_ARG_STRING, &style_string, 0, "Default is 'horizontal'. Can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them.", "STYLE"},
         POPT_TABLEEND
     };
 
@@ -66,9 +69,23 @@ int main(int argc, const char **argv) {
         free_output_file = 1;
     }
 
+    if (style_string == NULL) {
+        style = NORDLICHT_STYLE_HORIZONTAL;
+    } else {
+        if (strcmp(style_string, "horizontal") == 0) {
+            style = NORDLICHT_STYLE_HORIZONTAL;
+        } else if (strcmp(style_string, "vertical") == 0) {
+            style = NORDLICHT_STYLE_VERTICAL;
+        } else {
+            error("Unknown style '%s'.", style_string);
+            print_help(popt, 1);
+        }
+    }
+
     // MAIN PART
 
     nordlicht *code = nordlicht_init(filename, width, height);
+    nordlicht_set_style(code, style);
 
     if (code == NULL) {
         return 1;

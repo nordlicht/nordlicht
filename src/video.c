@@ -2,7 +2,6 @@
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
-#include "common.h"
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
 #define avcodec_free_frame av_freep
@@ -168,9 +167,63 @@ column* compress_to_column(image *i) {
     return c;
 }
 
-column* video_get_column(video *f, double min_percent, double max_percent) {
+column* compress_to_row(image *i) {
+    column *c;
+    c = malloc(sizeof(column));
+    c->data = malloc(i->width*3);
+    c->length = i->width;
+
+    int x, y;
+    int step = i->height/20;
+    for (x=i->width-1; x>=0; x--) {
+        long rsum = 0;
+        long gsum = 0;
+        long bsum = 0;
+        for (y=0; y<i->height; y+=step) {
+            bsum += i->data[y*i->width*3+3*x+0];
+            gsum += i->data[y*i->width*3+3*x+1];
+            rsum += i->data[y*i->width*3+3*x+2];
+        }
+        c->data[3*x+0] = 1.0*rsum*step/i->height;
+        c->data[3*x+1] = 1.0*gsum*step/i->height;
+        c->data[3*x+2] = 1.0*bsum*step/i->height;
+    }
+
+    return c;
+}
+
+column* compress_to_diagonal(image *i) {
+    column *c;
+    c = malloc(sizeof(column));
+    c->data = malloc(i->width*3);
+    c->length = i->width;
+
+    float slope = 1.0*i->height/i->width;
+
+    int x, y;
+    int step = i->height/20;
+    for (x=0; x<i->width; x++) {
+        y = x*slope;
+        c->data[3*x+0] = i->data[y*i->width*3+3*x+2];
+        c->data[3*x+1] = i->data[y*i->width*3+3*x+1];
+        c->data[3*x+2] = i->data[y*i->width*3+3*x+0];
+    }
+
+    return c;
+}
+
+column* video_get_column(video *f, double min_percent, double max_percent, nordlicht_style s) {
     image *i = get_frame(f, min_percent, max_percent);
-    column *c = compress_to_column(i);
+    column *c;
+
+    switch (s) {
+        case NORDLICHT_STYLE_HORIZONTAL:
+            c = compress_to_column(i);
+            break;
+        case NORDLICHT_STYLE_VERTICAL:
+            c = compress_to_row(i);
+            break;
+    }
     free(i->data);
     free(i);
     return c;

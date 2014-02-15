@@ -3,6 +3,11 @@
 
 typedef struct nordlicht nordlicht;
 
+typedef enum nordlicht_style {
+    NORDLICHT_STYLE_HORIZONTAL, // compress frames to columns, "move to the right"
+    NORDLICHT_STYLE_VERTICAL, // compress frames to rows, "move downwards"
+} nordlicht_style;
+
 // Allocate a new nordlicht of specific width and height, for a given video
 // file. Use `nordlicht_free` to free it again. Returns NULL on errors.
 nordlicht* nordlicht_init(char *filename, int width, int height);
@@ -10,7 +15,11 @@ nordlicht* nordlicht_init(char *filename, int width, int height);
 // Free a nordlicht.
 void nordlicht_free(nordlicht *n);
 
-// Generate the nordlicht. Returns 0 on success.
+// Set the output style of the nordlicht.
+void nordlicht_set_style(nordlicht *n, nordlicht_style s);
+
+// Generate the nordlicht. Calling this will freeze the nordlicht:
+// "set" functions will be without effect. Returns 0 on success.
 int nordlicht_generate(nordlicht *n);
 
 // Returns a value between 0 and 1 indicating how much of the nordlicht is done.

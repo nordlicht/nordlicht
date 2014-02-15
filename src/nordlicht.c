@@ -7,6 +7,8 @@ struct nordlicht {
     int width, height;
     char *filename;
     unsigned char *data;
+    nordlicht_style style;
+    int modifiable;
     float progress;
     video *source;
 };
@@ -23,6 +25,8 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     n->height = height;
     n->filename = filename;
     n->data = calloc(width*height*3, 1);
+    n->style = NORDLICHT_STYLE_HORIZONTAL;
+    n->modifiable = 1;
     n->progress = 0;
     n->source = video_init(filename);
 
@@ -41,8 +45,14 @@ void nordlicht_free(nordlicht *n) {
     free(n);
 }
 
+void nordlicht_set_style(nordlicht *n, nordlicht_style s) {
+    if (n->modifiable) {
+        n->style = s;
+    }
+}
+
 unsigned char* get_column(nordlicht *n, int i) {
-    column *c = video_get_column(n->source, 1.0*i/n->width, 1.0*(i+1)/n->width);
+    column *c = video_get_column(n->source, 1.0*i/n->width, 1.0*(i+1)/n->width, n->style);
     column *c2 = column_scale(c, n->height);
     unsigned char *data = c2->data;
     free(c2);
