@@ -20,7 +20,7 @@ Otherwise, get CMake, FFmpeg, FreeImage, and [popt](http://freecode.com/projects
 
 ### Command line tool
 
-Run `nordlicht` to get usage instructions for the command line tool.
+Run `nordlicht --help` to get usage instructions for the command line tool.
 
 ### Library
 
