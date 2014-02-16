@@ -5,7 +5,7 @@
 
 typedef struct video video;
 
-video* video_init(char *filename);
+video* video_init(char *filename, int exact);
 
 column* video_get_column(video *f, double min_percent, double max_percent, nordlicht_style s);
 

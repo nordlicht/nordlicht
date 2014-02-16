@@ -8,18 +8,99 @@
 #endif
 
 struct video {
+    int exact;
+
     AVFormatContext *format_context;
     AVCodecContext *decoder_context;
     int video_stream;
     AVFrame *frame;
+
+    long current_frame;
+    int *keyframes;
+    int number_of_keyframes;
 };
 
-video* video_init(char *filename) {
+double fps(video *f) {
+    return av_q2d(f->format_context->streams[f->video_stream]->r_frame_rate);
+}
+
+void grab_next_frame(video *f) {
+    int valid = 0;
+    int got_frame = 0;
+
+    AVPacket packet;
+    av_init_packet(&packet);
+
+    double pts;
+
+    while (!valid) {
+        if (av_read_frame(f->format_context, &packet) >= 0) {
+            if(packet.stream_index == f->video_stream) {
+                avcodec_decode_video2(f->decoder_context, f->frame, &got_frame, &packet);
+                if (got_frame) {
+                    pts = packet.pts;
+                    // to sec:
+                    pts = pts*(double)av_q2d(f->format_context->streams[f->video_stream]->time_base);
+                    // to frame number:
+                    pts = pts*fps(f);
+                    valid = 1;
+                }
+                av_free_packet(&packet);
+            } else {
+                av_free_packet(&packet);
+            }
+        } else {
+            return;
+        }
+    }
+
+    f->current_frame = pts;
+}
+
+void seek_keyframe(video *f, long frame) {
+    double time_base = av_q2d(f->format_context->streams[f->video_stream]->time_base);
+    av_seek_frame(f->format_context, f->video_stream, frame/fps(f)/time_base, AVSEEK_FLAG_BACKWARD);
+    grab_next_frame(f);
+}
+
+void seek_forward(video *f, long frame) {
+    double time_base = av_q2d(f->format_context->streams[f->video_stream]->time_base);
+    av_seek_frame(f->format_context, f->video_stream, frame/fps(f)/time_base, 0);
+    grab_next_frame(f);
+}
+
+int total_number_of_frames(video *f) {
+    double duration_sec = 1.0*f->format_context->duration/AV_TIME_BASE;
+    return fps(f)*duration_sec;
+}
+
+void build_keyframe_index(video *f) {
+    printf("Building index... ");
+    f->keyframes = malloc(sizeof(long)*10*60*60*60); // TODO: dynamic datastructure!
+    f->number_of_keyframes = 0;
+
+    AVPacket packet;
+    av_init_packet(&packet);
+
+    while (av_read_frame(f->format_context, &packet) >= 0) {
+        if (packet.stream_index == f->video_stream) {
+            if (!!(packet.flags & AV_PKT_FLAG_KEY)) {
+                f->keyframes[++f->number_of_keyframes] = packet.pts;
+            }
+        }
+        av_free_packet(&packet);
+    }
+    // TODO: Is it necessary to sort these?
+    printf("%d keyframes.\n", f->number_of_keyframes);
+}
+
+video* video_init(char *filename, int exact) {
     av_log_set_level(AV_LOG_FATAL);
     av_register_all();
 
     video *f;
     f = malloc(sizeof(video));
+    f->exact = exact;
     f->format_context = NULL;
 
     if (avformat_open_input(&f->format_context, filename, NULL, NULL) != 0) {
@@ -50,58 +131,43 @@ video* video_init(char *filename) {
     }
 
     f->frame = avcodec_alloc_frame();
+    f->current_frame = -1;
+
+    if (f->exact) {
+        build_keyframe_index(f);
+    }
 
     return f;
 }
 
-double fps(video *f) {
-    return av_q2d(f->format_context->streams[f->video_stream]->r_frame_rate);
-}
-
-int total_number_of_frames(video *f) {
-    double duration_sec = 1.0*f->format_context->duration/AV_TIME_BASE;
-    return fps(f)*duration_sec;
-}
-
-double grab_next_frame(video *f) {
-    int valid = 0;
-    int got_frame = 0;
-
-    AVPacket packet;
-    av_init_packet(&packet);
-
-    double pts;
-
-    while (!valid) {
-        if (av_read_frame(f->format_context, &packet) >= 0) {
-            if(packet.stream_index == f->video_stream) {
-                avcodec_decode_video2(f->decoder_context, f->frame, &got_frame, &packet);
-                if (got_frame) {
-                    pts = packet.pts;
-                    // to sec:
-                    pts = pts*(double)av_q2d(f->format_context->streams[f->video_stream]->time_base);
-                    // to frame number:
-                    pts = pts*fps(f);
-                    valid = 1;
-                }
-                av_free_packet(&packet);
-            } else {
-                av_free_packet(&packet);
-            }
-        } else {
-            return -1;
+long preceding_keyframe(video *f, long frame_nr) {
+    int i;
+    long best_keyframe = -1;
+    for (i=0; i < f->number_of_keyframes; i++) {
+        if (f->keyframes[i] <= frame_nr) {
+            best_keyframe = f->keyframes[i];
         }
     }
-
-    return pts;
+    return best_keyframe;
 }
 
 void seek(video *f, long min_frame_nr, long max_frame_nr) {
-    double time_base = av_q2d(f->format_context->streams[f->video_stream]->time_base);
+    if (f->exact) {
+        long keyframe = preceding_keyframe(f, max_frame_nr);
 
-    avformat_seek_file(f->format_context, f->video_stream, min_frame_nr/fps(f)/time_base, (min_frame_nr+max_frame_nr)/2/fps(f)/time_base, max_frame_nr/fps(f)/time_base, AVSEEK_FLAG_BACKWARD);
+        if (keyframe > f->current_frame) {
+            seek_keyframe(f, keyframe);
+        }
 
-    grab_next_frame(f);
+        while (f->current_frame < min_frame_nr) {
+            if (f->current_frame > max_frame_nr) {
+                // TODO: Can this happen?
+            }
+            grab_next_frame(f);
+        }
+    } else {
+        seek_keyframe(f, (min_frame_nr+max_frame_nr)/2);
+    }
 }
 
 image* get_frame(video *f, double min_percent, double max_percent) {

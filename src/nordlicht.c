@@ -8,12 +8,13 @@ struct nordlicht {
     char *filename;
     unsigned char *data;
     nordlicht_style style;
+    int exact;
     int modifiable;
     float progress;
     video *source;
 };
 
-nordlicht* nordlicht_init(char *filename, int width, int height) {
+nordlicht* nordlicht_init_exact(char *filename, int width, int height, int exact) {
     if (width < 1 || height < 1) {
         error("Dimensions must be positive (got %dx%d)", width, height);
         return NULL;
@@ -28,7 +29,7 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     n->style = NORDLICHT_STYLE_HORIZONTAL;
     n->modifiable = 1;
     n->progress = 0;
-    n->source = video_init(filename);
+    n->source = video_init(filename, exact);
 
     if (n->source == NULL) {
         error("Could not open video file '%s'", filename);
@@ -37,6 +38,10 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     }
 
     return n;
+}
+
+nordlicht* nordlicht_init(char *filename, int width, int height) {
+    return nordlicht_init_exact(filename, width, height, 0);
 }
 
 void nordlicht_free(nordlicht *n) {

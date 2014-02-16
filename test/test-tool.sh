@@ -72,4 +72,7 @@ pass nordlicht "$VIDEO" -w 1 -s vertical
 pass nordlicht "$VIDEO" -w 1 -s horizontal
 fail nordlicht "$VIDEO" -s nope
 
+# exact seeking
+pass nordlicht "$VIDEO" -w 1 -e
+
 echo "All assertions passed. Yay!"
