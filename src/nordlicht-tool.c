@@ -85,11 +85,12 @@ int main(int argc, const char **argv) {
     // MAIN PART
 
     nordlicht *code = nordlicht_init(filename, width, height);
-    nordlicht_set_style(code, style);
 
     if (code == NULL) {
         return 1;
     }
+
+    nordlicht_set_style(code, style);
 
     // Try to write the empty code to fail early if this does not work
     if (nordlicht_write(code, output_file) != 0) {

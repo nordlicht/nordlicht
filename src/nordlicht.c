@@ -78,6 +78,18 @@ int nordlicht_write(nordlicht *n, char *filename) {
         return -1;
     }
 
+    char *realpath_output = realpath(filename, NULL);
+    if (realpath_output != NULL) {
+        // output file exists
+        char *realpath_input = realpath(n->filename, NULL);
+        if (strcmp(realpath_input, realpath_output) == 0) {
+            error("Will not overwrite input file");
+            return -1;
+        }
+        free(realpath_input);
+        free(realpath_output);
+    }
+
     FIBITMAP *bitmap = FreeImage_ConvertFromRawBits(n->data, n->height, n->width, n->height*3, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK, 1);
     FIBITMAP *bitmap2 = FreeImage_Rotate(bitmap, -90, 0);
     FreeImage_FlipHorizontal(bitmap2);

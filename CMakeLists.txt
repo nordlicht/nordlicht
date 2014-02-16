@@ -23,6 +23,9 @@ add_executable(nordlicht-tool src/nordlicht-tool.c)
 set_target_properties(nordlicht-tool PROPERTIES OUTPUT_NAME nordlicht)
 target_link_libraries(nordlicht-tool nordlicht)
 
+enable_testing()
+add_test(test-tool ${CMAKE_SOURCE_DIR}/test/test-tool.sh)
+
 set(LIB_SUFFIX "" CACHE STRING "Suffix of library directory name (for example '32' or '64')")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}" CACHE STRING "Directory where library will be installed")
 
