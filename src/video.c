@@ -266,10 +266,9 @@ column* compress_to_diagonal(image *i) {
 
     float slope = 1.0*i->height/i->width;
 
-    int x, y;
-    int step = i->height/20;
+    int x;
     for (x=0; x<i->width; x++) {
-        y = x*slope;
+        int y = x*slope;
         c->data[3*x+0] = i->data[y*i->width*3+3*x+2];
         c->data[3*x+1] = i->data[y*i->width*3+3*x+1];
         c->data[3*x+2] = i->data[y*i->width*3+3*x+0];
