@@ -1,6 +1,6 @@
 ## Description
 
-**nordlicht** is a C library that converts your video files into colorful barcodes. It was inspired by the [moviebarcode tumblr](http://moviebarcode.tumblr.com/). It takes the video's frames in regular intervals, scales them to 1px width, and appends them. You can integrate the resulting barcodes into video players for faster navigation, see the section below.
+**nordlicht** is a C library that converts video files into colorful barcodes. It was inspired by the [moviebarcode tumblr](http://moviebarcode.tumblr.com/). It takes the video's frames in regular intervals, scales them to a width of 1 pixel, and appends them. The resulting barcodes can be integrated into video players for faster navigation, see below.
 
 As an example, here is the barcode of [Tears of Steel](http://tearsofsteel.org/). You can differentiate inside and outside scenes, see the credits and the "secret" closing scene:
 
@@ -8,19 +8,17 @@ As an example, here is the barcode of [Tears of Steel](http://tearsofsteel.org/)
 
 ## Installation
 
-If you are using Arch Linux, you can install the [**`nordlicht-git`**](https://aur.archlinux.org/packages/nordlicht-git/) package from the AUR.
-
-On Gentoo, install the **`media-video/nordlicht`** package from the [multimedia overlay](https://gitorious.org/gentoo-multimedia/gentoo-multimedia).
-
-Otherwise, get CMake, FFmpeg, FreeImage, and [popt](http://freecode.com/projects/popt), and issue
-
-    mkdir build && cd build && cmake .. && make && make install
+- Arch Linux: Install the [`nordlicht-git`](https://aur.archlinux.org/packages/nordlicht-git/) package from the AUR.
+- Gentoo: Install the `media-video/nordlicht` package from the [multimedia overlay](https://gitorious.org/gentoo-multimedia/gentoo-multimedia).
+- Otherwise, get CMake, FFmpeg, FreeImage, and [popt](http://freecode.com/projects/popt), and issue: `mkdir build && cd build && cmake .. && make && make install`
 
 ## Usage
 
 ### Command line tool
 
-Run `nordlicht --help` to get usage instructions for the command line tool.
+*nordlicht* comes with a command line tool, which you can use to generate your own barcodes:
+
+The command `nordlicht video.mkv -w 1000 -h 150 -o nordlicht.png` converts *video.mkv* to a barcode of 1000 x 150 pixels size and writes it to *nordlicht.png*. Run `nordlicht --help` to get additional usage instructions.
 
 ### Library
 
