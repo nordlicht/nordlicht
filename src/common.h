@@ -7,6 +7,8 @@
 #include "nordlicht.h"
 #include "graphics.h"
 
+#define VERSION "0.3.0"
+
 void error(char *message, ...);
 
 #endif

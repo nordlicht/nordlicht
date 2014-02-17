@@ -24,9 +24,11 @@ int main(int argc, const char **argv) {
     int free_output_file = 0;
 
     int help = 0;
+    int version = 0;
 
     struct poptOption optionsTable[] = {
         {"help", '\0', 0, &help, 0, NULL, NULL},
+        {"version", '\0', 0, &version, 0, "Show program version", NULL},
         {"width", 'w', POPT_ARG_INT, &width, 0, "Override default width of 1000 pixels.", NULL},
         {"height", 'h', POPT_ARG_INT, &height, 0, "Override default height of 150 pixels.", NULL},
         {"output", 'o', POPT_ARG_STRING, &output_file, 0, "Set filename of output PNG. Default: $(basename VIDEOFILE).png", "FILENAME"},
@@ -46,6 +48,11 @@ int main(int argc, const char **argv) {
     if (c < -1) {
         fprintf(stderr, "nordlicht: %s: %s\n", poptBadOption(popt, POPT_BADOPTION_NOALIAS), poptStrerror(c));
         return 1;
+    }
+
+    if (version) {
+      printf("This is nordlicht, v%s\n", VERSION);
+      return 0;
     }
 
     if (help) {
