@@ -1,0 +1,6 @@
+#ifndef INCLUDE_version_h__
+#define INCLUDE_version_h__
+
+#define NORDLICHT_VERSION "@NORDLICHT_VERSION@"
+
+#endif

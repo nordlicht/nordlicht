@@ -1,6 +1,10 @@
 project(nordlicht C)
 cmake_minimum_required(VERSION 2.8)
 
+set(NORDLICHT_VERSION 0.3.0)
+configure_file(src/version.h.in src/version.h @ONLY)
+include_directories(${CMAKE_BINARY_DIR}/src)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 find_package(Threads REQUIRED)
