@@ -6,6 +6,7 @@ CMakeFiles
 Makefile
 cmake_install.cmake
 install_manifest.txt
+CTestTestfile.cmake
 
 # Object files
 *.o
@@ -13,6 +14,7 @@ install_manifest.txt
 # Libraries
 *.lib
 *.a
+res/*.pc
 
 # Shared objects (inc. Windows DLLs)
 *.dll
@@ -21,6 +23,11 @@ install_manifest.txt
 *.dylib
 
 # Executables
+nordlicht
 *.exe
 *.out
 *.app
+
+# tests
+video.mp4
+test/tmp_*
