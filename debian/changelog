@@ -1,3 +1,9 @@
+nordlicht (0.3.0-1) unstable; urgency=medium
+
+  * new upstream version 0.3.0
+
+ -- Roland Hieber <rohieb@rohieb.name>  Mon, 17 Feb 2014 02:05:18 +0100
+
 nordlicht (0.2.0-1) unstable; urgency=low
 
   * Update to version 0.2.0
