@@ -76,6 +76,7 @@ int total_number_of_frames(video *f) {
 
 void build_keyframe_index(video *f) {
     printf("Building index... ");
+    fflush(stdout);
     f->keyframes = malloc(sizeof(long)*10*60*60*60); // TODO: dynamic datastructure!
     f->number_of_keyframes = 0;
 
