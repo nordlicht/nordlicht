@@ -66,9 +66,9 @@ column* compress_to_row(image *i) {
             gsum += i->data[y*i->width*3+3*x+1];
             rsum += i->data[y*i->width*3+3*x+2];
         }
-        c->data[3*y+0] = rsum/(i->height/step+1);
-        c->data[3*y+1] = gsum/(i->height/step+1);
-        c->data[3*y+2] = bsum/(i->height/step+1);
+        c->data[3*x+0] = rsum/(i->height/step+1);
+        c->data[3*x+1] = gsum/(i->height/step+1);
+        c->data[3*x+2] = bsum/(i->height/step+1);
     }
 
     return c;
