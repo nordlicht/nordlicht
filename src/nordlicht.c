@@ -29,7 +29,7 @@ nordlicht* nordlicht_init_exact(char *filename, int width, int height, int exact
     n->style = NORDLICHT_STYLE_HORIZONTAL;
     n->modifiable = 1;
     n->progress = 0;
-    n->source = video_init(filename, exact);
+    n->source = video_init(filename, exact, width);
 
     if (n->source == NULL) {
         error("Could not open video file '%s'", filename);

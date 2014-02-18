@@ -7,6 +7,9 @@
 #define avcodec_free_frame av_freep
 #endif
 
+#define HEURISTIC_NUMBER_OF_FRAMES 500
+#define HEURISTIC_KEYFRAME_FACTOR 2
+
 struct video {
     int exact;
 
@@ -74,28 +77,41 @@ int total_number_of_frames(video *f) {
     return fps(f)*duration_sec;
 }
 
-void build_keyframe_index(video *f) {
-    printf("Building index... ");
-    fflush(stdout);
+void build_keyframe_index(video *f, int width) {
     f->keyframes = malloc(sizeof(long)*10*60*60*60); // TODO: dynamic datastructure!
     f->number_of_keyframes = 0;
 
     AVPacket packet;
     av_init_packet(&packet);
+    int frame = 0;
 
     while (av_read_frame(f->format_context, &packet) >= 0) {
         if (packet.stream_index == f->video_stream) {
             if (!!(packet.flags & AV_PKT_FLAG_KEY)) {
                 f->keyframes[++f->number_of_keyframes] = packet.pts;
             }
+            frame++;
+            if (frame == HEURISTIC_NUMBER_OF_FRAMES) {
+                if (1.0*HEURISTIC_KEYFRAME_FACTOR*f->number_of_keyframes/HEURISTIC_NUMBER_OF_FRAMES > 1.0*width/total_number_of_frames(f)) {
+                    // The keyframe density in the first `HEURISTIC_NUMBER_OF_FRAMES`
+                    // frames is HEURISTIC_KEYFRAME_FACTOR times higher than
+                    // the density we need overall.
+                    printf("\rBuilding index: Enough keyframes, aborting.\n", f->number_of_keyframes, HEURISTIC_NUMBER_OF_FRAMES);
+                    f->exact = 0;
+                    return;
+                }
+            }
         }
         av_free_packet(&packet);
+
+        printf("\rBuilding index: %02.0f%%", 1.0*frame/total_number_of_frames(f)*100);
+        fflush(stdout);
     }
     // TODO: Is it necessary to sort these?
-    printf("%d keyframes.\n", f->number_of_keyframes);
+    printf("\rBuilding index: %d keyframes.\n", f->number_of_keyframes);
 }
 
-video* video_init(char *filename, int exact) {
+video* video_init(char *filename, int exact, int width) {
     av_log_set_level(AV_LOG_FATAL);
     av_register_all();
 
@@ -135,7 +151,7 @@ video* video_init(char *filename, int exact) {
     f->current_frame = -1;
 
     if (f->exact) {
-        build_keyframe_index(f);
+        build_keyframe_index(f, width);
     }
 
     return f;
