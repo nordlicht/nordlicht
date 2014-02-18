@@ -7,8 +7,8 @@ typedef struct video video;
 
 video* video_init(char *filename, int exact, int width);
 
-column* video_get_column(video *f, double min_percent, double max_percent, nordlicht_style s);
+column* video_get_column(video *v, double min_percent, double max_percent, nordlicht_style s);
 
-void video_free(video *f);
+void video_free(video *v);
 
 #endif
