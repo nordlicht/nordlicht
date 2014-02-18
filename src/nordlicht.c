@@ -67,9 +67,7 @@ unsigned char* get_column(nordlicht *n, int i) {
 }
 
 int nordlicht_generate(nordlicht *n) {
-    if (n->exact) {
-        build_keyframe_index(n->source, n->width);
-    }
+    build_keyframe_index(n->source, n->width);
 
     int x;
     for (x=0; x<n->width; x++) {

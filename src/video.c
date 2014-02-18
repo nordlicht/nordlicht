@@ -91,7 +91,7 @@ void build_keyframe_index(video *f, int width) {
                 f->keyframes[++f->number_of_keyframes] = packet.pts;
             }
             frame++;
-            if (frame == HEURISTIC_NUMBER_OF_FRAMES) {
+            if (!f->exact && frame == HEURISTIC_NUMBER_OF_FRAMES) {
                 float density = 1.0*HEURISTIC_KEYFRAME_FACTOR*f->number_of_keyframes/HEURISTIC_NUMBER_OF_FRAMES;
                 float required_density = 1.0*width/total_number_of_frames(f);
                 if (density > required_density) {
@@ -99,8 +99,9 @@ void build_keyframe_index(video *f, int width) {
                     // frames is HEURISTIC_KEYFRAME_FACTOR times higher than
                     // the density we need overall.
                     printf("\rBuilding index: Enough keyframes (%.2f times enough), aborting.\n", density/required_density);
-                    f->exact = 0;
                     return;
+                } else {
+                    f->exact = 1;
                 }
             }
         }
