@@ -150,10 +150,6 @@ video* video_init(char *filename, int exact, int width) {
     f->frame = avcodec_alloc_frame();
     f->current_frame = -1;
 
-    if (f->exact) {
-        build_keyframe_index(f, width);
-    }
-
     return f;
 }
 

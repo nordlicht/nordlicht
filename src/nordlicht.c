@@ -27,6 +27,7 @@ nordlicht* nordlicht_init_exact(char *filename, int width, int height, int exact
     n->filename = filename;
     n->data = calloc(width*height*3, 1);
     n->style = NORDLICHT_STYLE_HORIZONTAL;
+    n->exact = exact;
     n->modifiable = 1;
     n->progress = 0;
     n->source = video_init(filename, exact, width);
@@ -66,6 +67,10 @@ unsigned char* get_column(nordlicht *n, int i) {
 }
 
 int nordlicht_generate(nordlicht *n) {
+    if (n->exact) {
+        build_keyframe_index(n->source, n->width);
+    }
+
     int x;
     for (x=0; x<n->width; x++) {
         unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
