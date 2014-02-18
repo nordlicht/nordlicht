@@ -241,9 +241,9 @@ column* compress_to_column(image *i) {
             gsum += i->data[y*i->width*3+3*x+1];
             rsum += i->data[y*i->width*3+3*x+2];
         }
-        c->data[3*y+0] = 1.0*rsum*step/i->width;
-        c->data[3*y+1] = 1.0*gsum*step/i->width;
-        c->data[3*y+2] = 1.0*bsum*step/i->width;
+        c->data[3*y+0] = rsum/(i->width/step+1);
+        c->data[3*y+1] = gsum/(i->width/step+1);
+        c->data[3*y+2] = bsum/(i->width/step+1);
     }
 
     return c;
@@ -266,9 +266,9 @@ column* compress_to_row(image *i) {
             gsum += i->data[y*i->width*3+3*x+1];
             rsum += i->data[y*i->width*3+3*x+2];
         }
-        c->data[3*x+0] = 1.0*rsum*step/i->height;
-        c->data[3*x+1] = 1.0*gsum*step/i->height;
-        c->data[3*x+2] = 1.0*bsum*step/i->height;
+        c->data[3*y+0] = rsum/(i->height/step+1);
+        c->data[3*y+1] = gsum/(i->height/step+1);
+        c->data[3*y+2] = bsum/(i->height/step+1);
     }
 
     return c;
