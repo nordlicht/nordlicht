@@ -57,7 +57,7 @@ column* compress_to_row(image *i) {
 
     int x, y;
     int step = i->height/20;
-    for (x=i->width-1; x>=0; x--) {
+    for (x=0; x<i->width; x++) {
         long rsum = 0;
         long gsum = 0;
         long bsum = 0;
@@ -66,9 +66,9 @@ column* compress_to_row(image *i) {
             gsum += i->data[y*i->width*3+3*x+1];
             rsum += i->data[y*i->width*3+3*x+2];
         }
-        c->data[3*x+0] = rsum/(i->height/step+1);
-        c->data[3*x+1] = gsum/(i->height/step+1);
-        c->data[3*x+2] = bsum/(i->height/step+1);
+        c->data[3*(i->width-x-1)+0] = rsum/(i->height/step+1);
+        c->data[3*(i->width-x-1)+1] = gsum/(i->height/step+1);
+        c->data[3*(i->width-x-1)+2] = bsum/(i->height/step+1);
     }
 
     return c;
