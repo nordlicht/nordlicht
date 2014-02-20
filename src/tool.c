@@ -14,9 +14,40 @@ void print_help(poptContext popt, int ret) {
     exit(ret);
 }
 
+void interesting_stuff(char *filename, char *output_file, int width, int height, int exact, nordlicht_style style) {
+    nordlicht *code = nordlicht_init_exact(filename, width, height, exact);
+
+    if (code == NULL) {
+        exit(1);
+    }
+
+    nordlicht_set_style(code, style);
+
+    // Try to write the empty code to fail early if this does not work
+    if (nordlicht_write(code, output_file) != 0) {
+        exit(1);
+    }
+
+    pthread_t thread;
+    pthread_create(&thread, NULL, (void*(*)(void*))nordlicht_generate, code);
+
+    float progress = 0;
+    while (progress < 1) {
+        progress = nordlicht_progress(code);
+        printf("\rnordlicht: %02.0f%%", progress*100);
+        fflush(stdout);
+        usleep(100000);
+    }
+    pthread_join(thread, NULL);
+
+    nordlicht_write(code, output_file);
+    nordlicht_free(code);
+    printf(" -> '%s'\n", output_file);
+}
+
 int main(int argc, const char **argv) {
-    int width = 1000;
-    int height = 150;
+    int width = -1;
+    int height = -1;
     char *output_file = NULL;
     char *style_string = NULL;
     nordlicht_style style;
@@ -78,6 +109,20 @@ int main(int argc, const char **argv) {
         free_output_file = 1;
     }
 
+    if (width == -1 && height != -1) {
+        width = height*10;
+    }
+    if (height == -1 && width != -1) {
+        height = width/10;
+        if (height < 1) {
+            height = 1;
+        }
+    }
+    if (height == -1 && width == -1) {
+        width = 1000;
+        height = 100;
+    }
+
     if (style_string == NULL) {
         style = NORDLICHT_STYLE_HORIZONTAL;
     } else {
@@ -91,36 +136,7 @@ int main(int argc, const char **argv) {
         }
     }
 
-    // MAIN PART
-
-    nordlicht *code = nordlicht_init_exact(filename, width, height, exact);
-
-    if (code == NULL) {
-        return 1;
-    }
-
-    nordlicht_set_style(code, style);
-
-    // Try to write the empty code to fail early if this does not work
-    if (nordlicht_write(code, output_file) != 0) {
-        return 1;
-    }
-
-    pthread_t thread;
-    pthread_create(&thread, NULL, (void*(*)(void*))nordlicht_generate, code);
-
-    float progress = 0;
-    while (progress < 1) {
-        progress = nordlicht_progress(code);
-        printf("\rnordlicht: %02.0f%%", progress*100);
-        fflush(stdout);
-        usleep(100000);
-    }
-    pthread_join(thread, NULL);
-
-    nordlicht_write(code, output_file);
-    nordlicht_free(code);
-    printf(" -> '%s'\n", output_file);
+    interesting_stuff(filename, output_file, width, height, exact, style);
 
     if (free_output_file) {
         free(output_file);
