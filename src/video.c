@@ -64,6 +64,7 @@ void seek_keyframe(video *v, long frame) {
     double time_base = av_q2d(v->format_context->streams[v->video_stream]->time_base);
     av_seek_frame(v->format_context, v->video_stream, frame/fps(v)/time_base, AVSEEK_FLAG_BACKWARD);
     grab_next_frame(v);
+    avcodec_flush_buffers(v->decoder_context);
 }
 
 void seek_forward(video *v, long frame) {
