@@ -13,12 +13,12 @@ find_package(Popt REQUIRED)
 
 include_directories(${CMAKE_BINARY_DIR}/src ${FFMPEG_INCLUDE_DIRS} ${FreeImage_INCLUDE_DIRS} ${POPT_INCLUDES})
 
-add_library(libnordlicht SHARED src/common.c src/graphics.c src/nordlicht.c src/video.c)
-target_link_libraries(libnordlicht ${FFMPEG_LIBRARIES} ${FreeImage_LIBRARIES} ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+add_library(nordlicht SHARED src/common.c src/graphics.c src/nordlicht.c src/video.c)
+target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${FreeImage_LIBRARIES} ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-add_executable(nordlicht src/tool.c)
-set_target_properties(nordlicht PROPERTIES OUTPUT_NAME nordlicht)
-target_link_libraries(nordlicht libnordlicht)
+add_executable(tool src/tool.c)
+set_target_properties(tool PROPERTIES OUTPUT_NAME nordlicht)
+target_link_libraries(tool nordlicht)
 
 configure_file(res/nordlicht.pc.in res/nordlicht.pc @ONLY)
 configure_file(src/version.h.in src/version.h @ONLY)
@@ -26,7 +26,7 @@ configure_file(src/version.h.in src/version.h @ONLY)
 enable_testing()
 add_test(test-tool ${CMAKE_SOURCE_DIR}/test/test-tool.sh)
 
-install(TARGETS libnordlicht DESTINATION ${LIB_INSTALL_DIR})
-install(TARGETS nordlicht DESTINATION bin)
+install(TARGETS nordlicht DESTINATION ${LIB_INSTALL_DIR})
+install(TARGETS tool DESTINATION bin)
 install(FILES src/nordlicht.h DESTINATION include)
 install(FILES ${CMAKE_BINARY_DIR}/res/nordlicht.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
