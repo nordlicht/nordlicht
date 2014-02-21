@@ -78,7 +78,7 @@ int total_number_of_frames(video *v) {
     return fps(v)*duration_sec;
 }
 
-void build_keyframe_index(video *v, int width) {
+void video_build_keyframe_index(video *v, int width) {
     v->keyframes = malloc(sizeof(long)*10*60*60*60); // TODO: dynamic datastructure!
     v->number_of_keyframes = 0;
 
