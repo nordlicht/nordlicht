@@ -23,7 +23,7 @@ The command `nordlicht video.mkv -w 1000 -h 150 -o nordlicht.png` converts *vide
 ### Library
 
 - API documentation: see [src/nordlicht.h](src/nordlicht.h)
-- Simple usage example: see [src/tool.c](src/tool.c)
+- Simple usage example: see [src/main.c](src/main.c)
 
 ## Integrations
 
