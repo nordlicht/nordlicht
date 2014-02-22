@@ -177,7 +177,7 @@ void seek(video *v, long min_frame_nr, long max_frame_nr) {
 
         while (v->current_frame < min_frame_nr) {
             if (v->current_frame > max_frame_nr) {
-                // TODO: Can this happen?
+                error("Target frame is in the past. This shoudn't happen.");
             }
             grab_next_frame(v);
         }
