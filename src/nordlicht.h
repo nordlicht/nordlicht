@@ -12,11 +12,6 @@ typedef enum nordlicht_style {
 // file. Use `nordlicht_free` to free it again. Returns NULL on errors.
 nordlicht* nordlicht_init(char *filename, int width, int height);
 
-// Experimental: If you set `exact` to 1, nordlicht will produce an "exact"
-// barcode. You should activate this if your video has few keyframes. This will
-// soon happen automatically.
-nordlicht* nordlicht_init_exact(char *filename, int width, int height, int exact);
-
 // Free a nordlicht.
 void nordlicht_free(nordlicht *n);
 

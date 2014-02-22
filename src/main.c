@@ -14,8 +14,8 @@ void print_help(poptContext popt, int ret) {
     exit(ret);
 }
 
-void interesting_stuff(char *filename, char *output_file, int width, int height, int exact, nordlicht_style style) {
-    nordlicht *code = nordlicht_init_exact(filename, width, height, exact);
+void interesting_stuff(char *filename, char *output_file, int width, int height, nordlicht_style style) {
+    nordlicht *code = nordlicht_init(filename, width, height);
 
     if (code == NULL) {
         exit(1);
@@ -51,7 +51,6 @@ int main(int argc, const char **argv) {
     char *output_file = NULL;
     char *style_string = NULL;
     nordlicht_style style;
-    int exact = 0;
     int free_output_file = 0;
 
     int help = 0;
@@ -64,7 +63,6 @@ int main(int argc, const char **argv) {
         {"height", 'h', POPT_ARG_INT, &height, 0, "Override default height of 150 pixels.", NULL},
         {"output", 'o', POPT_ARG_STRING, &output_file, 0, "Set filename of output PNG. Default: $(basename VIDEOFILE).png", "FILENAME"},
         {"style", 's', POPT_ARG_STRING, &style_string, 0, "Default is 'horizontal'. Can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them.", "STYLE"},
-        {"exact", 'e', POPT_ARG_NONE, &exact, 0, "Enforce exact, slow seeking. Will always produce nice barcodes, where the default heuristic might be off.", NULL},
         POPT_TABLEEND
     };
 
@@ -136,7 +134,7 @@ int main(int argc, const char **argv) {
         }
     }
 
-    interesting_stuff(filename, output_file, width, height, exact, style);
+    interesting_stuff(filename, output_file, width, height, style);
 
     if (free_output_file) {
         free(output_file);

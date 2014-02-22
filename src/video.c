@@ -92,7 +92,7 @@ void video_build_keyframe_index(video *v, int width) {
                 v->keyframes[++v->number_of_keyframes] = packet.pts;
             }
             frame++;
-            if (!v->exact && frame == HEURISTIC_NUMBER_OF_FRAMES) {
+            if (frame == HEURISTIC_NUMBER_OF_FRAMES) {
                 float density = 1.0*HEURISTIC_KEYFRAME_FACTOR*v->number_of_keyframes/HEURISTIC_NUMBER_OF_FRAMES;
                 float required_density = 1.0*width/total_number_of_frames(v);
                 if (density > required_density) {
@@ -100,9 +100,8 @@ void video_build_keyframe_index(video *v, int width) {
                     // frames is HEURISTIC_KEYFRAME_FACTOR times higher than
                     // the density we need overall.
                     printf("\rBuilding index: Enough keyframes (%.2f times enough), aborting.\n", density/required_density);
+                    v->exact = 0;
                     return;
-                } else {
-                    v->exact = 1;
                 }
             }
         }
@@ -115,13 +114,13 @@ void video_build_keyframe_index(video *v, int width) {
     printf("\rBuilding index: %d keyframes.\n", v->number_of_keyframes);
 }
 
-video* video_init(char *filename, int exact, int width) {
+video* video_init(char *filename, int width) {
     av_log_set_level(AV_LOG_FATAL);
     av_register_all();
 
     video *v;
     v = malloc(sizeof(video));
-    v->exact = exact;
+    v->exact = 1;
     v->format_context = NULL;
 
     if (avformat_open_input(&v->format_context, filename, NULL, NULL) != 0) {
