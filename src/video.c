@@ -7,8 +7,8 @@
 #define avcodec_free_frame av_freep
 #endif
 
-#define HEURISTIC_NUMBER_OF_FRAMES 500
-#define HEURISTIC_KEYFRAME_FACTOR 2
+#define HEURISTIC_NUMBER_OF_FRAMES 1800 // how many frames will the heuristic look at?
+#define HEURISTIC_KEYFRAME_FACTOR 1 // lower bound for the actual/required keyframe ratio
 
 struct video {
     int exact;
@@ -93,8 +93,8 @@ void video_build_keyframe_index(video *v, int width) {
             }
             frame++;
             if (frame == HEURISTIC_NUMBER_OF_FRAMES) {
-                float density = 1.0*HEURISTIC_KEYFRAME_FACTOR*v->number_of_keyframes/HEURISTIC_NUMBER_OF_FRAMES;
-                float required_density = 1.0*width/total_number_of_frames(v);
+                float density = 1.0*v->number_of_keyframes/HEURISTIC_NUMBER_OF_FRAMES;
+                float required_density = 1.0*HEURISTIC_KEYFRAME_FACTOR*width/total_number_of_frames(v);
                 if (density > required_density) {
                     // The keyframe density in the first `HEURISTIC_NUMBER_OF_FRAMES`
                     // frames is HEURISTIC_KEYFRAME_FACTOR times higher than
