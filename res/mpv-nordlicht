@@ -4,14 +4,14 @@ VIDEO="${!#}"
 
 SCREEN_WIDTH=$(xrandr -q | grep Screen | cut -d" " -f8)
 SCREEN_HEIGHT=$(xrandr -q | grep Screen | cut -d" " -f10 | sed "s/,//")
-NORDLICHT_HEIGHT=100
-OSD_H_PX=10
-OSD_H=$(python -c "print(100.0*$OSD_H_PX/$SCREEN_HEIGHT)") # everybody has python!
-OSD_Y=$(python -c "print(-1+2.0*$NORDLICHT_HEIGHT/($SCREEN_HEIGHT*(1-$OSD_H/100.0)))")
+NORDLICHT_HEIGHT=60
+OSD_H_PX=3
+OSD_H=$(python -c "print(100.0*(2*$OSD_H_PX+$NORDLICHT_HEIGHT)/$SCREEN_HEIGHT)") # everybody has python!
+OSD_Y=-1 #$(python -c "print(-1+2.0*$NORDLICHT_HEIGHT/($SCREEN_HEIGHT*(1-$OSD_H/100.0)))")
 
 rm -f /tmp/mpv_input.conf
 cp -f ~/.mpv/input.conf /tmp/mpv_input.conf 2> /dev/null
-echo "n overlay_add 0 0 0 /tmp/nordlicht.bgra 0 bgra $SCREEN_WIDTH $NORDLICHT_HEIGHT $(($SCREEN_WIDTH*4))
+echo "n overlay_add 0 0 $OSD_H_PX /tmp/nordlicht.bgra 0 bgra $SCREEN_WIDTH $NORDLICHT_HEIGHT $(($SCREEN_WIDTH*4))
 N overlay_remove 0" >> /tmp/mpv_input.conf
 
 nordlicht "$VIDEO" -w $SCREEN_WIDTH -h $NORDLICHT_HEIGHT -o /tmp/nordlicht.png
