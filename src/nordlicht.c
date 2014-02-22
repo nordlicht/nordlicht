@@ -52,7 +52,7 @@ void nordlicht_set_style(nordlicht *n, nordlicht_style s) {
 }
 
 unsigned char* get_column(nordlicht *n, int i) {
-    column *c = video_get_column(n->source, 1.0*i/n->width, 1.0*(i+1)/n->width, n->style);
+    column *c = video_get_column(n->source, 1.0*(i+0.5-COLUMN_PRECISION/2.0)/n->width, 1.0*(i+0.5+COLUMN_PRECISION/2.0)/n->width, n->style);
     column *c2 = column_scale(c, n->height);
     unsigned char *data = c2->data;
     free(c2);

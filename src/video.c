@@ -8,7 +8,7 @@
 #endif
 
 #define HEURISTIC_NUMBER_OF_FRAMES 1800 // how many frames will the heuristic look at?
-#define HEURISTIC_KEYFRAME_FACTOR 1 // lower bound for the actual/required keyframe ratio
+#define HEURISTIC_KEYFRAME_FACTOR 2 // lower bound for the actual/required keyframe ratio
 
 struct video {
     int exact;
@@ -94,7 +94,7 @@ void video_build_keyframe_index(video *v, int width) {
             frame++;
             if (frame == HEURISTIC_NUMBER_OF_FRAMES) {
                 float density = 1.0*v->number_of_keyframes/HEURISTIC_NUMBER_OF_FRAMES;
-                float required_density = 1.0*HEURISTIC_KEYFRAME_FACTOR*width/total_number_of_frames(v);
+                float required_density = 1.0*HEURISTIC_KEYFRAME_FACTOR/COLUMN_PRECISION*width/total_number_of_frames(v);
                 if (density > required_density) {
                     // The keyframe density in the first `HEURISTIC_NUMBER_OF_FRAMES`
                     // frames is HEURISTIC_KEYFRAME_FACTOR times higher than
@@ -177,12 +177,15 @@ void seek(video *v, long min_frame_nr, long max_frame_nr) {
 
         while (v->current_frame < min_frame_nr) {
             if (v->current_frame > max_frame_nr) {
-                error("Target frame is in the past. This shoudn't happen.");
+                error("Target frame is in the past. This shoudn't happen. Please file a bug.");
             }
             grab_next_frame(v);
         }
     } else {
         seek_keyframe(v, (min_frame_nr+max_frame_nr)/2);
+        if (v->current_frame < min_frame_nr || v->current_frame > max_frame_nr) {
+            error("Our heuristic failed: %ld is not between %ld and %ld.", v->current_frame, min_frame_nr, max_frame_nr);
+        }
     }
 }
 
