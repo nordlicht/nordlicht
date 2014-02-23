@@ -9,8 +9,36 @@ Homepage: https://github.com/blinry/nordlicht
 Package: nordlicht
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Library + tool that creates colorful video barcodes
+Description: create colorful video barcodes
  nordlicht converts video files into colorful barcodes. It's heavily inspired
  by the "moviebarcode" tumblr. It takes the video's frames in regular
  intervals, scales them to 1px width, and appends them. The resulting barcodes
  can be integrated into video players for simplified navigation.
+ .
+ This package contains the `nordlicht' tool which can be used to create
+ barcodes from video files.
+
+Package: libnordlicht0
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: create colorful video barcodes -- shared library
+ nordlicht converts video files into colorful barcodes. It's heavily inspired
+ by the "moviebarcode" tumblr. It takes the video's frames in regular
+ intervals, scales them to 1px width, and appends them. The resulting barcodes
+ can be integrated into video players for simplified navigation.
+ .
+ This package contains the library which encapsulates the video barcode
+ functionality.
+
+Package: libnordlicht-dev
+Architecture: any
+Section: libdevel
+Depends: libnordlicht0 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Description: create colorful video barcodes -- development files
+ nordlicht converts video files into colorful barcodes. It's heavily inspired
+ by the "moviebarcode" tumblr. It takes the video's frames in regular
+ intervals, scales them to 1px width, and appends them. The resulting barcodes
+ can be integrated into video players for simplified navigation.
+ .
+ This package contains the development files which are needed if you want to
+ include nordlicht functionality into your own applications.
