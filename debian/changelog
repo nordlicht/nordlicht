@@ -2,6 +2,8 @@ nordlicht (0.3.0-1) unstable; urgency=medium
 
   * new upstream version 0.3.0
   * remove tests, they are failing and prevent building and installation
+  * promote debhelper compat to 9 in order to profit from automatic hardening
+    flags
 
  -- Roland Hieber <rohieb@rohieb.name>  Mon, 17 Feb 2014 02:05:18 +0100
 
