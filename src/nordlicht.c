@@ -53,6 +53,11 @@ void nordlicht_set_style(nordlicht *n, nordlicht_style s) {
 
 unsigned char* get_column(nordlicht *n, int i) {
     column *c = video_get_column(n->source, 1.0*(i+0.5-COLUMN_PRECISION/2.0)/n->width, 1.0*(i+0.5+COLUMN_PRECISION/2.0)/n->width, n->style);
+
+    if (c == NULL) {
+        return NULL;
+    }
+
     column *c2 = column_scale(c, n->height);
     unsigned char *data = c2->data;
     free(c2);
@@ -66,8 +71,12 @@ int nordlicht_generate(nordlicht *n) {
     int x;
     for (x=0; x<n->width; x++) {
         unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
-        memcpy(n->data+n->height*3*x, column, n->height*3);
-        free(column);
+        if (column) {
+            memcpy(n->data+n->height*3*x, column, n->height*3);
+            free(column);
+        } else {
+            memset(n->data+n->height*3*x, 0, n->height*3);
+        }
         n->progress = 1.0*x/n->width;
     }
     n->progress = 1.0;
