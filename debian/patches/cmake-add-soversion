@@ -1,0 +1,14 @@
+Author: Roland Hieber <rohieb@rohieb.name>
+Subject: add a SOVERSION for proper versioning of the libnordlicht ABI
+Forwarded: https://github.com/blinry/nordlicht/pull/20
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -17,6 +17,7 @@
+ include_directories(include)
+ 
+ add_library(nordlicht SHARED src/common.c src/graphics.c src/nordlicht.c src/video.c)
++set_target_properties(nordlicht PROPERTIES SOVERSION 0)
+ target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${FreeImage_LIBRARIES} ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+ 
+ add_executable(nordlicht-tool src/nordlicht-tool.c)
