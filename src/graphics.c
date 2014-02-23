@@ -11,9 +11,20 @@ column* column_scale(column *c, int length) {
 
     int i;
     for(i=0; i<length; i++) {
-        int nn = factor*3*i;
-        nn -= nn%3;
-        memcpy(c2->data+3*i, c->data+nn, 3);
+        int lower = factor*i+0.5;
+        int upper = factor*(i+1)-0.5;
+        int rsum = 0;
+        int gsum = 0;
+        int bsum = 0;
+        int j;
+        for(j=lower; j<=upper; j++) {
+            rsum += c->data[j*3+0];
+            gsum += c->data[j*3+1];
+            bsum += c->data[j*3+2];
+        }
+        c2->data[i*3+0] = rsum/(upper-lower+1);
+        c2->data[i*3+1] = gsum/(upper-lower+1);
+        c2->data[i*3+2] = bsum/(upper-lower+1);
     }
 
     return c2;
