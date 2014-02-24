@@ -3,11 +3,11 @@ Priority: optional
 Maintainer: Sebastian Morr <sebastian@morr.cc>
 Build-Depends: debhelper (>= 9.0.0), cmake, libavcodec-dev, libavformat-dev, libswscale-dev, libfreeimage-dev, libpopt-dev
 Standards-Version: 3.9.3
-Section: libs
 Homepage: https://github.com/blinry/nordlicht
 
 Package: nordlicht
 Architecture: any
+Section: video
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: create colorful video barcodes
  nordlicht converts video files into colorful barcodes. It's heavily inspired
@@ -20,6 +20,7 @@ Description: create colorful video barcodes
 
 Package: libnordlicht0
 Architecture: any
+Section: libs
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: create colorful video barcodes -- shared library
  nordlicht converts video files into colorful barcodes. It's heavily inspired
