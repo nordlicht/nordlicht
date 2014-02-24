@@ -57,12 +57,12 @@ int main(int argc, const char **argv) {
     int version = 0;
 
     struct poptOption optionsTable[] = {
+        {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width; by default it's \"height*10\", or 1000 pixels, if both are undefined", NULL},
+        {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height; by default it's \"width/10\"", NULL},
+        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set filename of output PNG; the default is $(basename VIDEOFILE).png", "FILENAME"},
+        {"style", 's', POPT_ARG_STRING, &style_string, 0, "default is 'horizontal'; can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them", "STYLE"},
         {"help", '\0', 0, &help, 0, "display this help and exit", NULL},
         {"version", '\0', 0, &version, 0, "output version information and exit", NULL},
-        {"width", 'w', POPT_ARG_INT, &width, 0, "override default width of 1000 pixels", NULL},
-        {"height", 'h', POPT_ARG_INT, &height, 0, "override default height of 150 pixels", NULL},
-        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set filename of output PNG, default: $(basename VIDEOFILE).png", "FILENAME"},
-        {"style", 's', POPT_ARG_STRING, &style_string, 0, "default is 'horizontal', can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them", "STYLE"},
         POPT_TABLEEND
     };
 
