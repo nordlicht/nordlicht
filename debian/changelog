@@ -2,6 +2,7 @@ nordlicht (0.3.1-1) unstable; urgency=medium
 
   * new upstream version 0.3.1
     - refresh patches
+  * bump standards version to 3.9.5, no changes needed
 
  -- Roland Hieber <rohieb@rohieb.name>  Mon, 24 Feb 2014 01:32:01 +0100
 

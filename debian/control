@@ -2,7 +2,7 @@ Source: nordlicht
 Priority: optional
 Maintainer: Roland Hieber <rohieb@rohieb.name>
 Build-Depends: debhelper (>= 9.0.0), cmake, libavcodec-dev, libavformat-dev, libswscale-dev, libfreeimage-dev, libpopt-dev
-Standards-Version: 3.9.3
+Standards-Version: 3.9.5
 Homepage: https://github.com/blinry/nordlicht
 
 Package: nordlicht
