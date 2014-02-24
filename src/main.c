@@ -85,7 +85,6 @@ int main(int argc, const char **argv) {
     }
 
     if (help) {
-        fprintf(stderr, "nordlicht creates colorful barcodes from video files.\n\n");
         print_help(popt, 0);
     }
 
