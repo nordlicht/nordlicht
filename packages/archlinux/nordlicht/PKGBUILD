@@ -1,8 +1,7 @@
 # Maintainer: Sebastian Morr <sebastian@morr.cc>
 
-pkgname=nordlicht-git
-_gitname=nordlicht
-pkgver=20140216
+pkgname=nordlicht
+pkgver=0.3.0
 pkgrel=1
 pkgdesc="Creates colorful moviebarcodes from video files, comes with a shared C library"
 arch=('i686' 'x86_64')
@@ -10,18 +9,16 @@ url="http://github.com/blinry/nordlicht"
 license=('GPL')
 depends=('ffmpeg' 'freeimage' 'popt')
 makedepends=('git' 'cmake')
-provides=('nordlicht')
-conflicts=('nordlicht')
-source=('git+https://github.com/blinry/nordlicht')
-sha1sums=('SKIP')
+source=(https://github.com/blinry/$pkgname/archive/v$pkgver.tar.gz)
+md5sums=('8cb335116244cc5502d52fcd8079740a')
 
 build() {
-  cd "$srcdir/$_gitname"
+  cd "$pkgname-$pkgver"
   cmake -DCMAKE_INSTALL_PREFIX=/usr
   make
 }
 
 package() {
-  cd "$srcdir/$_gitname"
+  cd "$pkgname-$pkgver"
   make DESTDIR="$pkgdir" install
 }

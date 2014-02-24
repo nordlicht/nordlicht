@@ -14,4 +14,8 @@ typedef struct {
 column* column_scale(column *c, int length);
 void column_free(column *c);
 
+column* compress_to_column(image *i);
+column* compress_to_row(image *i);
+column* compress_to_diagonal(image *i);
+
 #endif

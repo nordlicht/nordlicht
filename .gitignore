@@ -1,26 +1,20 @@
-build
-
-# CMake
+# Build products
 CMakeCache.txt
-CMakeFiles
+CMakeFiles/
+CTestTestfile.cmake
+libnordlicht.so
 Makefile
 cmake_install.cmake
-install_manifest.txt
+nordlicht
+nordlicht.pc
+version.h
 
-# Object files
-*.o
+# Testing
+Testing/
+tests-tmp_*
+video.mp4
+*.png
 
-# Libraries
-*.lib
-*.a
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
+# Vagrant
+/Vagrantfile
+/.vagrant

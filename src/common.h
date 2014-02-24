@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "nordlicht.h"
+#include "version.h"
 #include "graphics.h"
 
 void error(char *message, ...);

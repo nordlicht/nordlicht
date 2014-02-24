@@ -8,13 +8,12 @@ struct nordlicht {
     char *filename;
     unsigned char *data;
     nordlicht_style style;
-    int exact;
     int modifiable;
     float progress;
     video *source;
 };
 
-nordlicht* nordlicht_init_exact(char *filename, int width, int height, int exact) {
+nordlicht* nordlicht_init(char *filename, int width, int height) {
     if (width < 1 || height < 1) {
         error("Dimensions must be positive (got %dx%d)", width, height);
         return NULL;
@@ -29,7 +28,7 @@ nordlicht* nordlicht_init_exact(char *filename, int width, int height, int exact
     n->style = NORDLICHT_STYLE_HORIZONTAL;
     n->modifiable = 1;
     n->progress = 0;
-    n->source = video_init(filename, exact);
+    n->source = video_init(filename, width);
 
     if (n->source == NULL) {
         error("Could not open video file '%s'", filename);
@@ -38,10 +37,6 @@ nordlicht* nordlicht_init_exact(char *filename, int width, int height, int exact
     }
 
     return n;
-}
-
-nordlicht* nordlicht_init(char *filename, int width, int height) {
-    return nordlicht_init_exact(filename, width, height, 0);
 }
 
 void nordlicht_free(nordlicht *n) {
@@ -57,7 +52,7 @@ void nordlicht_set_style(nordlicht *n, nordlicht_style s) {
 }
 
 unsigned char* get_column(nordlicht *n, int i) {
-    column *c = video_get_column(n->source, 1.0*i/n->width, 1.0*(i+1)/n->width, n->style);
+    column *c = video_get_column(n->source, 1.0*(i+0.5-COLUMN_PRECISION/2.0)/n->width, 1.0*(i+0.5+COLUMN_PRECISION/2.0)/n->width, n->style);
     column *c2 = column_scale(c, n->height);
     unsigned char *data = c2->data;
     free(c2);
@@ -66,6 +61,8 @@ unsigned char* get_column(nordlicht *n, int i) {
 }
 
 int nordlicht_generate(nordlicht *n) {
+    video_build_keyframe_index(n->source, n->width);
+
     int x;
     for (x=0; x<n->width; x++) {
         unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy

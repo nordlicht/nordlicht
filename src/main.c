@@ -14,24 +14,55 @@ void print_help(poptContext popt, int ret) {
     exit(ret);
 }
 
+void interesting_stuff(char *filename, char *output_file, int width, int height, nordlicht_style style) {
+    nordlicht *code = nordlicht_init(filename, width, height);
+
+    if (code == NULL) {
+        exit(1);
+    }
+
+    nordlicht_set_style(code, style);
+
+    // Try to write the empty code to fail early if this does not work
+    if (nordlicht_write(code, output_file) != 0) {
+        exit(1);
+    }
+
+    pthread_t thread;
+    pthread_create(&thread, NULL, (void*(*)(void*))nordlicht_generate, code);
+
+    float progress = 0;
+    while (progress < 1) {
+        progress = nordlicht_progress(code);
+        printf("\rnordlicht: %02.0f%%", progress*100);
+        fflush(stdout);
+        usleep(100000);
+    }
+    pthread_join(thread, NULL);
+
+    nordlicht_write(code, output_file);
+    nordlicht_free(code);
+    printf(" -> '%s'\n", output_file);
+}
+
 int main(int argc, const char **argv) {
-    int width = 1000;
-    int height = 150;
+    int width = -1;
+    int height = -1;
     char *output_file = NULL;
     char *style_string = NULL;
     nordlicht_style style;
-    int exact = 0;
     int free_output_file = 0;
 
     int help = 0;
+    int version = 0;
 
     struct poptOption optionsTable[] = {
         {"help", '\0', 0, &help, 0, NULL, NULL},
+        {"version", '\0', 0, &version, 0, NULL, NULL},
         {"width", 'w', POPT_ARG_INT, &width, 0, "Override default width of 1000 pixels.", NULL},
         {"height", 'h', POPT_ARG_INT, &height, 0, "Override default height of 150 pixels.", NULL},
         {"output", 'o', POPT_ARG_STRING, &output_file, 0, "Set filename of output PNG. Default: $(basename VIDEOFILE).png", "FILENAME"},
         {"style", 's', POPT_ARG_STRING, &style_string, 0, "Default is 'horizontal'. Can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them.", "STYLE"},
-        {"exact", 'e', POPT_ARG_NONE, &exact, 0, "Do exact seeking. Will produce nicer barcodes for videos with few keyframes.", NULL},
         POPT_TABLEEND
     };
 
@@ -46,6 +77,11 @@ int main(int argc, const char **argv) {
     if (c < -1) {
         fprintf(stderr, "nordlicht: %s: %s\n", poptBadOption(popt, POPT_BADOPTION_NOALIAS), poptStrerror(c));
         return 1;
+    }
+
+    if (version) {
+      printf("nordlicht %s\n", NORDLICHT_VERSION);
+      return 0;
     }
 
     if (help) {
@@ -71,6 +107,20 @@ int main(int argc, const char **argv) {
         free_output_file = 1;
     }
 
+    if (width == -1 && height != -1) {
+        width = height*10;
+    }
+    if (height == -1 && width != -1) {
+        height = width/10;
+        if (height < 1) {
+            height = 1;
+        }
+    }
+    if (height == -1 && width == -1) {
+        width = 1000;
+        height = 100;
+    }
+
     if (style_string == NULL) {
         style = NORDLICHT_STYLE_HORIZONTAL;
     } else {
@@ -84,36 +134,7 @@ int main(int argc, const char **argv) {
         }
     }
 
-    // MAIN PART
-
-    nordlicht *code = nordlicht_init_exact(filename, width, height, exact);
-
-    if (code == NULL) {
-        return 1;
-    }
-
-    nordlicht_set_style(code, style);
-
-    // Try to write the empty code to fail early if this does not work
-    if (nordlicht_write(code, output_file) != 0) {
-        return 1;
-    }
-
-    pthread_t thread;
-    pthread_create(&thread, NULL, (void*(*)(void*))nordlicht_generate, code);
-
-    float progress = 0;
-    while (progress < 1) {
-        progress = nordlicht_progress(code);
-        printf("\rnordlicht: %02.0f%%", progress*100);
-        fflush(stdout);
-        usleep(100000);
-    }
-    pthread_join(thread, NULL);
-
-    nordlicht_write(code, output_file);
-    nordlicht_free(code);
-    printf(" -> '%s'\n", output_file);
+    interesting_stuff(filename, output_file, width, height, style);
 
     if (free_output_file) {
         free(output_file);

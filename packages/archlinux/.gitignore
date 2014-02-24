@@ -1,0 +1,7 @@
+#*
+#!.gitignore
+#!**/PKGBUILD
+*.tar.gz
+*.tar.xz
+src
+pkg
