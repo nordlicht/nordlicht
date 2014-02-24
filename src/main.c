@@ -10,7 +10,7 @@ const char *gnu_basename(const char *path) {
 }
 
 void print_help(poptContext popt, int ret) {
-    poptPrintHelp(popt, stderr, 0);
+    poptPrintHelp(popt, ret == 0 ? stdout : stderr, 0);
     exit(ret);
 }
 
