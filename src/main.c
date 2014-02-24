@@ -10,7 +10,7 @@ const char *gnu_basename(const char *path) {
 }
 
 void print_help(poptContext popt, int ret) {
-    poptPrintHelp(popt, stderr, 0);
+    poptPrintHelp(popt, ret == 0 ? stdout : stderr, 0);
     exit(ret);
 }
 
@@ -57,17 +57,17 @@ int main(int argc, const char **argv) {
     int version = 0;
 
     struct poptOption optionsTable[] = {
-        {"help", '\0', 0, &help, 0, NULL, NULL},
-        {"version", '\0', 0, &version, 0, NULL, NULL},
-        {"width", 'w', POPT_ARG_INT, &width, 0, "Override default width of 1000 pixels.", NULL},
-        {"height", 'h', POPT_ARG_INT, &height, 0, "Override default height of 150 pixels.", NULL},
-        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "Set filename of output PNG. Default: $(basename VIDEOFILE).png", "FILENAME"},
-        {"style", 's', POPT_ARG_STRING, &style_string, 0, "Default is 'horizontal'. Can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them.", "STYLE"},
+        {"help", '\0', 0, &help, 0, "display this help and exit", NULL},
+        {"version", '\0', 0, &version, 0, "output version information and exit", NULL},
+        {"width", 'w', POPT_ARG_INT, &width, 0, "override default width of 1000 pixels", NULL},
+        {"height", 'h', POPT_ARG_INT, &height, 0, "override default height of 150 pixels", NULL},
+        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set filename of output PNG, default: $(basename VIDEOFILE).png", "FILENAME"},
+        {"style", 's', POPT_ARG_STRING, &style_string, 0, "default is 'horizontal', can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them", "STYLE"},
         POPT_TABLEEND
     };
 
     poptContext popt = poptGetContext(NULL, argc, argv, optionsTable, 0);
-    poptSetOtherOptionHelp(popt, "VIDEOFILE");
+    poptSetOtherOptionHelp(popt, "[OPTION]... VIDEOFILE\n");
 
     char c;
 
@@ -85,7 +85,6 @@ int main(int argc, const char **argv) {
     }
 
     if (help) {
-        fprintf(stderr, "nordlicht creates colorful barcodes from video files.\n\n");
         print_help(popt, 0);
     }
 
