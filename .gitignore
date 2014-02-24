@@ -18,3 +18,5 @@ video.mp4
 # Vagrant
 /Vagrantfile
 /.vagrant
+.pc
+*.rej
