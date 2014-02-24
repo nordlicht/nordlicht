@@ -3,15 +3,15 @@ Description: remove failing tests that prevent installation
  to fail, which prevents cmake to install the files to their target location.
 Author: Roland Hieber <rohieb@rohieb.name>
 
---- nordlicht-0.3.0.orig/CMakeLists.txt
-+++ nordlicht-0.3.0/CMakeLists.txt
-@@ -23,9 +23,6 @@ add_executable(nordlicht-tool src/nordli
- set_target_properties(nordlicht-tool PROPERTIES OUTPUT_NAME nordlicht)
- target_link_libraries(nordlicht-tool nordlicht)
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -23,9 +23,6 @@
+ configure_file(res/nordlicht.pc.in res/nordlicht.pc @ONLY)
+ configure_file(src/version.h.in src/version.h @ONLY)
  
 -enable_testing()
--add_test(test-tool ${CMAKE_SOURCE_DIR}/test/test-tool.sh)
+-add_test(test-bin ${CMAKE_SOURCE_DIR}/test/test-bin.sh)
 -
- set(LIB_SUFFIX "" CACHE STRING "Suffix of library directory name (for example '32' or '64')")
- set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}" CACHE STRING "Directory where library will be installed")
- 
+ install(TARGETS nordlicht DESTINATION ${LIB_INSTALL_DIR})
+ install(TARGETS nordlicht-bin DESTINATION bin)
+ install(FILES src/nordlicht.h DESTINATION include)
