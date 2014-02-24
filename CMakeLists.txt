@@ -1,7 +1,9 @@
-project(nordlicht C)
 cmake_minimum_required(VERSION 2.8)
+include(GNUInstallDirs)
 
+project(nordlicht C)
 set(NORDLICHT_VERSION 0.3.1)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(LIB_SUFFIX "" CACHE STRING "Suffix of library directory name (for example '32' or '64')")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}" CACHE STRING "Directory where library will be installed")
@@ -30,3 +32,4 @@ install(TARGETS nordlicht DESTINATION ${LIB_INSTALL_DIR})
 install(TARGETS nordlicht-bin DESTINATION bin)
 install(FILES src/nordlicht.h DESTINATION include)
 install(FILES ${CMAKE_BINARY_DIR}/res/nordlicht.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
+install(FILES nordlicht.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
