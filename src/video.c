@@ -18,6 +18,10 @@ struct video {
     int video_stream;
     AVFrame *frame;
 
+    uint8_t *buffer;
+    AVFrame *scaleframe;
+    struct SwsContext *sws_context;
+
     long current_frame;
     int *keyframes;
     int number_of_keyframes;
@@ -156,6 +160,23 @@ video* video_init(char *filename, int width) {
     v->frame = avcodec_alloc_frame();
     v->current_frame = -1;
 
+    if (grab_next_frame(v) != 0) {
+        error("fuck");
+        exit(1);
+    }
+
+    v->scaleframe = avcodec_alloc_frame();
+    v->scaleframe->width = v->frame->width;
+    v->scaleframe->height = v->frame->height;
+    v->scaleframe->format = PIX_FMT_RGB24;
+
+    v->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, v->scaleframe->width, v->scaleframe->height));
+    printf("yay\n");
+    avpicture_fill((AVPicture *)v->scaleframe, v->buffer, PIX_FMT_RGB24, v->frame->width, v->frame->height);
+
+    v->sws_context = sws_getContext(v->frame->width, v->frame->height, v->frame->format,
+            v->scaleframe->width, v->scaleframe->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
+
     return v;
 }
 
@@ -207,30 +228,14 @@ image* get_frame(video *v, double min_percent, double max_percent) {
     i->height = v->frame->height;
     i->data = malloc(i->height*i->width*3);
 
-    AVFrame *frame;
-    frame = avcodec_alloc_frame();
-    frame->width = i->width;
-    frame->height = i->height;
-    frame->format = PIX_FMT_RGB24;
-
-    uint8_t *buffer;
-    buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, i->width, i->height));
-    avpicture_fill((AVPicture *)frame, buffer, PIX_FMT_RGB24, i->width, i->height);
-
-    struct SwsContext *sws_context = sws_getContext(v->frame->width, v->frame->height, v->frame->format,
-            v->frame->width, v->frame->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
-    sws_scale(sws_context, (uint8_t const * const *)v->frame->data,
-            v->frame->linesize, 0, v->frame->height, frame->data,
-            frame->linesize);
-    sws_freeContext(sws_context);
+    sws_scale(v->sws_context, (uint8_t const * const *)v->frame->data,
+            v->frame->linesize, 0, v->frame->height, v->scaleframe->data,
+            v->scaleframe->linesize);
 
     int y;
     for (y=0; y<i->height; y++) {
-        memcpy(i->data+y*i->width*3, frame->data[0]+y*frame->linesize[0], frame->linesize[0]);
+        memcpy(i->data+y*i->width*3, v->scaleframe->data[0]+y*v->scaleframe->linesize[0], v->scaleframe->linesize[0]);
     }
-
-    av_free(buffer);
-    avcodec_free_frame(&frame);
 
     return i;
 }
@@ -259,6 +264,10 @@ column* video_get_column(video *v, double min_percent, double max_percent, nordl
 }
 
 void video_free(video *v) {
+    av_free(v->buffer);
+    avcodec_free_frame(&v->scaleframe);
+    sws_freeContext(v->sws_context);
+
     avcodec_close(v->decoder_context);
     avformat_close_input(&v->format_context);
     avcodec_free_frame(&v->frame);
