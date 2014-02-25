@@ -17,7 +17,7 @@ void print_help(poptContext popt, int ret) {
 }
 
 void interesting_stuff(char *filename, char *output_file, int width, int height, nordlicht_style style, int live) {
-    nordlicht *n = nordlicht_init(filename, width, height);
+    nordlicht *n = nordlicht_init(filename, width, height, live);
     char *data = NULL;
 
     if (n == NULL) {

@@ -7,6 +7,7 @@ struct nordlicht {
     int width, height;
     char *filename;
     unsigned char *data;
+    int live;
     nordlicht_style style;
     int modifiable;
     int owns_data;
@@ -18,7 +19,7 @@ size_t nordlicht_buffer_size(nordlicht *n) {
     return n->width*n->height*4;
 }
 
-nordlicht* nordlicht_init(char *filename, int width, int height) {
+nordlicht* nordlicht_init(char *filename, int width, int height, int live) {
     if (width < 1 || height < 1) {
         error("Dimensions must be positive (got %dx%d)", width, height);
         return NULL;
@@ -32,6 +33,8 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
 
     n->data = calloc(nordlicht_buffer_size(n), 1);
     n->owns_data = 1;
+
+    n->live = !!live;
 
     n->style = NORDLICHT_STYLE_HORIZONTAL;
     n->modifiable = 1;
@@ -71,28 +74,34 @@ unsigned char* get_column(nordlicht *n, int i) {
     column *c2 = column_scale(c, n->height);
     unsigned char *data = c2->data;
     free(c2);
-    column_free(c);
     return data;
 }
 
 int nordlicht_generate(nordlicht *n) {
     video_build_keyframe_index(n->source, n->width);
+    int x, exact;
 
-    int x;
-    for (x=0; x<n->width; x++) {
-        unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
-        if (column) {
-            int y;
-            for (y=0; y<n->height; y++) {
-                memcpy(n->data+n->width*4*y+4*x, column+3*y, 3);
-                memset(n->data+n->width*4*y+4*x+3, 255, 1);
+    int do_a_fast_pass = n->live || !video_exact(n->source);
+    int do_an_exact_pass = video_exact(n->source);
+
+    for(exact=(!do_a_fast_pass); exact<=do_an_exact_pass; exact++) {
+        video_set_exact(n->source, exact);
+        for (x=0; x<n->width; x++) {
+            unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
+            if (column) {
+                int y;
+                for (y=0; y<n->height; y++) {
+                    memcpy(n->data+n->width*4*y+4*x, column+3*y, 3);
+                    memset(n->data+n->width*4*y+4*x+3, 255, 1);
+                }
+                free(column);
+            } else {
+                memset(n->data+n->height*3*x, 0, n->height*3);
             }
-            free(column);
-        } else {
-            memset(n->data+n->height*3*x, 0, n->height*3);
+            n->progress = 1.0*x/n->width;
         }
-        n->progress = 1.0*x/n->width;
     }
+
     n->progress = 1.0;
     return 0;
 }

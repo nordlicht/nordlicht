@@ -10,8 +10,10 @@ typedef enum nordlicht_style {
 } nordlicht_style;
 
 // Allocate a new nordlicht of specific width and height, for a given video
-// file. Use `nordlicht_free` to free it again. Returns NULL on errors.
-nordlicht* nordlicht_init(char *filename, int width, int height);
+// file. When `live` is true, give a fast approximation before starting the
+// slow, exact generation. Use `nordlicht_free` to free the nordlicht again.
+// Returns NULL on errors.
+nordlicht* nordlicht_init(char *filename, int width, int height, int live);
 
 // Free a nordlicht.
 void nordlicht_free(nordlicht *n);
