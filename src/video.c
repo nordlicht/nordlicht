@@ -27,7 +27,7 @@ double fps(video *v) {
     return av_q2d(v->format_context->streams[v->video_stream]->r_frame_rate);
 }
 
-void grab_next_frame(video *v) {
+int grab_next_frame(video *v) {
     int valid = 0;
     int got_frame = 0;
 
@@ -53,11 +53,14 @@ void grab_next_frame(video *v) {
                 av_free_packet(&packet);
             }
         } else {
-            return;
+            error("av_read_frame failed.");
+            v->current_frame = -1;
+            return 1;
         }
     }
 
     v->current_frame = pts;
+    return 0;
 }
 
 void seek_keyframe(video *v, long frame) {
@@ -167,7 +170,7 @@ long preceding_keyframe(video *v, long frame_nr) {
     return best_keyframe;
 }
 
-void seek(video *v, long min_frame_nr, long max_frame_nr) {
+int seek(video *v, long min_frame_nr, long max_frame_nr) {
     if (v->exact) {
         long keyframe = preceding_keyframe(v, max_frame_nr);
 
@@ -179,7 +182,9 @@ void seek(video *v, long min_frame_nr, long max_frame_nr) {
             if (v->current_frame > max_frame_nr) {
                 error("Target frame is in the past. This shoudn't happen. Please file a bug.");
             }
-            grab_next_frame(v);
+            if (grab_next_frame(v) != 0) {
+                return 1;
+            }
         }
     } else {
         seek_keyframe(v, (min_frame_nr+max_frame_nr)/2);
@@ -187,10 +192,13 @@ void seek(video *v, long min_frame_nr, long max_frame_nr) {
             error("Our heuristic failed: %ld is not between %ld and %ld.", v->current_frame, min_frame_nr, max_frame_nr);
         }
     }
+    return 0;
 }
 
 image* get_frame(video *v, double min_percent, double max_percent) {
-    seek(v, min_percent*total_number_of_frames(v), max_percent*total_number_of_frames(v));
+    if (seek(v, min_percent*total_number_of_frames(v), max_percent*total_number_of_frames(v)) != 0) {
+        return NULL;
+    }
 
     image *i;
     i = malloc(sizeof(image));
@@ -229,8 +237,12 @@ image* get_frame(video *v, double min_percent, double max_percent) {
 
 column* video_get_column(video *v, double min_percent, double max_percent, nordlicht_style s) {
     image *i = get_frame(v, min_percent, max_percent);
-    column *c;
 
+    if (i == NULL) {
+        return NULL;
+    }
+
+    column *c;
     switch (s) {
         case NORDLICHT_STYLE_HORIZONTAL:
             c = compress_to_column(i);
@@ -239,8 +251,10 @@ column* video_get_column(video *v, double min_percent, double max_percent, nordl
             c = compress_to_row(i);
             break;
     }
+
     free(i->data);
     free(i);
+
     return c;
 }
 

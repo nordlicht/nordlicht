@@ -1,24 +1,30 @@
 ## Description
 
-**nordlicht** is a C library that converts video files into colorful barcodes. It was inspired by the [moviebarcode tumblr](http://moviebarcode.tumblr.com/). It takes the video's frames in regular intervals, scales them to a width of 1 pixel, and appends them. The resulting barcodes can be integrated into video players for faster navigation, see below.
+**nordlicht** is a C library for converting video files into colorful barcodes. It is inspired by the [Moviebarcode Tumblr](http://moviebarcode.tumblr.com/), but aims at the next logical step: Integrating these barcodes into video players to make navigation faster and more precise.
 
-As an example, here is the barcode of [Tears of Steel](http://tearsofsteel.org/). You can differentiate inside and outside scenes, see the credits and the "secret" closing scene:
+*nordlicht* provides a command line tool, which you can use to generate your own barcodes easily.
 
-![Barcode for "Tears of Steel"](res/tos-example.png)
+## Examples
+
+Here's the barcode for [Tears of Steel](http://tearsofsteel.org/). It was created by taking the movie's frames at regular intervals, scaling them to 1 pixel width, and appending them. You can differentiate inside and outside scenes, the credits, and the "secret" scene at the end:
+
+![](examples/tears-of-steel.png)
+
+This barcode of [Elephants Dream](http://www.elephantsdream.org/) uses the *vertical* style, which compresses video's frames to columns and rotates them counterclockwise. This style emphasizes the movement of characters:
+
+![](examples/elephants-dream-vertical.png)
 
 ## Installation
 
 - Arch Linux: Install the [`nordlicht-git`](https://aur.archlinux.org/packages/nordlicht-git/) package from the AUR.
 - Gentoo: Install the `media-video/nordlicht` package from the [multimedia overlay](https://gitorious.org/gentoo-multimedia/gentoo-multimedia).
-- Otherwise, get CMake, FFmpeg, FreeImage, and [popt](http://freecode.com/projects/popt), and issue: `mkdir build && cd build && cmake .. && make && make install`
+- On other distributions, get CMake, FFmpeg, FreeImage, [popt](http://freecode.com/projects/popt), and [help2man](https://www.gnu.org/software/help2man/), and issue: `mkdir build && cd build && cmake .. && make && make install`
 
 ## Usage
 
 ### Command line tool
 
-*nordlicht* comes with a command line tool, which you can use to generate your own barcodes:
-
-The command `nordlicht video.mkv -w 1000 -h 150 -o nordlicht.png` converts *video.mkv* to a barcode of 1000 x 150 pixels size and writes it to *nordlicht.png*. Run `nordlicht --help` to get additional usage instructions.
+Basic usage: `nordlicht video.mkv -w 1000 -h 150 -o barcode.png` converts *video.mkv* to a barcode of 1000 x 150 pixels size and writes it to *barcode.png*. Run `nordlicht --help` to learn more.
 
 ### Library
 
@@ -29,16 +35,10 @@ The command `nordlicht video.mkv -w 1000 -h 150 -o nordlicht.png` converts *vide
 
 ### mpv
 
-Are you using a recent [mpv](http://mpv.io/)? Would you like to try how navigating a video with a *nordlicht* feels like? Do you fancy hacky scripts? [mpv-nordlicht](/res/mpv-nordlicht) is for you! It generates a barcode for its last argument, then starts mpv and sets up the keybindings `n`/`N` to display/hide the barcode at the top of the video using mpv's `overlay_add` command. The OSD progress bar (which is displayed when using the arrow keys) is positioned below that. The barcode is adapted to your monitor resolution, so please activate fullscreen.
+For [mpv](http://mpv.io/), there's a hacky script called [mpv-nordlicht](/utils/mpv-nordlicht). Put it in your `PATH` and use it instead of `mpv`; it will generate a barcode for its last argument, then start mpv in fullscreen mode and display the barcode at the top, along with the OSD progress bar. This is how it looks like (for [Decay](http://www.decayfilm.com/)):
 
-This is how it looks like (for [Decay](http://www.decayfilm.com/)):
+![](/examples/mpv-integration.png)
 
-!["Decay" barcode integrated into mpv](/res/decay-mpv-example.png)
-
-### VLC
-
-An experimental [VLC integration](https://github.com/blinry/vlc) exists, that uses *nordlicht* to generate the barcode on the fly and display it in the main seek slider. Currently it needs to be updated to the 0.2 API.
-
-## License
+## License: GPLv2+
 
 *nordlicht* is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
