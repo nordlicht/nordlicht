@@ -15,6 +15,7 @@ echo "n overlay_add 0 0 $OSD_H_PX /tmp/nordlicht.bgra 0 bgra $SCREEN_WIDTH $NORD
 N overlay_remove 0
 b osd-bar seek 0" >> /tmp/mpv_input.conf
 
-nordlicht "$VIDEO" -w $SCREEN_WIDTH -h $NORDLICHT_HEIGHT -o /tmp/nordlicht.png
-convert /tmp/nordlicht.png BGRA:/tmp/nordlicht.bgra
-echo -n "fnb" | mpv --input-conf=/tmp/mpv_input.conf --osd-border-size=0 --osd-bar-align-y=$OSD_Y --osd-bar-w=100 --osd-bar-h=$OSD_H --osd-duration=3600000 "$@"
+trap "kill 0" SIGINT SIGTERM EXIT
+
+nordlicht "$VIDEO" -w $SCREEN_WIDTH -h $NORDLICHT_HEIGHT --live -o /tmp/nordlicht.bgra &
+{ echo -n "fb"; while true; do echo -n "n"; sleep 0.01; done } | mpv --input-conf=/tmp/mpv_input.conf --osd-border-size=0 --osd-bar-align-y=$OSD_Y --osd-bar-w=100 --osd-bar-h=$OSD_H --osd-duration=3600000 "$@"
