@@ -9,9 +9,14 @@ struct nordlicht {
     unsigned char *data;
     nordlicht_style style;
     int modifiable;
+    int owns_data;
     float progress;
     video *source;
 };
+
+size_t nordlicht_buffer_size(nordlicht *n) {
+    return n->width*n->height*4;
+}
 
 nordlicht* nordlicht_init(char *filename, int width, int height) {
     if (width < 1 || height < 1) {
@@ -24,7 +29,10 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     n->width = width;
     n->height = height;
     n->filename = filename;
-    n->data = calloc(width*height*3, 1);
+
+    n->data = calloc(nordlicht_buffer_size(n), 1);
+    n->owns_data = 1;
+
     n->style = NORDLICHT_STYLE_HORIZONTAL;
     n->modifiable = 1;
     n->progress = 0;
@@ -40,7 +48,9 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
 }
 
 void nordlicht_free(nordlicht *n) {
-    free(n->data);
+    if (n->owns_data) {
+        free(n->data);
+    }
     video_free(n->source);
     free(n);
 }
@@ -72,7 +82,11 @@ int nordlicht_generate(nordlicht *n) {
     for (x=0; x<n->width; x++) {
         unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
         if (column) {
-            memcpy(n->data+n->height*3*x, column, n->height*3);
+            int y;
+            for (y=0; y<n->height; y++) {
+                memcpy(n->data+n->width*4*y+4*x, column+3*y, 3);
+                memset(n->data+n->width*4*y+4*x+3, 255, 1);
+            }
             free(column);
         } else {
             memset(n->data+n->height*3*x, 0, n->height*3);
@@ -101,18 +115,27 @@ int nordlicht_write(nordlicht *n, char *filename) {
         free(realpath_output);
     }
 
-    FIBITMAP *bitmap = FreeImage_ConvertFromRawBits(n->data, n->height, n->width, n->height*3, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK, 1);
-    FIBITMAP *bitmap2 = FreeImage_Rotate(bitmap, -90, 0);
-    FreeImage_FlipHorizontal(bitmap2);
-    if (!FreeImage_Save(FreeImage_GetFIFFromMime("image/png"), bitmap2, filename, 0)) {
+    FIBITMAP *bitmap = FreeImage_ConvertFromRawBits(n->data, n->width, n->height, n->width*4, 4*8, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK, 1);
+    if (!FreeImage_Save(FreeImage_GetFIFFromMime("image/png"), bitmap, filename, 0)) {
         error("Could not write to '%s'", filename);
         return -1;
     }
     FreeImage_Unload(bitmap);
-    FreeImage_Unload(bitmap2);
     return 0;
 }
 
 float nordlicht_progress(nordlicht *n) {
     return n->progress;
 }
+
+const char* nordlicht_buffer(nordlicht *n) {
+    return n->data;
+}
+
+int nordlicht_set_buffer(nordlicht *n, char *data) {
+    n->owns_data = 0;
+    free(n->data);
+    n->data = data;
+    return 0;
+}
+
