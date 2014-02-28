@@ -35,7 +35,7 @@ Basic usage: `nordlicht video.mkv -w 1000 -h 150 -o barcode.png` converts *video
 
 ### mpv
 
-For [mpv](http://mpv.io/), there's a hacky script called [mpv-nordlicht](/utils/mpv-nordlicht). Put it in your `PATH` and use it instead of `mpv`; it will generate a barcode for its last argument, then start mpv in fullscreen mode and display the barcode at the top, along with the OSD progress bar. This is how it looks like (for [Decay](http://www.decayfilm.com/)):
+For [mpv](http://mpv.io/), there's a hacky script called [mpv-nordlicht](/utils/mpv-nordlicht). Put it in your `PATH` and use it instead of `mpv`; it will start mpv in fullscreen mode, generate a barcode in the background and display it at the top, along with the OSD progress bar. This is how it looks like (for [Decay](http://www.decayfilm.com/)):
 
 ![](/examples/mpv-integration.png)
 
