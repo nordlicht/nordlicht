@@ -30,9 +30,6 @@ add_custom_command(TARGET nordlicht-bin POST_BUILD
     -o ${CMAKE_BINARY_DIR}/nordlicht.1
 )
 
-enable_testing()
-add_test(test-bin ${CMAKE_SOURCE_DIR}/test/test-bin.sh)
-
 install(TARGETS nordlicht DESTINATION ${LIB_INSTALL_DIR})
 install(TARGETS nordlicht-bin DESTINATION bin)
 install(FILES src/nordlicht.h DESTINATION include)
