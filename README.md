@@ -45,4 +45,4 @@ For versions >= 0.2.0, there is an older script called [mpv-nordlicht](/utils/mp
 
 *nordlicht* is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
-The header image shows an Aurora Borealis, which is called "Nordlicht" in German. The picture was taken in Greenland during the [Shelios 2012 expedition](http://shelios.com/sh2012) and is available under the [Creative Commons Attribution-NonCommercial License](https://creativecommons.org/licenses/by-nc/2.0/).
+The header image shows an Aurora Borealis, which is called "Nordlicht" (nord-/lɪ[ç](https://en.wikipedia.org/wiki/Voiceless_palatal_fricative)t/) in German. The picture was taken in Greenland during the [Shelios 2012 expedition](http://shelios.com/sh2012) and is available under the [Creative Commons Attribution-NonCommercial License](https://creativecommons.org/licenses/by-nc/2.0/).
