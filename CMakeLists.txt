@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 2.8)
-include(GNUInstallDirs)
 
 project(nordlicht C)
 set(NORDLICHT_VERSION 0.3.2)
