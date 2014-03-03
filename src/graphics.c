@@ -13,6 +13,12 @@ column* column_scale(column *c, int length) {
     for(i=0; i<length; i++) {
         int lower = factor*i+0.5;
         int upper = factor*(i+1)-0.5;
+
+        if (lower > upper) {
+            // this can happen when upscaling. pick nearest-neighbour entry:
+            lower = upper = factor*(i+0.5);
+        }
+
         int rsum = 0;
         int gsum = 0;
         int bsum = 0;
