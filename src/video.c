@@ -176,8 +176,7 @@ video* video_init(char *filename, int width) {
     v->has_index = 0;
 
     if (grab_next_frame(v) != 0) {
-        error("fuck");
-        exit(1);
+        return NULL;
     }
 
     v->scaleframe = avcodec_alloc_frame();

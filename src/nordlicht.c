@@ -107,6 +107,8 @@ int nordlicht_generate(nordlicht *n) {
 }
 
 int nordlicht_write(nordlicht *n, char *filename) {
+    int code = 0;
+
     if (strcmp(filename, "") == 0) {
         error("Output filename must not be empty");
         return -1;
@@ -118,13 +120,17 @@ int nordlicht_write(nordlicht *n, char *filename) {
         char *realpath_input = realpath(n->filename, NULL);
         if (strcmp(realpath_input, realpath_output) == 0) {
             error("Will not overwrite input file");
-            return -1;
+            code = -1;
         }
+
         free(realpath_input);
         free(realpath_output);
+
+        if (code != 0) {
+            return code;
+        }
     }
 
-    int code = 0;
     FILE *fp;
     png_structp png = NULL;
     png_infop png_info = NULL;
@@ -132,27 +138,27 @@ int nordlicht_write(nordlicht *n, char *filename) {
     fp = fopen(filename, "wb");
     if (fp == NULL) {
         error("Could not open '%s' for writing", filename);
-        code = 1;
+        code = -1;
         goto finalize;
     }
 
     png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (png == NULL) {
         error("Error writing PNG");
-        code = 1;
+        code = -1;
         goto finalize;
     }
 
     png_info = png_create_info_struct(png);
     if (png_info == NULL) {
         error("Error writing PNG");
-        code = 1;
+        code = -1;
         goto finalize;
     }
 
     if (setjmp(png_jmpbuf(png))) {
         error("Error writing PNG");
-        code = 1;
+        code = -1;
         goto finalize;
     }
     png_init_io(png, fp);
@@ -185,9 +191,10 @@ const unsigned char* nordlicht_buffer(nordlicht *n) {
 }
 
 int nordlicht_set_buffer(nordlicht *n, unsigned char *data) {
+    if (n->owns_data) {
+        free(n->data);
+    }
     n->owns_data = 0;
-    free(n->data);
     n->data = data;
     return 0;
 }
-
