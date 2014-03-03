@@ -126,8 +126,8 @@ int nordlicht_write(nordlicht *n, char *filename) {
 
     int code = 0;
     FILE *fp;
-    png_structp png;
-    png_infop png_info;
+    png_structp png = NULL;
+    png_infop png_info = NULL;
 
     fp = fopen(filename, "wb");
     if (fp == NULL) {

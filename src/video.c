@@ -80,12 +80,6 @@ void seek_keyframe(video *v, long frame) {
     grab_next_frame(v);
 }
 
-void seek_forward(video *v, long frame) {
-    double time_base = av_q2d(v->format_context->streams[v->video_stream]->time_base);
-    av_seek_frame(v->format_context, v->video_stream, frame/fps(v)/time_base, 0);
-    grab_next_frame(v);
-}
-
 int total_number_of_frames(video *v) {
     double duration_sec = 1.0*v->format_context->duration/AV_TIME_BASE;
     return fps(v)*duration_sec;
