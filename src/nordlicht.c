@@ -1,5 +1,5 @@
 #include "nordlicht.h"
-#include <FreeImage.h>
+#include <png.h>
 #include "common.h"
 #include "video.h"
 
@@ -124,13 +124,56 @@ int nordlicht_write(nordlicht *n, char *filename) {
         free(realpath_output);
     }
 
-    FIBITMAP *bitmap = FreeImage_ConvertFromRawBits(n->data, n->width, n->height, n->width*4, 4*8, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK, 1);
-    if (!FreeImage_Save(FreeImage_GetFIFFromMime("image/png"), bitmap, filename, 0)) {
-        error("Could not write to '%s'", filename);
-        return -1;
+    int code = 0;
+    FILE *fp;
+    png_structp png;
+    png_infop png_info;
+
+    fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        error("Could not open '%s' for writing", filename);
+        code = 1;
+        goto finalize;
     }
-    FreeImage_Unload(bitmap);
-    return 0;
+
+    png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (png == NULL) {
+        error("Error writing PNG");
+        code = 1;
+        goto finalize;
+    }
+
+    png_info = png_create_info_struct(png);
+    if (png_info == NULL) {
+        error("Error writing PNG");
+        code = 1;
+        goto finalize;
+    }
+
+    if (setjmp(png_jmpbuf(png))) {
+        error("Error writing PNG");
+        code = 1;
+        goto finalize;
+    }
+    png_init_io(png, fp);
+    png_set_IHDR(png, png_info, n->width, n->height, 8, PNG_COLOR_TYPE_RGB_ALPHA,
+            PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+    png_write_info(png, png_info);
+
+    int y;
+    for (y = 0; y < n->height; y++) {
+        png_write_row(png, n->data+4*y*n->width);
+    }
+
+    png_write_end(png, NULL);
+
+finalize:
+    if (fp != NULL) fclose(fp);
+    if (png_info != NULL) png_free_data(png, png_info, PNG_FREE_ALL, -1);
+    if (png != NULL) png_destroy_write_struct(&png, (png_infopp)NULL);
+
+    return code;
 }
 
 float nordlicht_progress(nordlicht *n) {

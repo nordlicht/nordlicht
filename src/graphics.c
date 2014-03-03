@@ -48,9 +48,9 @@ column* compress_to_column(image *i) {
         long gsum = 0;
         long bsum = 0;
         for (x=0; x<i->width; x+=step) {
-            bsum += i->data[y*i->width*3+3*x+0];
+            rsum += i->data[y*i->width*3+3*x+0];
             gsum += i->data[y*i->width*3+3*x+1];
-            rsum += i->data[y*i->width*3+3*x+2];
+            bsum += i->data[y*i->width*3+3*x+2];
         }
         c->data[3*y+0] = rsum/(i->width/step+1);
         c->data[3*y+1] = gsum/(i->width/step+1);
@@ -73,9 +73,9 @@ column* compress_to_row(image *i) {
         long gsum = 0;
         long bsum = 0;
         for (y=0; y<i->height; y+=step) {
-            bsum += i->data[y*i->width*3+3*x+0];
+            rsum += i->data[y*i->width*3+3*x+0];
             gsum += i->data[y*i->width*3+3*x+1];
-            rsum += i->data[y*i->width*3+3*x+2];
+            bsum += i->data[y*i->width*3+3*x+2];
         }
         c->data[3*(i->width-x-1)+0] = rsum/(i->height/step);
         c->data[3*(i->width-x-1)+1] = gsum/(i->height/step);
@@ -96,9 +96,9 @@ column* compress_to_diagonal(image *i) {
     int x;
     for (x=0; x<i->width; x++) {
         int y = x*slope;
-        c->data[3*x+0] = i->data[y*i->width*3+3*x+2];
+        c->data[3*x+0] = i->data[y*i->width*3+3*x+0];
         c->data[3*x+1] = i->data[y*i->width*3+3*x+1];
-        c->data[3*x+2] = i->data[y*i->width*3+3*x+0];
+        c->data[3*x+2] = i->data[y*i->width*3+3*x+2];
     }
 
     return c;

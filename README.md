@@ -18,7 +18,7 @@ This barcode of [Elephants Dream](http://www.elephantsdream.org/) uses the *vert
 
 - Arch Linux: Install the [`nordlicht-git`](https://aur.archlinux.org/packages/nordlicht-git/) package from the AUR
 - Gentoo: Install the `media-video/nordlicht` package from the [multimedia overlay](https://gitorious.org/gentoo-multimedia/gentoo-multimedia)
-- On other distributions, get CMake, FFmpeg, FreeImage, [popt](http://freecode.com/projects/popt), and [help2man](https://www.gnu.org/software/help2man/), and issue: `mkdir build && cd build && cmake .. && make && make install`
+- On other distributions, get CMake, FFmpeg, libpng, [popt](http://freecode.com/projects/popt), and [help2man](https://www.gnu.org/software/help2man/), and issue: `mkdir build && cd build && cmake .. && make && make install`
 
 ## Usage
 
