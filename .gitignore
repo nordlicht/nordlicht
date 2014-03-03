@@ -2,10 +2,12 @@
 CMakeCache.txt
 CMakeFiles/
 CTestTestfile.cmake
-libnordlicht.so
-Makefile
 cmake_install.cmake
+libnordlicht.so
+libnordlicht.so.*
+Makefile
 nordlicht
+nordlicht.1
 nordlicht.pc
 version.h
 
