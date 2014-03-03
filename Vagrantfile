@@ -17,4 +17,8 @@ Vagrant.configure("2") do |config|
         c.vm.box = "gentoo64"
         c.vm.box_url = "https://dl.dropboxusercontent.com/s/0e23qmbo97wb5x2/gentoo-20131029-i686-minimal.box"
     end
+    config.vm.define "suse64" do |c|
+        c.vm.box = "suse64"
+        c.vm.box_url = "http://sourceforge.net/projects/opensusevagrant/files/12.2/opensuse-12.2-64.box/download"
+    end
 end
