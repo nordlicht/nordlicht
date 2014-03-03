@@ -180,11 +180,11 @@ float nordlicht_progress(nordlicht *n) {
     return n->progress;
 }
 
-const char* nordlicht_buffer(nordlicht *n) {
+const unsigned char* nordlicht_buffer(nordlicht *n) {
     return n->data;
 }
 
-int nordlicht_set_buffer(nordlicht *n, char *data) {
+int nordlicht_set_buffer(nordlicht *n, unsigned char *data) {
     n->owns_data = 0;
     free(n->data);
     n->data = data;
