@@ -91,7 +91,10 @@ int nordlicht_generate(nordlicht *n) {
             if (column) {
                 int y;
                 for (y=0; y<n->height; y++) {
-                    memcpy(n->data+n->width*4*y+4*x, column+3*y, 3);
+                    // BGRA pixel format:
+                    memcpy(n->data+n->width*4*y+4*x+2, column+3*y+0, 1);
+                    memcpy(n->data+n->width*4*y+4*x+1, column+3*y+1, 1);
+                    memcpy(n->data+n->width*4*y+4*x+0, column+3*y+2, 1);
                     memset(n->data+n->width*4*y+4*x+3, 255, 1);
                 }
                 free(column);
@@ -166,6 +169,8 @@ int nordlicht_write(nordlicht *n, char *filename) {
             PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
 
     png_write_info(png, png_info);
+
+    png_set_bgr(png);
 
     int y;
     for (y = 0; y < n->height; y++) {

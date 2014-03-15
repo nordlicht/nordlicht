@@ -22,7 +22,7 @@ void nordlicht_free(nordlicht *n);
 void nordlicht_set_style(nordlicht *n, nordlicht_style s);
 
 // Returns a pointer to the nordlicht's internal buffer. You can use it to draw
-// the barcode while it is generated.
+// the barcode while it is generated. The pixel format is 32-bit BGRA.
 const unsigned char* nordlicht_buffer(nordlicht *n);
 
 // Replace the internal nordlicht's internal buffer. The data pointer is owned

@@ -82,7 +82,7 @@ int main(int argc, const char **argv) {
         {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height; by default it's \"width/10\"", NULL},
         {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set filename of output PNG; the default is $(basename VIDEOFILE).png", "FILENAME"},
         {"style", 's', POPT_ARG_STRING, &style_string, 0, "default is 'horizontal'; can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them", "STYLE"},
-        {"live", '\0', 0, &live, 0, "generate a raw BGRA file instead of an PNG; you can display this file, it will update itself", NULL},
+        {"live", '\0', 0, &live, 0, "generate a raw 32-bit BGRA file instead of an PNG. You can display the content of this file, it will be updated as the barcode is generated", NULL},
         {"help", '\0', 0, &help, 0, "display this help and exit", NULL},
         {"version", '\0', 0, &version, 0, "output version information and exit", NULL},
         POPT_TABLEEND
