@@ -5,7 +5,7 @@ function init()
     is_on = false
     -- size of the barcode:
     width = mp.get_property("osd-width")
-    height = math.floor(width/10)
+    height = math.floor(width/20)
     -- size of the progress marker:
     mw = math.floor(height/8)*2+1
     mh = (mw+1)/2
