@@ -5,8 +5,6 @@ nordlicht() {
 }
 
 abort() {
-    popd
-    rm -r "$TMP"
     exit 1
 }
 
@@ -94,6 +92,11 @@ pass nordlicht "$VIDEO" -w 1 -s vertical
 pass nordlicht "$VIDEO" -w 1 -s horizontal
 fail nordlicht "$VIDEO" -s nope
 fail nordlicht "$VIDEO" -s ''
+
+# output formats
+pass nordlicht "$VIDEO" -w 1 -o barcode.bgra
+fail nordlicht "$VIDEO" -w 1 -o barcode.123
+fail nordlicht "$VIDEO" -w 1 -o not-a-png
 
 popd
 rm -r "$TMP"

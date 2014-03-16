@@ -11,6 +11,12 @@ const char *gnu_basename(const char *path) {
     return base ? base+1 : path;
 }
 
+const char *filename_ext(const char *path) {
+    const char *dot = strrchr(path, '.');
+    if (!dot || dot == path) return "";
+    return dot+1;
+}
+
 void print_help(poptContext popt, int ret) {
     poptPrintHelp(popt, ret == 0 ? stdout : stderr, 0);
     exit(ret);
@@ -80,9 +86,8 @@ int main(int argc, const char **argv) {
     struct poptOption optionsTable[] = {
         {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width; by default it's \"height*10\", or 1000 pixels, if both are undefined", NULL},
         {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height; by default it's \"width/10\"", NULL},
-        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set filename of output PNG; the default is $(basename VIDEOFILE).png", "FILENAME"},
+        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename, the default is $(basename VIDEOFILE).png; when you specify an *.bgra file, you'll get a raw 32-bit BGRA file that is updated as the barcode is generated", "FILENAME"},
         {"style", 's', POPT_ARG_STRING, &style_string, 0, "default is 'horizontal'; can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them", "STYLE"},
-        {"live", '\0', 0, &live, 0, "generate a raw 32-bit BGRA file instead of an PNG. You can display the content of this file, it will be updated as the barcode is generated", NULL},
         {"help", '\0', 0, &help, 0, "display this help and exit", NULL},
         {"version", '\0', 0, &version, 0, "output version information and exit", NULL},
         POPT_TABLEEND
@@ -158,6 +163,16 @@ int main(int argc, const char **argv) {
             error("Unknown style '%s'.", style_string);
             print_help(popt, 1);
         }
+    }
+
+    const char *ext = filename_ext(output_file);
+    if (strcmp(ext, "png") == 0) {
+        live = 0;
+    } else if (strcmp(ext, "rgba") == 0) {
+        live = 1;
+    } else {
+        error("Unsupported file extension '%s'", ext);
+        print_help(popt, 1);
     }
 
     interesting_stuff(filename, output_file, width, height, style, live);
