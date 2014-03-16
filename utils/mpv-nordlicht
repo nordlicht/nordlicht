@@ -17,5 +17,5 @@ b osd-bar seek 0" >> /tmp/mpv_input.conf
 
 trap "kill 0" SIGINT SIGTERM EXIT
 
-nordlicht "$VIDEO" -w $SCREEN_WIDTH -h $NORDLICHT_HEIGHT --live -o /tmp/nordlicht.bgra &
+nordlicht "$VIDEO" -w $SCREEN_WIDTH -h $NORDLICHT_HEIGHT -o /tmp/nordlicht.bgra &
 { echo -n "fb"; while true; do echo -n "n"; sleep 0.01; done } | mpv --input-conf=/tmp/mpv_input.conf --osd-border-size=0 --osd-bar-align-y=$OSD_Y --osd-bar-w=100 --osd-bar-h=$OSD_H --osd-duration=3600000 "$@"
