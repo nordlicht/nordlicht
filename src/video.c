@@ -8,7 +8,7 @@
 #endif
 
 #define HEURISTIC_NUMBER_OF_FRAMES 1800 // how many frames will the heuristic look at?
-#define HEURISTIC_KEYFRAME_FACTOR 2 // lower bound for the actual/required keyframe ratio
+#define HEURISTIC_KEYFRAME_FACTOR 1 // lower bound for the actual/required keyframe ratio
 
 struct video {
     int exact;
@@ -18,13 +18,27 @@ struct video {
     int video_stream;
     AVFrame *frame;
 
+    uint8_t *buffer;
+    AVFrame *scaleframe;
+    struct SwsContext *sws_context;
+
     long current_frame;
     int *keyframes;
     int number_of_keyframes;
+    int has_index;
+
+    column *last_column;
 };
 
 double fps(video *v) {
     return av_q2d(v->format_context->streams[v->video_stream]->r_frame_rate);
+}
+
+long packet_pts(video *v, AVPacket *packet) {
+    long pts = packet->pts != 0 ? packet->pts : packet->dts;
+    double sec = (double)(pts - v->format_context->streams[v->video_stream]->start_time) *
+        av_q2d(v->format_context->streams[v->video_stream]->time_base);
+    return (int64_t)(fps(v) * sec + 0.5);
 }
 
 int grab_next_frame(video *v) {
@@ -41,11 +55,7 @@ int grab_next_frame(video *v) {
             if(packet.stream_index == v->video_stream) {
                 avcodec_decode_video2(v->decoder_context, v->frame, &got_frame, &packet);
                 if (got_frame) {
-                    pts = packet.pts;
-                    // to sec:
-                    pts = pts*(double)av_q2d(v->format_context->streams[v->video_stream]->time_base);
-                    // to frame number:
-                    pts = pts*fps(v);
+                    pts = packet_pts(v, &packet);
                     valid = 1;
                 }
                 av_free_packet(&packet);
@@ -70,31 +80,35 @@ void seek_keyframe(video *v, long frame) {
     grab_next_frame(v);
 }
 
-void seek_forward(video *v, long frame) {
-    double time_base = av_q2d(v->format_context->streams[v->video_stream]->time_base);
-    av_seek_frame(v->format_context, v->video_stream, frame/fps(v)/time_base, 0);
-    grab_next_frame(v);
-}
-
 int total_number_of_frames(video *v) {
     double duration_sec = 1.0*v->format_context->duration/AV_TIME_BASE;
     return fps(v)*duration_sec;
 }
 
 void video_build_keyframe_index(video *v, int width) {
-    v->keyframes = malloc(sizeof(long)*10*60*60*60); // TODO: dynamic datastructure!
+    v->keyframes = malloc(sizeof(long)*60*60*3); // TODO: dynamic datastructure!
     v->number_of_keyframes = 0;
 
     AVPacket packet;
     av_init_packet(&packet);
     int frame = 0;
 
+    v->has_index = 0;
+    v->exact = 1;
+    seek_keyframe(v, 0);
+
     while (av_read_frame(v->format_context, &packet) >= 0) {
         if (packet.stream_index == v->video_stream) {
             if (!!(packet.flags & AV_PKT_FLAG_KEY)) {
-                v->keyframes[++v->number_of_keyframes] = packet.pts;
+                v->number_of_keyframes++;
+
+                long pts = packet_pts(v, &packet);
+                if (pts < 1 && v->number_of_keyframes > 0) {
+                    pts = frame;
+                }
+
+                v->keyframes[v->number_of_keyframes] = pts;
             }
-            frame++;
             if (frame == HEURISTIC_NUMBER_OF_FRAMES) {
                 float density = 1.0*v->number_of_keyframes/HEURISTIC_NUMBER_OF_FRAMES;
                 float required_density = 1.0*HEURISTIC_KEYFRAME_FACTOR/COLUMN_PRECISION*width/total_number_of_frames(v);
@@ -105,16 +119,19 @@ void video_build_keyframe_index(video *v, int width) {
                     printf("\rBuilding index: Enough keyframes (%.2f times enough), aborting.\n", density/required_density);
                     v->exact = 0;
                     return;
+                } else {
+                    printf("\rBuilding index: Keyframe ratio is %.2f, keep going.\n", density/required_density);
                 }
             }
+            frame++;
         }
         av_free_packet(&packet);
 
         printf("\rBuilding index: %02.0f%%", 1.0*frame/total_number_of_frames(v)*100);
         fflush(stdout);
     }
-    // TODO: Is it necessary to sort these?
     printf("\rBuilding index: %d keyframes.\n", v->number_of_keyframes);
+    v->has_index = 1;
 }
 
 video* video_init(char *filename, int width) {
@@ -155,6 +172,23 @@ video* video_init(char *filename, int width) {
 
     v->frame = avcodec_alloc_frame();
     v->current_frame = -1;
+    v->last_column = NULL;
+    v->has_index = 0;
+
+    if (grab_next_frame(v) != 0) {
+        return NULL;
+    }
+
+    v->scaleframe = avcodec_alloc_frame();
+    v->scaleframe->width = v->frame->width;
+    v->scaleframe->height = v->frame->height;
+    v->scaleframe->format = PIX_FMT_RGB24;
+
+    v->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, v->scaleframe->width, v->scaleframe->height));
+    avpicture_fill((AVPicture *)v->scaleframe, v->buffer, PIX_FMT_RGB24, v->frame->width, v->frame->height);
+
+    v->sws_context = sws_getContext(v->frame->width, v->frame->height, v->frame->format,
+            v->scaleframe->width, v->scaleframe->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
     return v;
 }
@@ -188,15 +222,12 @@ int seek(video *v, long min_frame_nr, long max_frame_nr) {
         }
     } else {
         seek_keyframe(v, (min_frame_nr+max_frame_nr)/2);
-        if (v->current_frame < min_frame_nr || v->current_frame > max_frame_nr) {
-            error("Our heuristic failed: %ld is not between %ld and %ld.", v->current_frame, min_frame_nr, max_frame_nr);
-        }
     }
     return 0;
 }
 
-image* get_frame(video *v, double min_percent, double max_percent) {
-    if (seek(v, min_percent*total_number_of_frames(v), max_percent*total_number_of_frames(v)) != 0) {
+image* get_frame(video *v, double min_frame, double max_frame) {
+    if (seek(v, min_frame, max_frame) != 0) {
         return NULL;
     }
 
@@ -207,58 +238,67 @@ image* get_frame(video *v, double min_percent, double max_percent) {
     i->height = v->frame->height;
     i->data = malloc(i->height*i->width*3);
 
-    AVFrame *frame;
-    frame = avcodec_alloc_frame();
-    frame->width = i->width;
-    frame->height = i->height;
-    frame->format = PIX_FMT_RGB24;
-
-    uint8_t *buffer;
-    buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, i->width, i->height));
-    avpicture_fill((AVPicture *)frame, buffer, PIX_FMT_RGB24, i->width, i->height);
-
-    struct SwsContext *sws_context = sws_getContext(v->frame->width, v->frame->height, v->frame->format,
-            v->frame->width, v->frame->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
-    sws_scale(sws_context, (uint8_t const * const *)v->frame->data,
-            v->frame->linesize, 0, v->frame->height, frame->data,
-            frame->linesize);
-    sws_freeContext(sws_context);
+    sws_scale(v->sws_context, (uint8_t const * const *)v->frame->data,
+            v->frame->linesize, 0, v->frame->height, v->scaleframe->data,
+            v->scaleframe->linesize);
 
     int y;
     for (y=0; y<i->height; y++) {
-        memcpy(i->data+y*i->width*3, frame->data[0]+y*frame->linesize[0], frame->linesize[0]);
+        memcpy(i->data+y*i->width*3, v->scaleframe->data[0]+y*v->scaleframe->linesize[0], v->scaleframe->linesize[0]);
     }
-
-    av_free(buffer);
-    avcodec_free_frame(&frame);
 
     return i;
 }
 
 column* video_get_column(video *v, double min_percent, double max_percent, nordlicht_style s) {
-    image *i = get_frame(v, min_percent, max_percent);
+    long min_frame = min_percent*total_number_of_frames(v);
+    long max_frame = max_percent*total_number_of_frames(v);
+
+    if (v->last_column != NULL && !v->exact && v->has_index) {
+        if (v->current_frame >= preceding_keyframe(v, (max_frame+min_frame)/2)) {
+            return v->last_column;
+        }
+    }
+
+    image *i = get_frame(v, min_frame, max_frame);
 
     if (i == NULL) {
         return NULL;
     }
 
-    column *c;
+    if (v->last_column != NULL) {
+        free(v->last_column);
+    }
+
     switch (s) {
         case NORDLICHT_STYLE_HORIZONTAL:
-            c = compress_to_column(i);
+            v->last_column = compress_to_column(i);
             break;
         case NORDLICHT_STYLE_VERTICAL:
-            c = compress_to_row(i);
+            v->last_column = compress_to_row(i);
             break;
     }
 
     free(i->data);
     free(i);
 
-    return c;
+    return v->last_column;
+}
+
+int video_exact(video *v) {
+    return v->exact;
+}
+
+void video_set_exact(video *v, int exact) {
+    v->exact = exact;
+    seek_keyframe(v, 0);
 }
 
 void video_free(video *v) {
+    av_free(v->buffer);
+    avcodec_free_frame(&v->scaleframe);
+    sws_freeContext(v->sws_context);
+
     avcodec_close(v->decoder_context);
     avformat_close_input(&v->format_context);
     avcodec_free_frame(&v->frame);

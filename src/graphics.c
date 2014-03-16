@@ -13,6 +13,12 @@ column* column_scale(column *c, int length) {
     for(i=0; i<length; i++) {
         int lower = factor*i+0.5;
         int upper = factor*(i+1)-0.5;
+
+        if (lower > upper) {
+            // this can happen when upscaling. pick nearest-neighbour entry:
+            lower = upper = factor*(i+0.5);
+        }
+
         int rsum = 0;
         int gsum = 0;
         int bsum = 0;
@@ -42,19 +48,19 @@ column* compress_to_column(image *i) {
     c->length = i->height;
 
     int x, y;
-    int step = 1;
+    int step = i->width/20;
     for (y=0; y<i->height; y++) {
         long rsum = 0;
         long gsum = 0;
         long bsum = 0;
         for (x=0; x<i->width; x+=step) {
-            bsum += i->data[y*i->width*3+3*x+0];
+            rsum += i->data[y*i->width*3+3*x+0];
             gsum += i->data[y*i->width*3+3*x+1];
-            rsum += i->data[y*i->width*3+3*x+2];
+            bsum += i->data[y*i->width*3+3*x+2];
         }
-        c->data[3*y+0] = rsum/(i->width/step);
-        c->data[3*y+1] = gsum/(i->width/step);
-        c->data[3*y+2] = bsum/(i->width/step);
+        c->data[3*y+0] = rsum/(i->width/step+1);
+        c->data[3*y+1] = gsum/(i->width/step+1);
+        c->data[3*y+2] = bsum/(i->width/step+1);
     }
 
     return c;
@@ -73,9 +79,9 @@ column* compress_to_row(image *i) {
         long gsum = 0;
         long bsum = 0;
         for (y=0; y<i->height; y+=step) {
-            bsum += i->data[y*i->width*3+3*x+0];
+            rsum += i->data[y*i->width*3+3*x+0];
             gsum += i->data[y*i->width*3+3*x+1];
-            rsum += i->data[y*i->width*3+3*x+2];
+            bsum += i->data[y*i->width*3+3*x+2];
         }
         c->data[3*(i->width-x-1)+0] = rsum/(i->height/step);
         c->data[3*(i->width-x-1)+1] = gsum/(i->height/step);
@@ -84,23 +90,3 @@ column* compress_to_row(image *i) {
 
     return c;
 }
-
-column* compress_to_diagonal(image *i) {
-    column *c;
-    c = malloc(sizeof(column));
-    c->data = malloc(i->width*3);
-    c->length = i->width;
-
-    float slope = 1.0*i->height/i->width;
-
-    int x;
-    for (x=0; x<i->width; x++) {
-        int y = x*slope;
-        c->data[3*x+0] = i->data[y*i->width*3+3*x+2];
-        c->data[3*x+1] = i->data[y*i->width*3+3*x+1];
-        c->data[3*x+2] = i->data[y*i->width*3+3*x+0];
-    }
-
-    return c;
-}
-

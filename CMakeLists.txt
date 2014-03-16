@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
-include(GNUInstallDirs)
 
 project(nordlicht C)
-set(NORDLICHT_VERSION 0.3.1)
+set(NORDLICHT_VERSION 0.3.4)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(LIB_SUFFIX "" CACHE STRING "Suffix of library directory name (for example '32' or '64')")
@@ -10,14 +9,14 @@ set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}" CACHE STRING "Dir
 
 find_package(Threads REQUIRED)
 find_package(FFmpeg COMPONENTS AVUTIL AVFORMAT AVCODEC SWSCALE REQUIRED)
-find_package(FreeImage REQUIRED)
+find_package(PNG REQUIRED)
 find_package(Popt REQUIRED)
 
-include_directories(${CMAKE_BINARY_DIR}/src ${FFMPEG_INCLUDE_DIRS} ${FreeImage_INCLUDE_DIRS} ${POPT_INCLUDES})
+include_directories(${CMAKE_BINARY_DIR}/src ${FFMPEG_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${POPT_INCLUDES})
 
 add_library(nordlicht SHARED src/common.c src/graphics.c src/nordlicht.c src/video.c)
 set_target_properties(nordlicht PROPERTIES SOVERSION 0)
-target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${FreeImage_LIBRARIES} ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${PNG_LIBRARIES} ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(nordlicht-bin src/main.c)
 set_target_properties(nordlicht-bin PROPERTIES OUTPUT_NAME nordlicht)
@@ -29,9 +28,6 @@ add_custom_command(TARGET nordlicht-bin POST_BUILD
     COMMAND help2man ${CMAKE_BINARY_DIR}/nordlicht -N -n "creates colorful barcodes from video files"
     -o ${CMAKE_BINARY_DIR}/nordlicht.1
 )
-
-enable_testing()
-add_test(test-bin ${CMAKE_SOURCE_DIR}/test/test-bin.sh)
 
 install(TARGETS nordlicht DESTINATION ${LIB_INSTALL_DIR})
 install(TARGETS nordlicht-bin DESTINATION bin)

@@ -1,5 +1,5 @@
 #include "nordlicht.h"
-#include <FreeImage.h>
+#include <png.h>
 #include "common.h"
 #include "video.h"
 
@@ -7,13 +7,19 @@ struct nordlicht {
     int width, height;
     char *filename;
     unsigned char *data;
+    int live;
     nordlicht_style style;
     int modifiable;
+    int owns_data;
     float progress;
     video *source;
 };
 
-nordlicht* nordlicht_init(char *filename, int width, int height) {
+size_t nordlicht_buffer_size(nordlicht *n) {
+    return n->width*n->height*4;
+}
+
+nordlicht* nordlicht_init(char *filename, int width, int height, int live) {
     if (width < 1 || height < 1) {
         error("Dimensions must be positive (got %dx%d)", width, height);
         return NULL;
@@ -24,7 +30,12 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     n->width = width;
     n->height = height;
     n->filename = filename;
-    n->data = calloc(width*height*3, 1);
+
+    n->data = calloc(nordlicht_buffer_size(n), 1);
+    n->owns_data = 1;
+
+    n->live = !!live;
+
     n->style = NORDLICHT_STYLE_HORIZONTAL;
     n->modifiable = 1;
     n->progress = 0;
@@ -40,7 +51,9 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
 }
 
 void nordlicht_free(nordlicht *n) {
-    free(n->data);
+    if (n->owns_data) {
+        free(n->data);
+    }
     video_free(n->source);
     free(n);
 }
@@ -61,29 +74,41 @@ unsigned char* get_column(nordlicht *n, int i) {
     column *c2 = column_scale(c, n->height);
     unsigned char *data = c2->data;
     free(c2);
-    column_free(c);
     return data;
 }
 
 int nordlicht_generate(nordlicht *n) {
     video_build_keyframe_index(n->source, n->width);
+    int x, exact;
 
-    int x;
-    for (x=0; x<n->width; x++) {
-        unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
-        if (column) {
-            memcpy(n->data+n->height*3*x, column, n->height*3);
-            free(column);
-        } else {
-            memset(n->data+n->height*3*x, 0, n->height*3);
+    int do_a_fast_pass = n->live || !video_exact(n->source);
+    int do_an_exact_pass = video_exact(n->source);
+
+    for(exact=(!do_a_fast_pass); exact<=do_an_exact_pass; exact++) {
+        video_set_exact(n->source, exact);
+        for (x=0; x<n->width; x++) {
+            unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
+            if (column) {
+                int y;
+                for (y=0; y<n->height; y++) {
+                    memcpy(n->data+n->width*4*y+4*x, column+3*y, 3);
+                    memset(n->data+n->width*4*y+4*x+3, 255, 1);
+                }
+                free(column);
+            } else {
+                memset(n->data+n->height*3*x, 0, n->height*3);
+            }
+            n->progress = 1.0*x/n->width;
         }
-        n->progress = 1.0*x/n->width;
     }
+
     n->progress = 1.0;
     return 0;
 }
 
 int nordlicht_write(nordlicht *n, char *filename) {
+    int code = 0;
+
     if (strcmp(filename, "") == 0) {
         error("Output filename must not be empty");
         return -1;
@@ -95,24 +120,81 @@ int nordlicht_write(nordlicht *n, char *filename) {
         char *realpath_input = realpath(n->filename, NULL);
         if (strcmp(realpath_input, realpath_output) == 0) {
             error("Will not overwrite input file");
-            return -1;
+            code = -1;
         }
+
         free(realpath_input);
         free(realpath_output);
+
+        if (code != 0) {
+            return code;
+        }
     }
 
-    FIBITMAP *bitmap = FreeImage_ConvertFromRawBits(n->data, n->height, n->width, n->height*3, 24, FI_RGBA_RED_MASK, FI_RGBA_GREEN_MASK, FI_RGBA_BLUE_MASK, 1);
-    FIBITMAP *bitmap2 = FreeImage_Rotate(bitmap, -90, 0);
-    FreeImage_FlipHorizontal(bitmap2);
-    if (!FreeImage_Save(FreeImage_GetFIFFromMime("image/png"), bitmap2, filename, 0)) {
-        error("Could not write to '%s'", filename);
-        return -1;
+    FILE *fp;
+    png_structp png = NULL;
+    png_infop png_info = NULL;
+
+    fp = fopen(filename, "wb");
+    if (fp == NULL) {
+        error("Could not open '%s' for writing", filename);
+        code = -1;
+        goto finalize;
     }
-    FreeImage_Unload(bitmap);
-    FreeImage_Unload(bitmap2);
-    return 0;
+
+    png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (png == NULL) {
+        error("Error writing PNG");
+        code = -1;
+        goto finalize;
+    }
+
+    png_info = png_create_info_struct(png);
+    if (png_info == NULL) {
+        error("Error writing PNG");
+        code = -1;
+        goto finalize;
+    }
+
+    if (setjmp(png_jmpbuf(png))) {
+        error("Error writing PNG");
+        code = -1;
+        goto finalize;
+    }
+    png_init_io(png, fp);
+    png_set_IHDR(png, png_info, n->width, n->height, 8, PNG_COLOR_TYPE_RGB_ALPHA,
+            PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+    png_write_info(png, png_info);
+
+    int y;
+    for (y = 0; y < n->height; y++) {
+        png_write_row(png, n->data+4*y*n->width);
+    }
+
+    png_write_end(png, NULL);
+
+finalize:
+    if (fp != NULL) fclose(fp);
+    if (png_info != NULL) png_free_data(png, png_info, PNG_FREE_ALL, -1);
+    if (png != NULL) png_destroy_write_struct(&png, (png_infopp)NULL);
+
+    return code;
 }
 
 float nordlicht_progress(nordlicht *n) {
     return n->progress;
+}
+
+const unsigned char* nordlicht_buffer(nordlicht *n) {
+    return n->data;
+}
+
+int nordlicht_set_buffer(nordlicht *n, unsigned char *data) {
+    if (n->owns_data) {
+        free(n->data);
+    }
+    n->owns_data = 0;
+    n->data = data;
+    return 0;
 }
