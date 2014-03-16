@@ -1,3 +1,11 @@
+nordlicht (0.3.4-1) unstable; urgency=medium
+
+  * new upstream version 0.3.4
+    - patches/remove-tests applied upstream
+    - now depends directly on libpng instead of freeimage
+
+ -- Sebastian Morr <sebastian@morr.cc>  Sun, 16 Mar 2014 09:49:00 +0100
+
 nordlicht (0.3.1-2~1.gbp13a9ed) UNRELEASED; urgency=medium
 
   ** SNAPSHOT build @13a9ecaa1df30804dc548c813222d19de647bf3d **
