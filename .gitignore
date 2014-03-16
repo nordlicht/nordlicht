@@ -13,7 +13,7 @@ testsuite
 version.h
 
 # Testing
-tests_tmp_*
+test_tmp_*
 video.mp4
 *.png
 
