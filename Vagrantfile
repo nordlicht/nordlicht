@@ -4,6 +4,7 @@ Vagrant.configure("2") do |config|
         c.vm.box_url = "http://files.vagrantup.com/precise64.box"
         c.vm.provision :shell, :path => "utils/bootstrap-debian.sh"
         c.vm.synced_folder ".", "/home/vagrant/nordlicht"
+        c.vm.synced_folder "~/.gnupg", "/home/vagrant/.gnupg"
         c.ssh.forward_agent = true
     end
     config.vm.define "debian" do |c|
@@ -11,6 +12,7 @@ Vagrant.configure("2") do |config|
         c.vm.box_url = "https://dl.dropboxusercontent.com/u/197673519/debian-7.2.0.box"
         c.vm.provision :shell, :path => "utils/bootstrap-debian.sh"
         c.vm.synced_folder ".", "/home/vagrant/nordlicht"
+        c.vm.synced_folder "~/.gnupg", "/home/vagrant/.gnupg"
         c.ssh.forward_agent = true
     end
     config.vm.define "gentoo" do |c|
