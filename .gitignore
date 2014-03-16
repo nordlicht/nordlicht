@@ -1,19 +1,19 @@
 # Build products
 CMakeCache.txt
 CMakeFiles/
-CTestTestfile.cmake
 cmake_install.cmake
+CTestTestfile.cmake
 libnordlicht.so
 libnordlicht.so.*
 Makefile
 nordlicht
 nordlicht.1
 nordlicht.pc
+testsuite
 version.h
 
 # Testing
-Testing/
-tests-tmp_*
+tests_tmp_*
 video.mp4
 *.png
 

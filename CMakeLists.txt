@@ -12,7 +12,7 @@ find_package(FFmpeg COMPONENTS AVUTIL AVFORMAT AVCODEC SWSCALE REQUIRED)
 find_package(PNG REQUIRED)
 find_package(Popt REQUIRED)
 
-include_directories(${CMAKE_BINARY_DIR}/src ${FFMPEG_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${POPT_INCLUDES})
+include_directories(${CMAKE_BINARY_DIR}/src ${CMAKE_SOURCE_DIR}/src ${FFMPEG_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${POPT_INCLUDES})
 
 add_library(nordlicht SHARED src/common.c src/graphics.c src/nordlicht.c src/video.c)
 set_target_properties(nordlicht PROPERTIES SOVERSION 0)
@@ -21,6 +21,10 @@ target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${PNG_LIBRARIES} ${POPT_LIBR
 add_executable(nordlicht-bin src/main.c)
 set_target_properties(nordlicht-bin PROPERTIES OUTPUT_NAME nordlicht)
 target_link_libraries(nordlicht-bin nordlicht)
+
+add_executable(testsuite test/library.c)
+target_link_libraries(testsuite nordlicht)
+add_custom_target(test COMMAND testsuite COMMAND ${CMAKE_SOURCE_DIR}/test/tool.sh)
 
 configure_file(cmake/nordlicht.pc.in cmake/nordlicht.pc @ONLY)
 configure_file(src/version.h.in src/version.h @ONLY)
