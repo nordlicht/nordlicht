@@ -22,9 +22,9 @@ add_executable(nordlicht-bin src/main.c)
 set_target_properties(nordlicht-bin PROPERTIES OUTPUT_NAME nordlicht)
 target_link_libraries(nordlicht-bin nordlicht)
 
-add_executable(testsuite test/library.c)
+add_executable(testsuite tests/library.c)
 target_link_libraries(testsuite nordlicht)
-add_custom_target(test COMMAND testsuite COMMAND ${CMAKE_SOURCE_DIR}/test/tool.sh)
+add_custom_target(test COMMAND testsuite COMMAND ${CMAKE_SOURCE_DIR}/tests/tool.sh)
 
 configure_file(cmake/nordlicht.pc.in cmake/nordlicht.pc @ONLY)
 configure_file(src/version.h.in src/version.h @ONLY)
