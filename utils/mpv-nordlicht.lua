@@ -40,7 +40,7 @@ function new_file()
     kill()
 
     local path = mp.get_property("path")
-    local cmd = "nordlicht \""..path.."\" --live -o /tmp/nordlicht.bgra -w "..width.." -h "..height.." &"
+    local cmd = "nice nordlicht \""..path.."\" --live -o /tmp/nordlicht.bgra -w "..width.." -h "..height.." &"
     os.execute(cmd)
 
     if was_on then
