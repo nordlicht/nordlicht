@@ -58,10 +58,15 @@ void nordlicht_free(nordlicht *n) {
     free(n);
 }
 
-void nordlicht_set_style(nordlicht *n, nordlicht_style s) {
-    if (n->modifiable) {
-        n->style = s;
+int nordlicht_set_style(nordlicht *n, nordlicht_style s) {
+    if (! n->modifiable) {
+        return -1;
     }
+    if (s < 0 || s > NORDLICHT_STYLE_VERTICAL) {
+        return -1;
+    }
+    n->style = s;
+    return 0;
 }
 
 unsigned char* get_column(nordlicht *n, int i) {
@@ -78,6 +83,8 @@ unsigned char* get_column(nordlicht *n, int i) {
 }
 
 int nordlicht_generate(nordlicht *n) {
+    n->modifiable = 0;
+
     video_build_keyframe_index(n->source, n->width);
     int x, exact;
 
@@ -112,6 +119,11 @@ int nordlicht_generate(nordlicht *n) {
 int nordlicht_write(nordlicht *n, char *filename) {
     int code = 0;
 
+    if (filename == NULL) {
+        error("Output filename must not be NULL");
+        return -1;
+    }
+
     if (strcmp(filename, "") == 0) {
         error("Output filename must not be empty");
         return -1;
@@ -121,12 +133,15 @@ int nordlicht_write(nordlicht *n, char *filename) {
     if (realpath_output != NULL) {
         // output file exists
         char *realpath_input = realpath(n->filename, NULL);
-        if (strcmp(realpath_input, realpath_output) == 0) {
-            error("Will not overwrite input file");
-            code = -1;
-        }
+        if (realpath_input != NULL) {
+            // otherwise, input filename is probably a URL
 
-        free(realpath_input);
+            if (strcmp(realpath_input, realpath_output) == 0) {
+                error("Will not overwrite input file");
+                code = -1;
+            }
+            free(realpath_input);
+        }
         free(realpath_output);
 
         if (code != 0) {
@@ -196,6 +211,14 @@ const unsigned char* nordlicht_buffer(nordlicht *n) {
 }
 
 int nordlicht_set_buffer(nordlicht *n, unsigned char *data) {
+    if (! n->modifiable) {
+        return -1;
+    }
+
+    if (data == NULL) {
+        return -1;
+    }
+
     if (n->owns_data) {
         free(n->data);
     }

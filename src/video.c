@@ -135,6 +135,10 @@ void video_build_keyframe_index(video *v, int width) {
 }
 
 video* video_init(char *filename, int width) {
+    if (filename == NULL) {
+        return NULL;
+    }
+
     av_log_set_level(AV_LOG_FATAL);
     av_register_all();
 

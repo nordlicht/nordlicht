@@ -19,7 +19,8 @@ nordlicht* nordlicht_init(char *filename, int width, int height, int live);
 void nordlicht_free(nordlicht *n);
 
 // Set the output style of the nordlicht. Default is NORDLICHT_STYLE_HORIZONTAL.
-void nordlicht_set_style(nordlicht *n, nordlicht_style s);
+// Returns 0 on success.
+int nordlicht_set_style(nordlicht *n, nordlicht_style s);
 
 // Returns a pointer to the nordlicht's internal buffer. You can use it to draw
 // the barcode while it is generated. The pixel format is 32-bit BGRA.
@@ -33,7 +34,7 @@ int nordlicht_set_buffer(nordlicht *n, unsigned char *data);
 size_t nordlicht_buffer_size(nordlicht *n);
 
 // Generate the nordlicht. Calling this will freeze the nordlicht:
-// "set" functions will be without effect. Returns 0 on success.
+// "set" functions will fail. Returns 0 on success.
 int nordlicht_generate(nordlicht *n);
 
 // Returns a value between 0 and 1 indicating how much of the nordlicht is done.
