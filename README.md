@@ -36,7 +36,7 @@ Basic usage: `nordlicht video.mkv -w 1000 -h 150 -o barcode.png` converts *video
 
 ### mpv
 
-For very recent versions of [mpv](http://mpv.io/), there is an experimental [lua plugin](/utils/mpv-nordlicht.lua). Simply put it in `~/.mpv/lua/` (or symlink it there!) and mpv should display a live-updating barcode of the current video file. You can turn it on and off by pressing `n`. You'll need a version of mpv after commit `d706f81` (>= v0.3.6) and ImageMagick! This is how it looks like (for [Decay](http://www.decayfilm.com/)):
+For very recent versions of [mpv](http://mpv.io/), there is an experimental [lua plugin](/utils/mpv-nordlicht.lua). Simply put it in `~/.mpv/lua/` (or symlink it there!) and mpv should display a live-updating barcode of the current video file. You can turn it on and off by pressing `n`. You'll need mpv (>= 0.3.6) and ImageMagick! This is how it looks like (for [Decay](http://www.decayfilm.com/)):
 
 ![](/examples/mpv-integration.png)
 

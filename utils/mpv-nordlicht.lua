@@ -1,5 +1,5 @@
--- nordlicht integration for mpv. You need a version after commit d706f81
--- (>=v0.3.6, that is) to correctly support lua scripting.
+-- nordlicht integration for mpv. You need mpv >= 0.3.6 to correctly support
+-- lua scripting.
 
 function init()
     is_on = false
