@@ -10,9 +10,9 @@ column* column_scale(column *c, int length) {
     float factor = 1.0*c->length/length;
 
     int i;
-    for(i=0; i<length; i++) {
-        int lower = factor*i+0.5;
-        int upper = factor*(i+1)-0.5;
+    for (i = 0; i < length; i++) {
+        int lower = factor*i + 0.5;
+        int upper = factor*(i+1) - 0.5;
 
         if (lower > upper) {
             // this can happen when upscaling. pick nearest-neighbour entry:
@@ -23,7 +23,7 @@ column* column_scale(column *c, int length) {
         int gsum = 0;
         int bsum = 0;
         int j;
-        for(j=lower; j<=upper; j++) {
+        for (j = lower; j <= upper; j++) {
             rsum += c->data[j*3+0];
             gsum += c->data[j*3+1];
             bsum += c->data[j*3+2];
@@ -49,11 +49,11 @@ column* compress_to_column(image *i) {
 
     int x, y;
     int step = i->width/20;
-    for (y=0; y<i->height; y++) {
+    for (y = 0; y < i->height; y++) {
         long rsum = 0;
         long gsum = 0;
         long bsum = 0;
-        for (x=0; x<i->width; x+=step) {
+        for (x = 0; x < i->width; x += step) {
             rsum += i->data[y*i->width*3+3*x+0];
             gsum += i->data[y*i->width*3+3*x+1];
             bsum += i->data[y*i->width*3+3*x+2];
@@ -74,11 +74,11 @@ column* compress_to_row(image *i) {
 
     int x, y;
     int step = 1;
-    for (x=0; x<i->width; x++) {
+    for (x = 0; x < i->width; x++) {
         long rsum = 0;
         long gsum = 0;
         long bsum = 0;
-        for (y=0; y<i->height; y+=step) {
+        for (y = 0; y < i->height; y += step) {
             rsum += i->data[y*i->width*3+3*x+0];
             gsum += i->data[y*i->width*3+3*x+1];
             bsum += i->data[y*i->width*3+3*x+2];

@@ -168,7 +168,7 @@ int main(int argc, const char **argv) {
     const char *ext = filename_ext(output_file);
     if (strcmp(ext, "png") == 0) {
         live = 0;
-    } else if (strcmp(ext, "rgba") == 0) {
+    } else if (strcmp(ext, "bgra") == 0) {
         live = 1;
     } else {
         error("Unsupported file extension '%s'", ext);

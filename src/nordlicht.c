@@ -7,16 +7,17 @@ struct nordlicht {
     int width, height;
     char *filename;
     unsigned char *data;
+
+    int owns_data;
+    int modifiable;
     int live;
     nordlicht_style style;
-    int modifiable;
-    int owns_data;
     float progress;
     video *source;
 };
 
 size_t nordlicht_buffer_size(nordlicht *n) {
-    return n->width*n->height*4;
+    return n->width * n->height * 4;
 }
 
 nordlicht* nordlicht_init(char *filename, int width, int height, int live) {
@@ -70,7 +71,8 @@ int nordlicht_set_style(nordlicht *n, nordlicht_style s) {
 }
 
 unsigned char* get_column(nordlicht *n, int i) {
-    column *c = video_get_column(n->source, 1.0*(i+0.5-COLUMN_PRECISION/2.0)/n->width, 1.0*(i+0.5+COLUMN_PRECISION/2.0)/n->width, n->style);
+    column *c = video_get_column(n->source, 1.0*(i+0.5-COLUMN_PRECISION/2.0)/n->width,
+                                            1.0*(i+0.5+COLUMN_PRECISION/2.0)/n->width, n->style);
 
     if (c == NULL) {
         return NULL;
@@ -91,13 +93,13 @@ int nordlicht_generate(nordlicht *n) {
     int do_a_fast_pass = n->live || !video_exact(n->source);
     int do_an_exact_pass = video_exact(n->source);
 
-    for(exact=(!do_a_fast_pass); exact<=do_an_exact_pass; exact++) {
+    for (exact = (!do_a_fast_pass); exact <= do_an_exact_pass; exact++) {
         video_set_exact(n->source, exact);
-        for (x=0; x<n->width; x++) {
+        for (x = 0; x < n->width; x++) {
             unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
             if (column) {
                 int y;
-                for (y=0; y<n->height; y++) {
+                for (y = 0; y < n->height; y++) {
                     // BGRA pixel format:
                     memcpy(n->data+n->width*4*y+4*x+2, column+3*y+0, 1);
                     memcpy(n->data+n->width*4*y+4*x+1, column+3*y+1, 1);
