@@ -27,27 +27,27 @@ int main(void) {
     assert(file_exists(VID));
 
     // invalid input
-    null(nordlicht_init(NULL, 100, 100, 0));
-    null(nordlicht_init("", 100, 100, 0));
-    null(nordlicht_init("\0", 100, 100, 0));
-    null(nordlicht_init(".", 100, 100, 0));
-    null(nordlicht_init("..", 100, 100, 0));
-    null(nordlicht_init("nonexistant_file.123", 100, 100, 0));
+    null(nordlicht_init(NULL, 100, 100));
+    null(nordlicht_init("", 100, 100));
+    null(nordlicht_init("\0", 100, 100));
+    null(nordlicht_init(".", 100, 100));
+    null(nordlicht_init("..", 100, 100));
+    null(nordlicht_init("nonexistant_file.123", 100, 100));
 
     // invalid size
-    null(nordlicht_init(VID, 0, 100, 0));
-    null(nordlicht_init(VID, 100, 0, 0));
-    null(nordlicht_init(VID, 0, 0, 0));
-    null(nordlicht_init(VID, -100, 100, 0));
-    null(nordlicht_init(VID, 100, -100, 0));
-    null(nordlicht_init(VID, INT_MIN, INT_MIN, 0));
+    null(nordlicht_init(VID, 0, 100));
+    null(nordlicht_init(VID, 100, 0));
+    null(nordlicht_init(VID, 0, 0));
+    null(nordlicht_init(VID, -100, 100));
+    null(nordlicht_init(VID, 100, -100));
+    null(nordlicht_init(VID, INT_MIN, INT_MIN));
 
     // valid size
-    assert(nordlicht_init(VID, 1, 1, 0));
-    assert(nordlicht_init(VID, INT_MAX, INT_MAX, 0));
+    assert(nordlicht_init(VID, 1, 1));
+    assert(nordlicht_init(VID, INT_MAX, INT_MAX));
 
     // invalid output
-    n = nordlicht_init(VID, 1, 100, 0);
+    n = nordlicht_init(VID, 1, 100);
     assert(n);
     fail(nordlicht_write(n, NULL));
     fail(nordlicht_write(n, ""));
@@ -58,7 +58,7 @@ int main(void) {
     nordlicht_free(n);
 
     // style
-    n = nordlicht_init(VID, 1, 100, 0);
+    n = nordlicht_init(VID, 1, 100);
     assert(n);
     pass(nordlicht_set_style(n, NORDLICHT_STYLE_HORIZONTAL));
     pass(nordlicht_set_style(n, NORDLICHT_STYLE_VERTICAL));
@@ -69,7 +69,7 @@ int main(void) {
 
     // buffer
     const unsigned char *buffer = NULL;
-    n = nordlicht_init(VID, 2, 100, 0);
+    n = nordlicht_init(VID, 2, 100);
     assert(n);
     buffer = nordlicht_buffer(n);
     assert(buffer);
@@ -86,7 +86,7 @@ int main(void) {
     free(buffer2);
 
     // complete run
-    n = nordlicht_init(VID, 1, 100, 0);
+    n = nordlicht_init(VID, 1, 100);
     assert(n);
     assert(0 == nordlicht_progress(n));
     pass(nordlicht_generate(n));

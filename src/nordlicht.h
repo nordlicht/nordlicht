@@ -9,11 +9,16 @@ typedef enum nordlicht_style {
     NORDLICHT_STYLE_VERTICAL, // compress frames to rows, "move downwards"
 } nordlicht_style;
 
+typedef enum nordlicht_strategy {
+    NORDLICHT_STRATEGY_FAST, // generate barcode in a single pass as fast as possible
+    NORDLICHT_STRATEGY_LIVE, // generate a fast approximation first, good for live display
+} nordlicht_strategy;
+
 // Allocate a new nordlicht of specific width and height, for a given video
 // file. When `live` is true, give a fast approximation before starting the
 // slow, exact generation. Use `nordlicht_free` to free the nordlicht again.
 // Returns NULL on errors.
-nordlicht* nordlicht_init(char *filename, int width, int height, int live);
+nordlicht* nordlicht_init(char *filename, int width, int height);
 
 // Free a nordlicht.
 void nordlicht_free(nordlicht *n);
@@ -21,6 +26,10 @@ void nordlicht_free(nordlicht *n);
 // Set the output style of the nordlicht. Default is NORDLICHT_STYLE_HORIZONTAL.
 // Returns 0 on success.
 int nordlicht_set_style(nordlicht *n, nordlicht_style s);
+
+// Set the generation strategy of the nordlicht. Default is NORDLICHT_STRATEGY_FAST.
+// Returns 0 on success. This function will be removed in the future.
+int nordlicht_set_strategy(nordlicht *n, nordlicht_strategy s);
 
 // Returns a pointer to the nordlicht's internal buffer. You can use it to draw
 // the barcode while it is generated. The pixel format is 32-bit BGRA.

@@ -22,8 +22,8 @@ void print_help(poptContext popt, int ret) {
     exit(ret);
 }
 
-void interesting_stuff(char *filename, char *output_file, int width, int height, nordlicht_style style, int live) {
-    nordlicht *n = nordlicht_init(filename, width, height, live);
+void interesting_stuff(char *filename, char *output_file, int width, int height, nordlicht_style style, nordlicht_strategy strategy) {
+    nordlicht *n = nordlicht_init(filename, width, height);
     unsigned char *data = NULL;
 
     if (n == NULL) {
@@ -31,8 +31,9 @@ void interesting_stuff(char *filename, char *output_file, int width, int height,
     }
 
     nordlicht_set_style(n, style);
+    nordlicht_set_strategy(n, strategy);
 
-    if (live) {
+    if (strategy == NORDLICHT_STRATEGY_LIVE) {
         int fd = open(output_file, O_CREAT | O_TRUNC | O_RDWR, 0666);
         if (fd == -1) {
             error("Could not open '%s'.", output_file);
@@ -60,7 +61,7 @@ void interesting_stuff(char *filename, char *output_file, int width, int height,
     }
     pthread_join(thread, NULL);
 
-    if (!live) {
+    if (strategy != NORDLICHT_STRATEGY_LIVE) {
         nordlicht_write(n, output_file);
     }
 
@@ -77,11 +78,11 @@ int main(int argc, const char **argv) {
     char *output_file = NULL;
     char *style_string = NULL;
     nordlicht_style style;
+    nordlicht_strategy strategy;
     int free_output_file = 0;
 
     int help = 0;
     int version = 0;
-    int live = 0;
 
     struct poptOption optionsTable[] = {
         {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width; by default it's \"height*10\", or 1000 pixels, if both are undefined", NULL},
@@ -128,13 +129,8 @@ int main(int argc, const char **argv) {
     }
 
     if (output_file == NULL) {
-        if (live) {
-            output_file = malloc(snprintf(NULL, 0, "%s.bgra", gnu_basename(filename)) + 1);
-            sprintf(output_file, "%s.bgra", gnu_basename(filename));
-        } else {
-            output_file = malloc(snprintf(NULL, 0, "%s.png", gnu_basename(filename)) + 1);
-            sprintf(output_file, "%s.png", gnu_basename(filename));
-        }
+        output_file = malloc(snprintf(NULL, 0, "%s.png", gnu_basename(filename)) + 1);
+        sprintf(output_file, "%s.png", gnu_basename(filename));
         free_output_file = 1;
     }
 
@@ -167,15 +163,15 @@ int main(int argc, const char **argv) {
 
     const char *ext = filename_ext(output_file);
     if (strcmp(ext, "png") == 0) {
-        live = 0;
+        strategy = NORDLICHT_STRATEGY_FAST;
     } else if (strcmp(ext, "bgra") == 0) {
-        live = 1;
+        strategy = NORDLICHT_STRATEGY_LIVE;
     } else {
         error("Unsupported file extension '%s'", ext);
         print_help(popt, 1);
     }
 
-    interesting_stuff(filename, output_file, width, height, style, live);
+    interesting_stuff(filename, output_file, width, height, style, strategy);
 
     if (free_output_file) {
         free(output_file);
