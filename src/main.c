@@ -19,6 +19,12 @@ const char *filename_ext(const char *path) {
 
 void print_help(poptContext popt, int ret) {
     poptPrintHelp(popt, ret == 0 ? stdout : stderr, 0);
+    printf("\n\
+Examples:\n\
+  nordlicht video.mp4                                   generate video.mp4.png of 1000 x 100 pixels size\n\
+  nordlicht video.mp4 --style=vertical                  compress individual frames to columns\n\
+  nordlicht video.mp4 -w 1920 -h 200 -o barcode.png     override size and name of the output file\n\
+");
     exit(ret);
 }
 
@@ -95,7 +101,7 @@ int main(int argc, const char **argv) {
     };
 
     poptContext popt = poptGetContext(NULL, argc, argv, optionsTable, 0);
-    poptSetOtherOptionHelp(popt, "[OPTION]... VIDEOFILE\n");
+    poptSetOtherOptionHelp(popt, "[OPTION]... VIDEOFILE\n\nOptions:");
 
     char c;
 
@@ -108,7 +114,7 @@ int main(int argc, const char **argv) {
     }
 
     if (version) {
-      printf("nordlicht %s\n", NORDLICHT_VERSION);
+      printf("nordlicht %s\n\nWritten by Sebastian Morr and contributors.\n", NORDLICHT_VERSION);
       return 0;
     }
 
@@ -119,12 +125,12 @@ int main(int argc, const char **argv) {
     char *filename = (char*)poptGetArg(popt);
 
     if (filename == NULL) {
-        error("Please specify an input file.");
+        error("Please specify an input file.\n");
         print_help(popt, 1);
     }
 
     if (poptGetArg(popt) != NULL) {
-        error("Please specify only one input file.");
+        error("Please specify only one input file.\n");
         print_help(popt, 1);
     }
 
@@ -156,7 +162,7 @@ int main(int argc, const char **argv) {
         } else if (strcmp(style_string, "vertical") == 0) {
             style = NORDLICHT_STYLE_VERTICAL;
         } else {
-            error("Unknown style '%s'.", style_string);
+            error("Unknown style '%s'.\n", style_string);
             print_help(popt, 1);
         }
     }
@@ -167,7 +173,7 @@ int main(int argc, const char **argv) {
     } else if (strcmp(ext, "bgra") == 0) {
         strategy = NORDLICHT_STRATEGY_LIVE;
     } else {
-        error("Unsupported file extension '%s'", ext);
+        error("Unsupported file extension '%s'\n", ext);
         print_help(popt, 1);
     }
 
