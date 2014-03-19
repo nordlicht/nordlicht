@@ -19,7 +19,8 @@ function init()
     os.execute("convert -depth 8 -size "..mw.."x"..mh.." bgra:/tmp/arrow_up.bgra -flip bgra:/tmp/arrow_down.bgra")
 
     new_file()
-    on()
+    -- wait for the convert commands to finish
+    mp.add_timeout(0.5, on)
 end
 
 function shutdown()
