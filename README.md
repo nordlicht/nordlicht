@@ -41,6 +41,14 @@ For [mpv](http://mpv.io/) (>= 0.3.6), there is an experimental [lua plugin](/uti
 
 For mpv >= 0.2.0, there is an older script called [mpv-nordlicht](/utils/mpv-nordlicht). Put it in your `PATH` and use it instead of `mpv`. It doesn't support multiple files, and you cannot hide the barcode.
 
+## Contributing
+
+Development of *nordlicht* happens on GitHub. Please report any bugs or ideas to the [issue tracker](https://github.com/blinry/nordlicht/issues). To contribute code, fork the repository and submit a pull request.
+
+You can also help by packaging the software for your favorite operating system, or writing an integration for your favorite video player. Even rough prototypes are highly appreciated!
+
+*nordlicht* uses [semantic versioning](http://semver.org/).
+
 ## License: GPLv2+
 
 *nordlicht* is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
