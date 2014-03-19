@@ -67,6 +67,16 @@ int main(void) {
     fail(nordlicht_set_style(n, -1));
     nordlicht_free(n);
 
+    // strategy
+    n = nordlicht_init(VID, 1, 100);
+    assert(n);
+    pass(nordlicht_set_strategy(n, NORDLICHT_STRATEGY_FAST));
+    pass(nordlicht_set_strategy(n, NORDLICHT_STRATEGY_LIVE));
+    fail(nordlicht_set_strategy(n, 2));
+    fail(nordlicht_set_strategy(n, 1000000));
+    fail(nordlicht_set_strategy(n, -1));
+    nordlicht_free(n);
+
     // buffer
     const unsigned char *buffer = NULL;
     n = nordlicht_init(VID, 2, 100);
