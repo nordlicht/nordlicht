@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 project(nordlicht C)
-set(NORDLICHT_VERSION 0.3.4)
+set(NORDLICHT_VERSION 0.3.5)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(LIB_SUFFIX "" CACHE STRING "Suffix of library directory name (for example '32' or '64')")
