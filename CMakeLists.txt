@@ -14,7 +14,7 @@ find_package(Popt REQUIRED)
 
 include_directories(${CMAKE_BINARY_DIR}/src ${CMAKE_SOURCE_DIR}/src ${FFMPEG_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${POPT_INCLUDES})
 
-add_library(nordlicht SHARED src/common.c src/graphics.c src/nordlicht.c src/video.c)
+add_library(nordlicht SHARED src/error.c src/graphics.c src/nordlicht.c src/video.c)
 set_target_properties(nordlicht PROPERTIES SOVERSION 0)
 target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${PNG_LIBRARIES} ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 

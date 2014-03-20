@@ -14,6 +14,9 @@ typedef enum nordlicht_strategy {
     NORDLICHT_STRATEGY_LIVE, // generate a fast approximation first, good for live display
 } nordlicht_strategy;
 
+// Returns a description of the last error, or NULL if the was no error.
+char *nordlicht_error();
+
 // Allocate a new nordlicht of specific width and height, for a given video
 // file. When `live` is true, give a fast approximation before starting the
 // slow, exact generation. Use `nordlicht_free` to free the nordlicht again.

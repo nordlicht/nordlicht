@@ -1,7 +1,8 @@
 #ifndef INCLUDE_video_h__
 #define INCLUDE_video_h__
 
-#include "common.h"
+#include "nordlicht.h"
+#include "graphics.h"
 
 #define COLUMN_PRECISION 0.95 // choose a frame from this percentage at the middle of each column
 

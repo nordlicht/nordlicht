@@ -1,10 +1,20 @@
 #include <pthread.h>
-#include <unistd.h>
 #include <sys/file.h>
 #include <sys/mman.h>
+#include <stdarg.h>
+#include <string.h>
 #include <popt.h>
 #include "nordlicht.h"
-#include "common.h"
+#include "version.h"
+
+void print_error(char *message, ...) {
+    fprintf(stderr, "nordlicht: ");
+    va_list arglist;
+    va_start(arglist, message);
+    vfprintf(stderr, message, arglist);
+    va_end(arglist);
+    fprintf(stderr, "\n");
+}
 
 const char *gnu_basename(const char *path) {
     char *base = strrchr(path, '/');
@@ -33,6 +43,7 @@ void interesting_stuff(char *filename, char *output_file, int width, int height,
     unsigned char *data = NULL;
 
     if (n == NULL) {
+        print_error(nordlicht_error());
         exit(1);
     }
 
@@ -42,7 +53,7 @@ void interesting_stuff(char *filename, char *output_file, int width, int height,
     if (strategy == NORDLICHT_STRATEGY_LIVE) {
         int fd = open(output_file, O_CREAT | O_TRUNC | O_RDWR, 0666);
         if (fd == -1) {
-            error("Could not open '%s'.", output_file);
+            print_error("Could not open '%s'.", output_file);
             exit(1);
         }
         ftruncate(fd, nordlicht_buffer_size(n));
@@ -51,6 +62,7 @@ void interesting_stuff(char *filename, char *output_file, int width, int height,
     } else {
         // Try to write the empty buffer to fail early if this does not work
         if (nordlicht_write(n, output_file) != 0) {
+            print_error(nordlicht_error());
             exit(1);
         }
     }
@@ -68,7 +80,10 @@ void interesting_stuff(char *filename, char *output_file, int width, int height,
     pthread_join(thread, NULL);
 
     if (strategy != NORDLICHT_STRATEGY_LIVE) {
-        nordlicht_write(n, output_file);
+        if (nordlicht_write(n, output_file) != 0) {
+            print_error(nordlicht_error());
+            exit(1);
+        }
     }
 
     nordlicht_free(n);
@@ -125,12 +140,12 @@ int main(int argc, const char **argv) {
     char *filename = (char*)poptGetArg(popt);
 
     if (filename == NULL) {
-        error("Please specify an input file.\n");
+        print_error("Please specify an input file.\n");
         print_help(popt, 1);
     }
 
     if (poptGetArg(popt) != NULL) {
-        error("Please specify only one input file.\n");
+        print_error("Please specify only one input file.\n");
         print_help(popt, 1);
     }
 
@@ -162,7 +177,7 @@ int main(int argc, const char **argv) {
         } else if (strcmp(style_string, "vertical") == 0) {
             style = NORDLICHT_STYLE_VERTICAL;
         } else {
-            error("Unknown style '%s'.\n", style_string);
+            print_error("Unknown style '%s'.\n", style_string);
             print_help(popt, 1);
         }
     }
@@ -173,7 +188,7 @@ int main(int argc, const char **argv) {
     } else if (strcmp(ext, "bgra") == 0) {
         strategy = NORDLICHT_STRATEGY_LIVE;
     } else {
-        error("Unsupported file extension '%s'\n", ext);
+        print_error("Unsupported file extension '%s'\n", ext);
         print_help(popt, 1);
     }
 

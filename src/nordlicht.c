@@ -1,6 +1,7 @@
 #include "nordlicht.h"
+#include <string.h>
 #include <png.h>
-#include "common.h"
+#include "error.h"
 #include "video.h"
 
 struct nordlicht {
@@ -56,6 +57,10 @@ void nordlicht_free(nordlicht *n) {
     }
     video_free(n->source);
     free(n);
+}
+
+char *nordlicht_error() {
+    return get_error();
 }
 
 int nordlicht_set_style(nordlicht *n, nordlicht_style s) {
