@@ -116,21 +116,14 @@ void video_build_keyframe_index(video *v, int width) {
                     // The keyframe density in the first `HEURISTIC_NUMBER_OF_FRAMES`
                     // frames is HEURISTIC_KEYFRAME_FACTOR times higher than
                     // the density we need overall.
-                    printf("\rBuilding index: Enough keyframes (%.2f times enough), aborting.\n", density/required_density);
                     v->exact = 0;
                     return;
-                } else {
-                    printf("\rBuilding index: Keyframe ratio is %.2f, keep going.\n", density/required_density);
                 }
             }
             frame++;
         }
         av_free_packet(&packet);
-
-        printf("\rBuilding index: %02.0f%%", 1.0*frame/total_number_of_frames(v)*100);
-        fflush(stdout);
     }
-    printf("\rBuilding index: %d keyframes.\n", v->number_of_keyframes);
     v->has_index = 1;
 }
 

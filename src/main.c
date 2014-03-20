@@ -71,6 +71,13 @@ void interesting_stuff(char *filename, char *output_file, int width, int height,
     pthread_create(&thread, NULL, (void*(*)(void*))nordlicht_generate, n);
 
     float progress = 0;
+    printf("nordlicht: Building keyframe index... ");
+    fflush(stdout);
+    while (progress == 0) {
+        progress = nordlicht_progress(n);
+        usleep(100000);
+    }
+    printf("done.\n");
     while (progress < 1) {
         progress = nordlicht_progress(n);
         printf("\rnordlicht: %02.0f%%", progress*100);
