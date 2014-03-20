@@ -7,19 +7,20 @@ struct nordlicht {
     int width, height;
     char *filename;
     unsigned char *data;
-    int live;
-    nordlicht_style style;
-    int modifiable;
+
     int owns_data;
+    int modifiable;
+    nordlicht_style style;
+    nordlicht_strategy strategy;
     float progress;
     video *source;
 };
 
 size_t nordlicht_buffer_size(nordlicht *n) {
-    return n->width*n->height*4;
+    return n->width * n->height * 4;
 }
 
-nordlicht* nordlicht_init(char *filename, int width, int height, int live) {
+nordlicht* nordlicht_init(char *filename, int width, int height) {
     if (width < 1 || height < 1) {
         error("Dimensions must be positive (got %dx%d)", width, height);
         return NULL;
@@ -34,9 +35,8 @@ nordlicht* nordlicht_init(char *filename, int width, int height, int live) {
     n->data = calloc(nordlicht_buffer_size(n), 1);
     n->owns_data = 1;
 
-    n->live = !!live;
-
     n->style = NORDLICHT_STYLE_HORIZONTAL;
+    n->strategy = NORDLICHT_STRATEGY_FAST;
     n->modifiable = 1;
     n->progress = 0;
     n->source = video_init(filename, width);
@@ -58,14 +58,31 @@ void nordlicht_free(nordlicht *n) {
     free(n);
 }
 
-void nordlicht_set_style(nordlicht *n, nordlicht_style s) {
-    if (n->modifiable) {
-        n->style = s;
+int nordlicht_set_style(nordlicht *n, nordlicht_style s) {
+    if (! n->modifiable) {
+        return -1;
     }
+    if (s < 0 || s > NORDLICHT_STYLE_VERTICAL) {
+        return -1;
+    }
+    n->style = s;
+    return 0;
+}
+
+int nordlicht_set_strategy(nordlicht *n, nordlicht_strategy s) {
+    if (! n->modifiable) {
+        return -1;
+    }
+    if (s < 0 || s > NORDLICHT_STRATEGY_LIVE) {
+        return -1;
+    }
+    n->strategy = s;
+    return 0;
 }
 
 unsigned char* get_column(nordlicht *n, int i) {
-    column *c = video_get_column(n->source, 1.0*(i+0.5-COLUMN_PRECISION/2.0)/n->width, 1.0*(i+0.5+COLUMN_PRECISION/2.0)/n->width, n->style);
+    column *c = video_get_column(n->source, 1.0*(i+0.5-COLUMN_PRECISION/2.0)/n->width,
+                                            1.0*(i+0.5+COLUMN_PRECISION/2.0)/n->width, n->style);
 
     if (c == NULL) {
         return NULL;
@@ -78,20 +95,25 @@ unsigned char* get_column(nordlicht *n, int i) {
 }
 
 int nordlicht_generate(nordlicht *n) {
+    n->modifiable = 0;
+
     video_build_keyframe_index(n->source, n->width);
     int x, exact;
 
-    int do_a_fast_pass = n->live || !video_exact(n->source);
+    int do_a_fast_pass = (n->strategy == NORDLICHT_STRATEGY_LIVE) || !video_exact(n->source);
     int do_an_exact_pass = video_exact(n->source);
 
-    for(exact=(!do_a_fast_pass); exact<=do_an_exact_pass; exact++) {
+    for (exact = (!do_a_fast_pass); exact <= do_an_exact_pass; exact++) {
         video_set_exact(n->source, exact);
-        for (x=0; x<n->width; x++) {
+        for (x = 0; x < n->width; x++) {
             unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
             if (column) {
                 int y;
-                for (y=0; y<n->height; y++) {
-                    memcpy(n->data+n->width*4*y+4*x, column+3*y, 3);
+                for (y = 0; y < n->height; y++) {
+                    // BGRA pixel format:
+                    memcpy(n->data+n->width*4*y+4*x+2, column+3*y+0, 1);
+                    memcpy(n->data+n->width*4*y+4*x+1, column+3*y+1, 1);
+                    memcpy(n->data+n->width*4*y+4*x+0, column+3*y+2, 1);
                     memset(n->data+n->width*4*y+4*x+3, 255, 1);
                 }
                 free(column);
@@ -109,6 +131,11 @@ int nordlicht_generate(nordlicht *n) {
 int nordlicht_write(nordlicht *n, char *filename) {
     int code = 0;
 
+    if (filename == NULL) {
+        error("Output filename must not be NULL");
+        return -1;
+    }
+
     if (strcmp(filename, "") == 0) {
         error("Output filename must not be empty");
         return -1;
@@ -118,12 +145,15 @@ int nordlicht_write(nordlicht *n, char *filename) {
     if (realpath_output != NULL) {
         // output file exists
         char *realpath_input = realpath(n->filename, NULL);
-        if (strcmp(realpath_input, realpath_output) == 0) {
-            error("Will not overwrite input file");
-            code = -1;
-        }
+        if (realpath_input != NULL) {
+            // otherwise, input filename is probably a URL
 
-        free(realpath_input);
+            if (strcmp(realpath_input, realpath_output) == 0) {
+                error("Will not overwrite input file");
+                code = -1;
+            }
+            free(realpath_input);
+        }
         free(realpath_output);
 
         if (code != 0) {
@@ -167,6 +197,8 @@ int nordlicht_write(nordlicht *n, char *filename) {
 
     png_write_info(png, png_info);
 
+    png_set_bgr(png);
+
     int y;
     for (y = 0; y < n->height; y++) {
         png_write_row(png, n->data+4*y*n->width);
@@ -191,6 +223,14 @@ const unsigned char* nordlicht_buffer(nordlicht *n) {
 }
 
 int nordlicht_set_buffer(nordlicht *n, unsigned char *data) {
+    if (! n->modifiable) {
+        return -1;
+    }
+
+    if (data == NULL) {
+        return -1;
+    }
+
     if (n->owns_data) {
         free(n->data);
     }

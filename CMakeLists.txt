@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.6)
 
 project(nordlicht C)
-set(NORDLICHT_VERSION 0.3.4)
+set(NORDLICHT_VERSION 0.3.5)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(LIB_SUFFIX "" CACHE STRING "Suffix of library directory name (for example '32' or '64')")
@@ -12,7 +12,7 @@ find_package(FFmpeg COMPONENTS AVUTIL AVFORMAT AVCODEC SWSCALE REQUIRED)
 find_package(PNG REQUIRED)
 find_package(Popt REQUIRED)
 
-include_directories(${CMAKE_BINARY_DIR}/src ${FFMPEG_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${POPT_INCLUDES})
+include_directories(${CMAKE_BINARY_DIR}/src ${CMAKE_SOURCE_DIR}/src ${FFMPEG_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${POPT_INCLUDES})
 
 add_library(nordlicht SHARED src/common.c src/graphics.c src/nordlicht.c src/video.c)
 set_target_properties(nordlicht PROPERTIES SOVERSION 0)
@@ -21,6 +21,9 @@ target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${PNG_LIBRARIES} ${POPT_LIBR
 add_executable(nordlicht-bin src/main.c)
 set_target_properties(nordlicht-bin PROPERTIES OUTPUT_NAME nordlicht)
 target_link_libraries(nordlicht-bin nordlicht)
+
+add_executable(testsuite tests/library.c)
+target_link_libraries(testsuite nordlicht)
 
 configure_file(cmake/nordlicht.pc.in cmake/nordlicht.pc @ONLY)
 configure_file(src/version.h.in src/version.h @ONLY)

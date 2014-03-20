@@ -38,7 +38,7 @@ long packet_pts(video *v, AVPacket *packet) {
     long pts = packet->pts != 0 ? packet->pts : packet->dts;
     double sec = (double)(pts - v->format_context->streams[v->video_stream]->start_time) *
         av_q2d(v->format_context->streams[v->video_stream]->time_base);
-    return (int64_t)(fps(v) * sec + 0.5);
+    return (int64_t)(fps(v)*sec + 0.5);
 }
 
 int grab_next_frame(video *v) {
@@ -52,7 +52,7 @@ int grab_next_frame(video *v) {
 
     while (!valid) {
         if (av_read_frame(v->format_context, &packet) >= 0) {
-            if(packet.stream_index == v->video_stream) {
+            if (packet.stream_index == v->video_stream) {
                 avcodec_decode_video2(v->decoder_context, v->frame, &got_frame, &packet);
                 if (got_frame) {
                     pts = packet_pts(v, &packet);
@@ -135,6 +135,10 @@ void video_build_keyframe_index(video *v, int width) {
 }
 
 video* video_init(char *filename, int width) {
+    if (filename == NULL) {
+        return NULL;
+    }
+
     av_log_set_level(AV_LOG_FATAL);
     av_register_all();
 
@@ -196,7 +200,7 @@ video* video_init(char *filename, int width) {
 long preceding_keyframe(video *v, long frame_nr) {
     int i;
     long best_keyframe = -1;
-    for (i=0; i < v->number_of_keyframes; i++) {
+    for (i = 0; i < v->number_of_keyframes; i++) {
         if (v->keyframes[i] <= frame_nr) {
             best_keyframe = v->keyframes[i];
         }
@@ -243,7 +247,7 @@ image* get_frame(video *v, double min_frame, double max_frame) {
             v->scaleframe->linesize);
 
     int y;
-    for (y=0; y<i->height; y++) {
+    for (y = 0; y < i->height; y++) {
         memcpy(i->data+y*i->width*3, v->scaleframe->data[0]+y*v->scaleframe->linesize[0], v->scaleframe->linesize[0]);
     }
 

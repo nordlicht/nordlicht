@@ -1,5 +1,5 @@
--- nordlicht integration for mpv. You need a version after commit d706f81
--- (>=v0.3.6, that is) to correctly support lua scripting.
+-- nordlicht integration for mpv. You need mpv >= 0.3.6 to correctly support
+-- lua scripting.
 
 function init()
     is_on = false
@@ -19,7 +19,8 @@ function init()
     os.execute("convert -depth 8 -size "..mw.."x"..mh.." bgra:/tmp/arrow_up.bgra -flip bgra:/tmp/arrow_down.bgra")
 
     new_file()
-    on()
+    -- wait for the convert commands to finish
+    mp.add_timeout(0.5, on)
 end
 
 function shutdown()
@@ -40,7 +41,7 @@ function new_file()
     kill()
 
     local path = mp.get_property("path")
-    local cmd = "nordlicht \""..path.."\" --live -o /tmp/nordlicht.bgra -w "..width.." -h "..height.." &"
+    local cmd = "nice nordlicht \""..path.."\" -o /tmp/nordlicht.bgra -w "..width.." -h "..height.." &"
     os.execute(cmd)
 
     if was_on then
