@@ -38,7 +38,7 @@ Examples:\n\
     exit(ret);
 }
 
-void interesting_stuff(char *filename, char *output_file, int width, int height, nordlicht_style style, nordlicht_strategy strategy) {
+void interesting_stuff(char *filename, char *output_file, int width, int height, nordlicht_style style, nordlicht_strategy strategy, int quiet) {
     nordlicht *n = nordlicht_init(filename, width, height);
     unsigned char *data = NULL;
 
@@ -71,19 +71,24 @@ void interesting_stuff(char *filename, char *output_file, int width, int height,
     pthread_create(&thread, NULL, (void*(*)(void*))nordlicht_generate, n);
 
     float progress = 0;
-    printf("nordlicht: Building keyframe index... ");
-    fflush(stdout);
-    while (progress == 0) {
-        progress = nordlicht_progress(n);
-        usleep(100000);
-    }
-    printf("done.\n");
-    while (progress < 1) {
-        progress = nordlicht_progress(n);
-        printf("\rnordlicht: %02.0f%%", progress*100);
+
+    if (! quiet) {
+        printf("nordlicht: Building keyframe index... ");
         fflush(stdout);
-        usleep(100000);
+        while (progress == 0) {
+            progress = nordlicht_progress(n);
+            usleep(100000);
+        }
+        printf("done.\n");
+
+        while (progress < 1) {
+            progress = nordlicht_progress(n);
+            printf("\rnordlicht: %02.0f%%", progress*100);
+            fflush(stdout);
+            usleep(100000);
+        }
     }
+
     pthread_join(thread, NULL);
 
     if (strategy != NORDLICHT_STRATEGY_LIVE) {
@@ -97,7 +102,9 @@ void interesting_stuff(char *filename, char *output_file, int width, int height,
     munmap(data, nordlicht_buffer_size(n));
     // close
 
-    printf(" -> '%s'\n", output_file);
+    if (! quiet) {
+        printf(" -> '%s'\n", output_file);
+    }
 }
 
 int main(int argc, const char **argv) {
@@ -109,6 +116,7 @@ int main(int argc, const char **argv) {
     nordlicht_strategy strategy;
     int free_output_file = 0;
 
+    int quiet = 0;
     int help = 0;
     int version = 0;
 
@@ -117,6 +125,7 @@ int main(int argc, const char **argv) {
         {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height; by default it's \"width/10\"", NULL},
         {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename, the default is $(basename VIDEOFILE).png; when you specify an *.bgra file, you'll get a raw 32-bit BGRA file that is updated as the barcode is generated", "FILENAME"},
         {"style", 's', POPT_ARG_STRING, &style_string, 0, "default is 'horizontal'; can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them", "STYLE"},
+        {"quiet", 'q', 0, &quiet, 0, "don't show progress indicator", NULL},
         {"help", '\0', 0, &help, 0, "display this help and exit", NULL},
         {"version", '\0', 0, &version, 0, "output version information and exit", NULL},
         POPT_TABLEEND
@@ -199,7 +208,7 @@ int main(int argc, const char **argv) {
         print_help(popt, 1);
     }
 
-    interesting_stuff(filename, output_file, width, height, style, strategy);
+    interesting_stuff(filename, output_file, width, height, style, strategy, quiet);
 
     if (free_output_file) {
         free(output_file);
