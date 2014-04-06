@@ -37,7 +37,7 @@ Description: create colorful video barcodes -- shared library
 Package: libnordlicht-dev
 Architecture: any
 Section: libdevel
-Depends: libnordlicht0 (= ${binary:Version}), ${shlibs:Depends}, ${misc:Depends}
+Depends: libnordlicht0 (= ${binary:Version}), ${misc:Depends}
 Description: create colorful video barcodes -- development files
  nordlicht converts video files into colorful barcodes. It's heavily inspired
  by the "moviebarcode" tumblr. It takes the video's frames in regular

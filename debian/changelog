@@ -1,6 +1,7 @@
 nordlicht (0.3.5-3) unstable; urgency=medium
 
   * sync Launchpad changes
+  * d/rules: dev packages don't know about ${shlibs:Depends}
 
  -- Roland Hieber <rohieb@rohieb.name>  Sun, 06 Apr 2014 06:00:09 +0200
 
