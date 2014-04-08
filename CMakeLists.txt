@@ -12,6 +12,11 @@ find_package(FFmpeg COMPONENTS AVUTIL AVFORMAT AVCODEC SWSCALE REQUIRED)
 find_package(PNG REQUIRED)
 find_package(Popt REQUIRED)
 
+find_program(HELP2MAN help2man)
+if (NOT HELP2MAN)
+    message(FATAL_ERROR "help2man not found, aborting.")
+endif()
+
 include_directories(${CMAKE_BINARY_DIR}/src ${CMAKE_SOURCE_DIR}/src ${FFMPEG_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${POPT_INCLUDES})
 
 add_library(nordlicht SHARED src/error.c src/graphics.c src/nordlicht.c src/video.c)
