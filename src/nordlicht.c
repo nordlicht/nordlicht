@@ -4,6 +4,10 @@
 #include "error.h"
 #include "video.h"
 
+#ifdef _WIN32
+#define realpath(N,R) _fullpath((R),(N),_MAX_PATH)
+#endif
+
 struct nordlicht {
     int width, height;
     char *filename;
