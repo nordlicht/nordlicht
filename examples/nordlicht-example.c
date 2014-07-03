@@ -1,8 +1,14 @@
 // Compile with: `cc nordlicht-example.c -lnordlicht -lpthread -o nordlicht-example`
 
+#include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <nordlicht.h>
+
+void print_error() {
+    // Print a description of the last error
+    printf("Error: %s\n", nordlicht_error());
+}
 
 int main(int argc, const char **argv) {
     nordlicht *n;
@@ -16,11 +22,13 @@ int main(int argc, const char **argv) {
     // Initialize a new nordlicht:
     n = nordlicht_init(input_file, width, height);
     if (n == NULL) {
+        print_error();
         exit(1);
     }
 
     // Generate the barcode:
     if (nordlicht_generate(n) != 0) {
+        print_error();
         exit(1);
     }
 
@@ -29,6 +37,7 @@ int main(int argc, const char **argv) {
 
     // You can also write the barcode to a PNG file:
     if (nordlicht_write(n, "barcode.png") != 0) {
+        print_error();
         exit(1);
     }
 
@@ -40,6 +49,10 @@ int main(int argc, const char **argv) {
 
     // Initialize a new nordlicht:
     n = nordlicht_init(input_file, width, height);
+    if (n == NULL) {
+        print_error();
+        exit(1);
+    }
 
     // Allocate a buffer of the correct size and tell nordlicht to use it:
     unsigned char *data2 = malloc(nordlicht_buffer_size(n));

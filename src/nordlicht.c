@@ -1,7 +1,12 @@
 #include "nordlicht.h"
+#include <string.h>
 #include <png.h>
-#include "common.h"
+#include "error.h"
 #include "video.h"
+
+#ifdef _WIN32
+#define realpath(N,R) _fullpath((R),(N),_MAX_PATH)
+#endif
 
 struct nordlicht {
     int width, height;
@@ -56,6 +61,10 @@ void nordlicht_free(nordlicht *n) {
     }
     video_free(n->source);
     free(n);
+}
+
+char *nordlicht_error() {
+    return get_error();
 }
 
 int nordlicht_set_style(nordlicht *n, nordlicht_style s) {

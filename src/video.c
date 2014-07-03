@@ -3,8 +3,9 @@
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
-#define avcodec_free_frame av_freep
+#if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(52, 8, 0)
+AVFrame *av_frame_alloc(void) { return avcodec_alloc_frame(); }
+void av_frame_free(AVFrame **frame) { av_freep(frame); }
 #endif
 
 #define HEURISTIC_NUMBER_OF_FRAMES 1800 // how many frames will the heuristic look at?
@@ -31,7 +32,7 @@ struct video {
 };
 
 double fps(video *v) {
-    return av_q2d(v->format_context->streams[v->video_stream]->r_frame_rate);
+    return av_q2d(v->format_context->streams[v->video_stream]->avg_frame_rate);
 }
 
 long packet_pts(video *v, AVPacket *packet) {
@@ -116,21 +117,14 @@ void video_build_keyframe_index(video *v, int width) {
                     // The keyframe density in the first `HEURISTIC_NUMBER_OF_FRAMES`
                     // frames is HEURISTIC_KEYFRAME_FACTOR times higher than
                     // the density we need overall.
-                    printf("\rBuilding index: Enough keyframes (%.2f times enough), aborting.\n", density/required_density);
                     v->exact = 0;
                     return;
-                } else {
-                    printf("\rBuilding index: Keyframe ratio is %.2f, keep going.\n", density/required_density);
                 }
             }
             frame++;
         }
         av_free_packet(&packet);
-
-        printf("\rBuilding index: %02.0f%%", 1.0*frame/total_number_of_frames(v)*100);
-        fflush(stdout);
     }
-    printf("\rBuilding index: %d keyframes.\n", v->number_of_keyframes);
     v->has_index = 1;
 }
 
@@ -174,7 +168,7 @@ video* video_init(char *filename, int width) {
         return NULL;
     }
 
-    v->frame = avcodec_alloc_frame();
+    v->frame = av_frame_alloc();
     v->current_frame = -1;
     v->last_column = NULL;
     v->has_index = 0;
@@ -183,7 +177,7 @@ video* video_init(char *filename, int width) {
         return NULL;
     }
 
-    v->scaleframe = avcodec_alloc_frame();
+    v->scaleframe = av_frame_alloc();
     v->scaleframe->width = v->frame->width;
     v->scaleframe->height = v->frame->height;
     v->scaleframe->format = PIX_FMT_RGB24;
@@ -300,11 +294,11 @@ void video_set_exact(video *v, int exact) {
 
 void video_free(video *v) {
     av_free(v->buffer);
-    avcodec_free_frame(&v->scaleframe);
+    av_frame_free(&v->scaleframe);
     sws_freeContext(v->sws_context);
 
     avcodec_close(v->decoder_context);
     avformat_close_input(&v->format_context);
-    avcodec_free_frame(&v->frame);
+    av_frame_free(&v->frame);
     free(v);
 }
