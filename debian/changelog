@@ -1,3 +1,17 @@
+nordlicht (0.3.5+git20140703.31723cf-1) UNRELEASED; urgency=medium
+
+  * import upstream Git snapshot 31723cf:
+    - Introduce nordlicht_error(), which returns a description of the last error
+    - Move display of "Building keyframe index..." to the tool
+    - Add a --quiet switch to the tool, that suppresses progress output
+    - CMake: Check if help2man is installed at configure phase
+    - On Windows, use _fullpath() instead of realpath()
+    - Move most of the README to http://nordlicht.github.io/
+    - Remove PNGs from the repository
+    - Use avg_frame_rate instead of r_frame_rate
+
+ -- Roland Hieber <rohieb@rohieb.name>  Thu, 03 Jul 2014 18:08:37 +0200
+
 nordlicht (0.3.5-3) unstable; urgency=medium
 
   * sync Launchpad changes
