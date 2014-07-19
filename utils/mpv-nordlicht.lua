@@ -7,7 +7,7 @@ function init()
     width = mp.get_property("osd-width")
     height = math.floor(width/20)
     -- size of the progress marker:
-    mw = math.floor(height/8)*2+1
+    mw = math.floor(width/160.0)*2+1
     mh = (mw+1)/2
 
     mp.register_event("start-file", new_file)
@@ -61,7 +61,7 @@ end
 
 function on()
     if not is_on then
-        timer = mp.add_periodic_timer(1.0/60, update)
+        timer = mp.add_periodic_timer(1.0/30, update)
         is_on = true
     end
 end
