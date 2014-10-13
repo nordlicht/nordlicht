@@ -26,6 +26,12 @@ nordlicht* nordlicht_init(char *filename, int width, int height);
 // Free a nordlicht.
 void nordlicht_free(nordlicht *n);
 
+// Specify where to start the nordlicht, in percent between 0 and 1.
+int nordlicht_set_start(nordlicht *n, float start);
+
+// Specify where to end the nordlicht, in percent between 0 and 1.
+int nordlicht_set_end(nordlicht *n, float end);
+
 // Set the output style of the nordlicht. Default is NORDLICHT_STYLE_HORIZONTAL.
 // Returns 0 on success.
 int nordlicht_set_style(nordlicht *n, nordlicht_style s);

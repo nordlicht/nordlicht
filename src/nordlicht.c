@@ -12,6 +12,7 @@ struct nordlicht {
     int width, height;
     char *filename;
     unsigned char *data;
+    float start, end;
 
     int owns_data;
     int modifiable;
@@ -36,6 +37,8 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     n->width = width;
     n->height = height;
     n->filename = filename;
+    n->start = 0.0;
+    n->end = 1.0;
 
     n->data = calloc(nordlicht_buffer_size(n), 1);
     n->owns_data = 1;
@@ -67,6 +70,42 @@ char *nordlicht_error() {
     return get_error();
 }
 
+int nordlicht_set_start(nordlicht *n, float start) {
+    if (! n->modifiable) {
+        return -1;
+    }
+
+    if (start < 0) {
+        error("'start' has to be >= 0.");
+        return -1;
+    }
+
+    if (start >= n->end) {
+        error("'start' has to be smaller than 'end'.");
+        return -1;
+    }
+
+    n->start = start;
+}
+
+int nordlicht_set_end(nordlicht *n, float end) {
+    if (! n->modifiable) {
+        return -1;
+    }
+
+    if (end > 1) {
+        error("'end' has to be <= 1.");
+        return -1;
+    }
+
+    if (n->start >= end) {
+        error("'start' has to be smaller than 'end'.");
+        return -1;
+    }
+
+    n->end = end;
+}
+
 int nordlicht_set_style(nordlicht *n, nordlicht_style s) {
     if (! n->modifiable) {
         return -1;
@@ -90,8 +129,9 @@ int nordlicht_set_strategy(nordlicht *n, nordlicht_strategy s) {
 }
 
 unsigned char* get_column(nordlicht *n, int i) {
-    column *c = video_get_column(n->source, 1.0*(i+0.5-COLUMN_PRECISION/2.0)/n->width,
-                                            1.0*(i+0.5+COLUMN_PRECISION/2.0)/n->width, n->style);
+    float proportion = n->end-n->start;
+    column *c = video_get_column(n->source, 1.0*(i+0.5-COLUMN_PRECISION/2.0)/n->width*proportion + n->start,
+                                            1.0*(i+0.5+COLUMN_PRECISION/2.0)/n->width*proportion + n->start, n->style);
 
     if (c == NULL) {
         return NULL;
