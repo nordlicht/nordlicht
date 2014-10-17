@@ -84,6 +84,10 @@ function toggle()
     end
 end
 
-mp.set_property("fullscreen", "yes")
--- wait a little until the fullscreen kicks in
-mp.add_timeout(0.5, init)
+function fullscreen()
+    mp.set_property("fullscreen", "yes")
+end
+
+-- not an optimal solution, but it seems to work:
+mp.add_timeout(0.1, fullscreen)
+mp.add_timeout(0.6, init)
