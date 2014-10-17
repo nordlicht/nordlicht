@@ -16,6 +16,3 @@ version.h
 test_tmp_*
 video.mp4
 *.png
-
-# Vagrant
-/.vagrant
