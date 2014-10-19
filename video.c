@@ -275,6 +275,9 @@ column* video_get_column(video *v, double min_percent, double max_percent, nordl
         case NORDLICHT_STYLE_VERTICAL:
             v->last_column = compress_to_row(i);
             break;
+        case NORDLICHT_STYLE_COLUMN:
+            v->last_column = cut_middle_column(i);
+            break;
     }
 
     free(i->data);

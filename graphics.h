@@ -16,6 +16,6 @@ void column_free(column *c);
 
 column* compress_to_column(image *i);
 column* compress_to_row(image *i);
-column* compress_to_diagonal(image *i);
+column* cut_middle_column(image *i);
 
 #endif

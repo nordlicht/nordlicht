@@ -203,6 +203,8 @@ int main(int argc, const char **argv) {
             style = NORDLICHT_STYLE_HORIZONTAL;
         } else if (strcmp(style_string, "vertical") == 0) {
             style = NORDLICHT_STYLE_VERTICAL;
+        } else if (strcmp(style_string, "column") == 0) {
+            style = NORDLICHT_STYLE_COLUMN;
         } else {
             print_error("Unknown style '%s'.\n", style_string);
             print_help(popt, 1);

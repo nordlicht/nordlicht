@@ -110,7 +110,7 @@ int nordlicht_set_style(nordlicht *n, nordlicht_style s) {
     if (! n->modifiable) {
         return -1;
     }
-    if (s < 0 || s > NORDLICHT_STYLE_VERTICAL) {
+    if (s < 0 || s > NORDLICHT_STYLE_COLUMN) {
         return -1;
     }
     n->style = s;

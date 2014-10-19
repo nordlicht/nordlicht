@@ -90,3 +90,20 @@ column* compress_to_row(image *i) {
 
     return c;
 }
+
+column* cut_middle_column(image *i) {
+    column *c;
+    c = malloc(sizeof(column));
+    c->data = malloc(i->height*3);
+    c->length = i->height;
+
+    int y;
+    int x = i->width/2;
+    for (y = 0; y < i->height; y++) {
+        c->data[3*y+0] = i->data[y*i->width*3+3*x+0];
+        c->data[3*y+1] = i->data[y*i->width*3+3*x+1];
+        c->data[3*y+2] = i->data[y*i->width*3+3*x+2];
+    }
+
+    return c;
+}

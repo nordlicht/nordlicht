@@ -7,6 +7,7 @@ typedef struct nordlicht nordlicht;
 typedef enum nordlicht_style {
     NORDLICHT_STYLE_HORIZONTAL, // compress frames to columns, "move to the right"
     NORDLICHT_STYLE_VERTICAL, // compress frames to rows, "move downwards"
+    NORDLICHT_STYLE_COLUMN, // take the frames' middlemost column
 } nordlicht_style;
 
 typedef enum nordlicht_strategy {
