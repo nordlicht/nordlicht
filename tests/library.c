@@ -60,11 +60,12 @@ int main(void) {
     // style
     n = nordlicht_init(VID, 1, 100);
     assert(n);
-    pass(nordlicht_set_style(n, NORDLICHT_STYLE_HORIZONTAL));
-    pass(nordlicht_set_style(n, NORDLICHT_STYLE_VERTICAL));
-    fail(nordlicht_set_style(n, 2));
-    fail(nordlicht_set_style(n, 1000000));
-    fail(nordlicht_set_style(n, -1));
+    nordlicht_style styles[1] = {NORDLICHT_STYLE_HORIZONTAL};
+    pass(nordlicht_set_style(n, styles, 1));
+    styles[0] = NORDLICHT_STYLE_VERTICAL;
+    pass(nordlicht_set_style(n, styles, 1));
+    styles[0] = 10000000;
+    fail(nordlicht_set_style(n, styles, 1));
     nordlicht_free(n);
 
     // strategy
@@ -101,7 +102,6 @@ int main(void) {
     assert(0 == nordlicht_progress(n));
     pass(nordlicht_generate(n));
     assert(1 == nordlicht_progress(n));
-    fail(nordlicht_set_style(n, NORDLICHT_STYLE_HORIZONTAL));
     buffer2 = malloc(nordlicht_buffer_size(n));
     fail(nordlicht_set_buffer(n, buffer2));
     nordlicht_free(n);

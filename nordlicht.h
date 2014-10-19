@@ -35,7 +35,7 @@ int nordlicht_set_end(nordlicht *n, float end);
 
 // Set the output style of the nordlicht. Default is NORDLICHT_STYLE_HORIZONTAL.
 // Returns 0 on success.
-int nordlicht_set_style(nordlicht *n, nordlicht_style s);
+int nordlicht_set_style(nordlicht *n, nordlicht_style *s, int num_styles);
 
 // Set the generation strategy of the nordlicht. Default is NORDLICHT_STRATEGY_FAST.
 // Returns 0 on success. This function will be removed in the future.

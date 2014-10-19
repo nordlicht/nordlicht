@@ -38,7 +38,7 @@ Examples:\n\
     exit(ret);
 }
 
-void interesting_stuff(char *filename, char *output_file, int width, int height, float start, float end, nordlicht_style style, nordlicht_strategy strategy, int quiet) {
+void interesting_stuff(char *filename, char *output_file, int width, int height, float start, float end, nordlicht_style *styles, int num_tracks, nordlicht_strategy strategy, int quiet) {
     nordlicht *n = nordlicht_init(filename, width, height);
     unsigned char *data = NULL;
 
@@ -49,7 +49,7 @@ void interesting_stuff(char *filename, char *output_file, int width, int height,
 
     nordlicht_set_start(n, start);
     nordlicht_set_end(n, end);
-    nordlicht_set_style(n, style);
+    nordlicht_set_style(n, styles, num_tracks);
     nordlicht_set_strategy(n, strategy);
 
     if (nordlicht_error() != NULL) {
@@ -120,7 +120,7 @@ int main(int argc, const char **argv) {
     float start = 0.0;
     float end = 1.0;
     char *output_file = NULL;
-    char *style_string = NULL;
+    char *styles_string = NULL;
     nordlicht_style style;
     nordlicht_strategy strategy;
     int free_output_file = 0;
@@ -133,7 +133,7 @@ int main(int argc, const char **argv) {
         {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width; by default it's \"height*10\", or 1000 pixels, if both are undefined", NULL},
         {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height; by default it's \"width/10\"", NULL},
         {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename, the default is $(basename VIDEOFILE).png; when you specify an *.bgra file, you'll get a raw 32-bit BGRA file that is updated as the barcode is generated", "FILENAME"},
-        {"style", 's', POPT_ARG_STRING, &style_string, 0, "default is 'horizontal'; can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them", "STYLE"},
+        {"style", 's', POPT_ARG_STRING, &styles_string, 0, "default is 'horizontal'; can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them, or 'column', which takes the middlemost column of each frame. You can specify more than one style, separated by '+', to get multiple tracks", "STYLE"},
         {"start", '\0', POPT_ARG_FLOAT, &start, 0, "specify where to start the barcode (in percent between 0 and 1)", NULL},
         {"end", '\0', POPT_ARG_FLOAT, &end, 0, "specify where to end the barcode (in percent between 0 and 1)", NULL},
         {"quiet", 'q', 0, &quiet, 0, "don't show progress indicator", NULL},
@@ -196,19 +196,33 @@ int main(int argc, const char **argv) {
         height = 100;
     }
 
-    if (style_string == NULL) {
-        style = NORDLICHT_STYLE_HORIZONTAL;
-    } else {
+    if (styles_string == NULL) {
+        styles_string = "horizontal";
+    }
+
+    // count the occurrences of ":" in the styles_string
+    char *s = styles_string;
+    int num_tracks;
+    for (num_tracks=0; s[num_tracks]; s[num_tracks]=='+' ? num_tracks++ : *s++);
+    num_tracks++;
+
+    nordlicht_style *styles;
+    styles = malloc(num_tracks * sizeof(nordlicht_style));
+
+    char *style_string;
+    num_tracks = 0;
+    while ((style_string = strsep(&styles_string, "+"))) {
         if (strcmp(style_string, "horizontal") == 0) {
-            style = NORDLICHT_STYLE_HORIZONTAL;
+            styles[num_tracks] = NORDLICHT_STYLE_HORIZONTAL;
         } else if (strcmp(style_string, "vertical") == 0) {
-            style = NORDLICHT_STYLE_VERTICAL;
+            styles[num_tracks] = NORDLICHT_STYLE_VERTICAL;
         } else if (strcmp(style_string, "column") == 0) {
-            style = NORDLICHT_STYLE_COLUMN;
+            styles[num_tracks] = NORDLICHT_STYLE_COLUMN;
         } else {
             print_error("Unknown style '%s'.\n", style_string);
             print_help(popt, 1);
         }
+        num_tracks++;
     }
 
     const char *ext = filename_ext(output_file);
@@ -221,7 +235,7 @@ int main(int argc, const char **argv) {
         print_help(popt, 1);
     }
 
-    interesting_stuff(filename, output_file, width, height, start, end, style, strategy, quiet);
+    interesting_stuff(filename, output_file, width, height, start, end, styles, num_tracks, strategy, quiet);
 
     if (free_output_file) {
         free(output_file);

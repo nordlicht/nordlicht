@@ -224,7 +224,10 @@ int seek(video *v, long min_frame_nr, long max_frame_nr) {
     return 0;
 }
 
-image* get_frame(video *v, double min_frame, double max_frame) {
+image* video_get_frame(video *v, double min_percent, double max_percent) {
+    long min_frame = min_percent*total_number_of_frames(v);
+    long max_frame = max_percent*total_number_of_frames(v);
+
     if (seek(v, min_frame, max_frame) != 0) {
         return NULL;
     }
@@ -246,44 +249,6 @@ image* get_frame(video *v, double min_frame, double max_frame) {
     }
 
     return i;
-}
-
-column* video_get_column(video *v, double min_percent, double max_percent, nordlicht_style s) {
-    long min_frame = min_percent*total_number_of_frames(v);
-    long max_frame = max_percent*total_number_of_frames(v);
-
-    if (v->last_column != NULL && !v->exact && v->has_index) {
-        if (v->current_frame >= preceding_keyframe(v, (max_frame+min_frame)/2)) {
-            return v->last_column;
-        }
-    }
-
-    image *i = get_frame(v, min_frame, max_frame);
-
-    if (i == NULL) {
-        return NULL;
-    }
-
-    if (v->last_column != NULL) {
-        free(v->last_column);
-    }
-
-    switch (s) {
-        case NORDLICHT_STYLE_HORIZONTAL:
-            v->last_column = compress_to_column(i);
-            break;
-        case NORDLICHT_STYLE_VERTICAL:
-            v->last_column = compress_to_row(i);
-            break;
-        case NORDLICHT_STYLE_COLUMN:
-            v->last_column = cut_middle_column(i);
-            break;
-    }
-
-    free(i->data);
-    free(i);
-
-    return v->last_column;
 }
 
 int video_exact(video *v) {

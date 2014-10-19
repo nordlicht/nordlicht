@@ -10,7 +10,7 @@ typedef struct video video;
 
 video* video_init(char *filename, int width);
 
-column* video_get_column(video *v, double min_percent, double max_percent, nordlicht_style s);
+image* video_get_frame(video *v, double min_percent, double max_percent);
 
 void video_build_keyframe_index(video *v, int width);
 

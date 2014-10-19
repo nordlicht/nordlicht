@@ -8,15 +8,21 @@
 #define realpath(N,R) _fullpath((R),(N),_MAX_PATH)
 #endif
 
+typedef struct {
+    nordlicht_style style;
+    int height;
+} track;
+
 struct nordlicht {
     int width, height;
     char *filename;
+    track *tracks;
+    int num_tracks;
     unsigned char *data;
     float start, end;
 
     int owns_data;
     int modifiable;
-    nordlicht_style style;
     nordlicht_strategy strategy;
     float progress;
     video *source;
@@ -43,7 +49,11 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     n->data = calloc(nordlicht_buffer_size(n), 1);
     n->owns_data = 1;
 
-    n->style = NORDLICHT_STYLE_HORIZONTAL;
+    n->num_tracks = 1;
+    n->tracks = malloc(sizeof(track));
+    n->tracks[0].style = NORDLICHT_STYLE_HORIZONTAL;
+    n->tracks[0].height = n->height;
+
     n->strategy = NORDLICHT_STRATEGY_FAST;
     n->modifiable = 1;
     n->progress = 0;
@@ -106,14 +116,25 @@ int nordlicht_set_end(nordlicht *n, float end) {
     n->end = end;
 }
 
-int nordlicht_set_style(nordlicht *n, nordlicht_style s) {
+int nordlicht_set_style(nordlicht *n, nordlicht_style *styles, int num_tracks) {
     if (! n->modifiable) {
         return -1;
     }
-    if (s < 0 || s > NORDLICHT_STYLE_COLUMN) {
-        return -1;
+
+    n->num_tracks = num_tracks;
+    free(n->tracks);
+    n->tracks = malloc(n->num_tracks*sizeof(track));
+    int i;
+    for (i=0; i<num_tracks; i++) {
+        nordlicht_style s = styles[i];
+        if (s < 0 || s > NORDLICHT_STYLE_COLUMN) {
+            return -1;
+        }
+
+        n->tracks[i].style = s;
+        n->tracks[i].height = n->height/n->num_tracks;
     }
-    n->style = s;
+
     return 0;
 }
 
@@ -128,21 +149,6 @@ int nordlicht_set_strategy(nordlicht *n, nordlicht_strategy s) {
     return 0;
 }
 
-unsigned char* get_column(nordlicht *n, int i) {
-    float proportion = n->end-n->start;
-    column *c = video_get_column(n->source, 1.0*(i+0.5-COLUMN_PRECISION/2.0)/n->width*proportion + n->start,
-                                            1.0*(i+0.5+COLUMN_PRECISION/2.0)/n->width*proportion + n->start, n->style);
-
-    if (c == NULL) {
-        return NULL;
-    }
-
-    column *c2 = column_scale(c, n->height);
-    unsigned char *data = c2->data;
-    free(c2);
-    return data;
-}
-
 int nordlicht_generate(nordlicht *n) {
     n->modifiable = 0;
 
@@ -155,20 +161,46 @@ int nordlicht_generate(nordlicht *n) {
     for (exact = (!do_a_fast_pass); exact <= do_an_exact_pass; exact++) {
         video_set_exact(n->source, exact);
         for (x = 0; x < n->width; x++) {
-            unsigned char *column = get_column(n, x); // TODO: Fill memory directly, no need to memcpy
-            if (column) {
-                int y;
-                for (y = 0; y < n->height; y++) {
-                    // BGRA pixel format:
-                    memcpy(n->data+n->width*4*y+4*x+2, column+3*y+0, 1);
-                    memcpy(n->data+n->width*4*y+4*x+1, column+3*y+1, 1);
-                    memcpy(n->data+n->width*4*y+4*x+0, column+3*y+2, 1);
-                    memset(n->data+n->width*4*y+4*x+3, 255, 1);
+            int i;
+            int y_offset = 0;
+            for(i = 0; i < n->num_tracks; i++) {
+                float proportion = n->end-n->start;
+                image *frame = video_get_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width*proportion + n->start,
+                                                          1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width*proportion + n->start);
+
+                column *c;
+                switch (n->tracks[i].style) {
+                    case NORDLICHT_STYLE_HORIZONTAL:
+                        c = compress_to_column(frame);
+                        break;
+                    case NORDLICHT_STYLE_VERTICAL:
+                        c = compress_to_row(frame);
+                        break;
+                    case NORDLICHT_STYLE_COLUMN:
+                        c = cut_middle_column(frame);
+                        break;
                 }
-                free(column);
-            } else {
-                memset(n->data+n->height*3*x, 0, n->height*3);
+                free(frame->data);
+                free(frame);
+
+                column *c2 = column_scale(c, n->tracks[i].height);
+                free(c->data);
+                free(c);
+
+                int y;
+                for (y = 0; y < c2->length; y++) {
+                    // BGRA pixel format:
+                    memcpy(n->data+n->width*4*(y_offset+y)+4*x+2, c2->data+3*y+0, 1);
+                    memcpy(n->data+n->width*4*(y_offset+y)+4*x+1, c2->data+3*y+1, 1);
+                    memcpy(n->data+n->width*4*(y_offset+y)+4*x+0, c2->data+3*y+2, 1);
+                    memset(n->data+n->width*4*(y_offset+y)+4*x+3, 255, 1);
+                }
+                free(c2->data);
+                free(c2);
+
+                y_offset += n->tracks[i].height;
             }
+
             n->progress = 1.0*x/n->width;
         }
     }
