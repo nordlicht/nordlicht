@@ -27,8 +27,6 @@ struct video {
     int *keyframes;
     int number_of_keyframes;
     int has_index;
-
-    column *last_column;
 };
 
 double fps(video *v) {
@@ -170,7 +168,6 @@ video* video_init(char *filename, int width) {
 
     v->frame = av_frame_alloc();
     v->current_frame = -1;
-    v->last_column = NULL;
     v->has_index = 0;
 
     if (grab_next_frame(v) != 0) {

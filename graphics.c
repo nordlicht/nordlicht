@@ -1,51 +1,35 @@
 #include "graphics.h"
 #include <stdlib.h>
+#include <string.h>
 
-column* column_scale(column *c, int length) {
-    column *c2;
-    c2 = malloc(sizeof(column));
-    c2->data = malloc(length*3);
-    c2->length = length;
+image* image_scale(image *i, int width, int height) {
+    image *i2;
+    i2 = malloc(sizeof(image));
+    i2->data = malloc(width*height*3);
+    i2->width = width;
+    i2->height = height;
 
-    float factor = 1.0*c->length/length;
+    // TODO: clever scaling
+    float x_factor = 1.0*i->width/width; // heh.
+    float y_factor = 1.0*i->height/height; // heh.
 
-    int i;
-    for (i = 0; i < length; i++) {
-        int lower = factor*i + 0.5;
-        int upper = factor*(i+1) - 0.5;
-
-        if (lower > upper) {
-            // this can happen when upscaling. pick nearest-neighbour entry:
-            lower = upper = factor*(i+0.5);
+    int x, y;
+    for (x = 0; x < width; x++) {
+        for (y = 0; y < height; y++) {
+            int orig_x = x*x_factor;
+            int orig_y = y*y_factor;
+            memcpy(i2->data + i2->width*y*3 + x*3, i->data + i->width*orig_y*3 + orig_x*3, 3);
         }
-
-        int rsum = 0;
-        int gsum = 0;
-        int bsum = 0;
-        int j;
-        for (j = lower; j <= upper; j++) {
-            rsum += c->data[j*3+0];
-            gsum += c->data[j*3+1];
-            bsum += c->data[j*3+2];
-        }
-        c2->data[i*3+0] = rsum/(upper-lower+1);
-        c2->data[i*3+1] = gsum/(upper-lower+1);
-        c2->data[i*3+2] = bsum/(upper-lower+1);
     }
-
-    return c2;
+    return i2;
 }
 
-void column_free(column *c) {
-    free(c->data);
-    free(c);
-}
-
-column* compress_to_column(image *i) {
-    column *c;
-    c = malloc(sizeof(column));
-    c->data = malloc(i->height*3);
-    c->length = i->height;
+image* image_compress_to_column(image *i) {
+    image *i2;
+    i2 = malloc(sizeof(image));
+    i2->data = malloc(i->height*3);
+    i2->width = 1;
+    i2->height = i->height;
 
     int x, y;
     int step = i->width/20;
@@ -58,19 +42,20 @@ column* compress_to_column(image *i) {
             gsum += i->data[y*i->width*3+3*x+1];
             bsum += i->data[y*i->width*3+3*x+2];
         }
-        c->data[3*y+0] = rsum/(i->width/step+1);
-        c->data[3*y+1] = gsum/(i->width/step+1);
-        c->data[3*y+2] = bsum/(i->width/step+1);
+        i2->data[3*y+0] = rsum/(i->width/step+1);
+        i2->data[3*y+1] = gsum/(i->width/step+1);
+        i2->data[3*y+2] = bsum/(i->width/step+1);
     }
 
-    return c;
+    return i2;
 }
 
-column* compress_to_row(image *i) {
-    column *c;
-    c = malloc(sizeof(column));
-    c->data = malloc(i->width*3);
-    c->length = i->width;
+image* image_compress_to_row(image *i) {
+    image *i2;
+    i2 = malloc(sizeof(image));
+    i2->data = malloc(i->width*3);
+    i2->width = 1;
+    i2->height = i->width;
 
     int x, y;
     int step = 1;
@@ -83,27 +68,28 @@ column* compress_to_row(image *i) {
             gsum += i->data[y*i->width*3+3*x+1];
             bsum += i->data[y*i->width*3+3*x+2];
         }
-        c->data[3*(i->width-x-1)+0] = rsum/(i->height/step);
-        c->data[3*(i->width-x-1)+1] = gsum/(i->height/step);
-        c->data[3*(i->width-x-1)+2] = bsum/(i->height/step);
+        i2->data[3*x+0] = rsum/(i->height/step);
+        i2->data[3*x+1] = gsum/(i->height/step);
+        i2->data[3*x+2] = bsum/(i->height/step);
     }
 
-    return c;
+    return i2;
 }
 
-column* cut_middle_column(image *i) {
-    column *c;
-    c = malloc(sizeof(column));
-    c->data = malloc(i->height*3);
-    c->length = i->height;
+image* image_middle_column(image *i) {
+    image *i2;
+    i2 = malloc(sizeof(image));
+    i2->data = malloc(i->height*3);
+    i2->width = 1;
+    i2->height = i->height;
 
     int y;
     int x = i->width/2;
     for (y = 0; y < i->height; y++) {
-        c->data[3*y+0] = i->data[y*i->width*3+3*x+0];
-        c->data[3*y+1] = i->data[y*i->width*3+3*x+1];
-        c->data[3*y+2] = i->data[y*i->width*3+3*x+2];
+        i2->data[3*y+0] = i->data[y*i->width*3+3*x+0];
+        i2->data[3*y+1] = i->data[y*i->width*3+3*x+1];
+        i2->data[3*y+2] = i->data[y*i->width*3+3*x+2];
     }
 
-    return c;
+    return i2;
 }

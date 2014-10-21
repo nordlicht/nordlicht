@@ -160,48 +160,63 @@ int nordlicht_generate(nordlicht *n) {
 
     for (exact = (!do_a_fast_pass); exact <= do_an_exact_pass; exact++) {
         video_set_exact(n->source, exact);
-        for (x = 0; x < n->width; x++) {
-            int i;
-            int y_offset = 0;
-            for(i = 0; i < n->num_tracks; i++) {
+
+        int i;
+        int y_offset = 0;
+        for(i = 0; i < n->num_tracks; i++) {
+            for (x = 0; x < n->width; x++) {
                 float proportion = n->end-n->start;
                 image *frame = video_get_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width*proportion + n->start,
                                                           1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width*proportion + n->start);
 
-                column *c;
+                image *column, *column2;
                 switch (n->tracks[i].style) {
+                    case NORDLICHT_STYLE_THUMBNAILS:
+                        column = malloc(sizeof(image));
+                        column->width = frame->width;
+                        column->height = frame->height;
+                        column->data = malloc(frame->height*frame->width*3);
+                        memcpy(column->data, frame->data, frame->height*frame->width*3);
+                        column2 = image_scale(column, 1.0*column->width*n->tracks[i].height/column->height, n->tracks[i].height);
+                        break;
                     case NORDLICHT_STYLE_HORIZONTAL:
-                        c = compress_to_column(frame);
+                        column = image_compress_to_column(frame);
+                        column2 = image_scale(column, 1, n->tracks[i].height);
                         break;
                     case NORDLICHT_STYLE_VERTICAL:
-                        c = compress_to_row(frame);
+                        column = image_compress_to_row(frame);
+                        column2 = image_scale(column, 1, n->tracks[i].height);
                         break;
                     case NORDLICHT_STYLE_COLUMN:
-                        c = cut_middle_column(frame);
+                        column = image_middle_column(frame);
+                        column2 = image_scale(column, 1, n->tracks[i].height);
                         break;
                 }
                 free(frame->data);
                 free(frame);
 
-                column *c2 = column_scale(c, n->tracks[i].height);
-                free(c->data);
-                free(c);
+                free(column->data);
+                free(column);
 
-                int y;
-                for (y = 0; y < c2->length; y++) {
-                    // BGRA pixel format:
-                    memcpy(n->data+n->width*4*(y_offset+y)+4*x+2, c2->data+3*y+0, 1);
-                    memcpy(n->data+n->width*4*(y_offset+y)+4*x+1, c2->data+3*y+1, 1);
-                    memcpy(n->data+n->width*4*(y_offset+y)+4*x+0, c2->data+3*y+2, 1);
-                    memset(n->data+n->width*4*(y_offset+y)+4*x+3, 255, 1);
+                int y, x2;
+                for (y = 0; y < column2->height; y++) {
+                    for (x2 = 0; x2 < column2->width && x+x2 < n->width; x2++) {
+                        // BGRA pixel format:
+                        memcpy(n->data+n->width*4*(y_offset+y)+4*(x+x2)+2, column2->data+column2->width*3*y+3*x2+0, 1);
+                        memcpy(n->data+n->width*4*(y_offset+y)+4*(x+x2)+1, column2->data+column2->width*3*y+3*x2+1, 1);
+                        memcpy(n->data+n->width*4*(y_offset+y)+4*(x+x2)+0, column2->data+column2->width*3*y+3*x2+2, 1);
+                        memset(n->data+n->width*4*(y_offset+y)+4*(x+x2)+3, 255, 1);
+                    }
                 }
-                free(c2->data);
-                free(c2);
 
-                y_offset += n->tracks[i].height;
+                n->progress = (i+1.0*x/n->width)/n->num_tracks;
+                x = x + column2->width - 1;
+
+                free(column2->data);
+                free(column2);
             }
 
-            n->progress = 1.0*x/n->width;
+            y_offset += n->tracks[i].height;
         }
     }
 
