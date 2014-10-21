@@ -19,7 +19,6 @@ struct nordlicht {
     track *tracks;
     int num_tracks;
     unsigned char *data;
-    float start, end;
 
     int owns_data;
     int modifiable;
@@ -43,8 +42,6 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     n->width = width;
     n->height = height;
     n->filename = filename;
-    n->start = 0.0;
-    n->end = 1.0;
 
     n->data = calloc(nordlicht_buffer_size(n), 1);
     n->owns_data = 1;
@@ -57,7 +54,7 @@ nordlicht* nordlicht_init(char *filename, int width, int height) {
     n->strategy = NORDLICHT_STRATEGY_FAST;
     n->modifiable = 1;
     n->progress = 0;
-    n->source = video_init(filename, width);
+    n->source = video_init(filename);
 
     if (n->source == NULL) {
         error("Could not open video file '%s'", filename);
@@ -90,12 +87,12 @@ int nordlicht_set_start(nordlicht *n, float start) {
         return -1;
     }
 
-    if (start >= n->end) {
+    if (start >= video_end(n->source)) {
         error("'start' has to be smaller than 'end'.");
         return -1;
     }
 
-    n->start = start;
+    video_set_start(n->source, start);
 }
 
 int nordlicht_set_end(nordlicht *n, float end) {
@@ -108,12 +105,12 @@ int nordlicht_set_end(nordlicht *n, float end) {
         return -1;
     }
 
-    if (n->start >= end) {
+    if (video_start(n->source) >= end) {
         error("'start' has to be smaller than 'end'.");
         return -1;
     }
 
-    n->end = end;
+    video_set_end(n->source, end);
 }
 
 int nordlicht_set_style(nordlicht *n, nordlicht_style *styles, int num_tracks) {
@@ -165,9 +162,8 @@ int nordlicht_generate(nordlicht *n) {
         int y_offset = 0;
         for(i = 0; i < n->num_tracks; i++) {
             for (x = 0; x < n->width; x++) {
-                float proportion = n->end-n->start;
-                image *frame = video_get_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width*proportion + n->start,
-                                                          1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width*proportion + n->start);
+                image *frame = video_get_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
+                                                          1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
 
                 image *column, *column2;
                 switch (n->tracks[i].style) {

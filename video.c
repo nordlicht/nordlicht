@@ -13,6 +13,7 @@ void av_frame_free(AVFrame **frame) { av_freep(frame); }
 
 struct video {
     int exact;
+    float start, end;
 
     AVFormatContext *format_context;
     AVCodecContext *decoder_context;
@@ -110,7 +111,7 @@ void video_build_keyframe_index(video *v, int width) {
             }
             if (frame == HEURISTIC_NUMBER_OF_FRAMES) {
                 float density = 1.0*v->number_of_keyframes/HEURISTIC_NUMBER_OF_FRAMES;
-                float required_density = 1.0*HEURISTIC_KEYFRAME_FACTOR/COLUMN_PRECISION*width/total_number_of_frames(v);
+                float required_density = 1.0*HEURISTIC_KEYFRAME_FACTOR/COLUMN_PRECISION*width/total_number_of_frames(v)/(v->end-v->start);
                 if (density > required_density) {
                     // The keyframe density in the first `HEURISTIC_NUMBER_OF_FRAMES`
                     // frames is HEURISTIC_KEYFRAME_FACTOR times higher than
@@ -126,7 +127,7 @@ void video_build_keyframe_index(video *v, int width) {
     v->has_index = 1;
 }
 
-video* video_init(char *filename, int width) {
+video* video_init(char *filename) {
     if (filename == NULL) {
         return NULL;
     }
@@ -137,6 +138,8 @@ video* video_init(char *filename, int width) {
     video *v;
     v = malloc(sizeof(video));
     v->exact = 1;
+    v->start = 0.0;
+    v->end = 1.0;
     v->format_context = NULL;
 
     if (avformat_open_input(&v->format_context, filename, NULL, NULL) != 0) {
@@ -255,6 +258,22 @@ int video_exact(video *v) {
 void video_set_exact(video *v, int exact) {
     v->exact = exact;
     seek_keyframe(v, 0);
+}
+
+float video_start(video *v) {
+    return v->start;
+}
+
+void video_set_start(video *v, float start) {
+    v->start = start;
+}
+
+float video_end(video *v) {
+    return v->end;
+}
+
+void video_set_end(video *v, float end) {
+    v->end = end;
 }
 
 void video_free(video *v) {
