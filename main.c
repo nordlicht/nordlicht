@@ -7,6 +7,20 @@
 #include "nordlicht.h"
 #include "version.h"
 
+typedef struct {
+    char *name;
+    char *description;
+    nordlicht_style style;
+} style;
+
+style style_table[] = {
+    {"horizontal", "compress frames to vertical lines and append them", NORDLICHT_STYLE_HORIZONTAL},
+    {"vertical", "compress frames to horizontal lines and rotate them counterclockwise by 90 degrees", NORDLICHT_STYLE_VERTICAL},
+    {"middlecolumn", "take the middlemost column of each frame", NORDLICHT_STYLE_MIDDLECOLUMN},
+    {"thumbnails", "display small thumbnails at regular intervals", NORDLICHT_STYLE_THUMBNAILS},
+    {NULL, NULL, NORDLICHT_STYLE_LAST}
+};
+
 void print_error(char *message, ...) {
     fprintf(stderr, "nordlicht: ");
     va_list arglist;
@@ -29,16 +43,147 @@ const char *filename_ext(const char *path) {
 
 void print_help(poptContext popt, int ret) {
     poptPrintHelp(popt, ret == 0 ? stdout : stderr, 0);
+
+    printf("\nStyles:\n");
+    int i;
+    for (i = 0; style_table[i].name; i++) {
+        printf("  %-14s %s\n", style_table[i].name, style_table[i].description);
+    }
+
     printf("\n\
 Examples:\n\
   nordlicht video.mp4                                   generate video.mp4.png of 1000 x 100 pixels size\n\
   nordlicht video.mp4 --style=vertical                  compress individual frames to columns\n\
-  nordlicht video.mp4 -w 1920 -h 200 -o barcode.png     override size and name of the output file\n\
-");
+  nordlicht video.mp4 -w 1920 -h 200 -o barcode.png     override size and name of the output file\n");
+
     exit(ret);
 }
 
-void interesting_stuff(char *filename, char *output_file, int width, int height, float start, float end, nordlicht_style *styles, int num_tracks, nordlicht_strategy strategy, int quiet) {
+int main(int argc, const char **argv) {
+    int width = -1;
+    int height = -1;
+    float start = 0.0;
+    float end = 1.0;
+    char *output_file = NULL;
+    char *styles_string = NULL;
+    nordlicht_style style;
+    nordlicht_strategy strategy;
+    int free_output_file = 0;
+
+    int quiet = 0;
+    int help = 0;
+    int version = 0;
+
+    struct poptOption optionsTable[] = {
+        {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width; by default it's \"height*10\", or 1000 pixels, if both are undefined", NULL},
+        {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height; by default it's \"width/10\"", NULL},
+        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename, the default is $(basename VIDEOFILE).png; when you specify an *.bgra file, you'll get a raw 32-bit BGRA file that is updated as the barcode is generated", "FILENAME"},
+        {"style", 's', POPT_ARG_STRING, &styles_string, 0, "default is 'horizontal', see \"Styles\" section below. You can specify more than one style, separated by '+', to get multiple tracks", "STYLE"},
+        {"start", '\0', POPT_ARG_FLOAT, &start, 0, "specify where to start the barcode (in percent between 0 and 1)", NULL},
+        {"end", '\0', POPT_ARG_FLOAT, &end, 0, "specify where to end the barcode (in percent between 0 and 1)", NULL},
+        {"quiet", 'q', 0, &quiet, 0, "don't show progress indicator", NULL},
+        {"help", '\0', 0, &help, 0, "display this help and exit", NULL},
+        {"version", '\0', 0, &version, 0, "output version information and exit", NULL},
+        POPT_TABLEEND
+    };
+
+    poptContext popt = poptGetContext(NULL, argc, argv, optionsTable, 0);
+    poptSetOtherOptionHelp(popt, "[OPTION]... VIDEOFILE\n\nOptions:");
+
+    char c;
+
+    // The next line leaks 3 bytes, blame popt!
+    while ((c = poptGetNextOpt(popt)) >= 0) { }
+
+    if (c < -1) {
+        fprintf(stderr, "nordlicht: %s: %s\n", poptBadOption(popt, POPT_BADOPTION_NOALIAS), poptStrerror(c));
+        return 1;
+    }
+
+    if (version) {
+      printf("nordlicht %s\n\nWritten by Sebastian Morr and contributors.\n", NORDLICHT_VERSION);
+      return 0;
+    }
+
+    if (help) {
+        print_help(popt, 0);
+    }
+
+    char *filename = (char*)poptGetArg(popt);
+
+    if (filename == NULL) {
+        print_error("Please specify an input file.\n");
+        print_help(popt, 1);
+    }
+
+    if (poptGetArg(popt) != NULL) {
+        print_error("Please specify only one input file.\n");
+        print_help(popt, 1);
+    }
+
+    if (output_file == NULL) {
+        output_file = malloc(snprintf(NULL, 0, "%s.png", gnu_basename(filename)) + 1);
+        sprintf(output_file, "%s.png", gnu_basename(filename));
+        free_output_file = 1;
+    }
+
+    if (width == -1 && height != -1) {
+        width = height*10;
+    }
+    if (height == -1 && width != -1) {
+        height = width/10;
+        if (height < 1) {
+            height = 1;
+        }
+    }
+    if (height == -1 && width == -1) {
+        width = 1000;
+        height = 100;
+    }
+
+    if (styles_string == NULL) {
+        styles_string = "horizontal";
+    }
+
+    // count the occurrences of "+" in the styles_string
+    char *s = styles_string;
+    int num_tracks;
+    for (num_tracks=0; s[num_tracks]; s[num_tracks]=='+' ? num_tracks++ : *s++);
+    num_tracks++;
+
+    nordlicht_style *styles;
+    styles = malloc(num_tracks * sizeof(nordlicht_style));
+
+    char *style_string;
+    num_tracks = 0;
+    while ((style_string = strsep(&styles_string, "+"))) {
+        int i;
+        for (i = 0; style_table[i].name; i++) {
+            if (strcmp(style_string, style_table[i].name) == 0) {
+                styles[num_tracks] = style_table[i].style;
+                break;
+            }
+        }
+
+        if (!style_table[i].name) {
+            print_error("Unknown style '%s'.\n", style_string);
+            print_help(popt, 1);
+        }
+        num_tracks++;
+    }
+
+    const char *ext = filename_ext(output_file);
+    if (strcmp(ext, "png") == 0) {
+        strategy = NORDLICHT_STRATEGY_FAST;
+    } else if (strcmp(ext, "bgra") == 0) {
+        strategy = NORDLICHT_STRATEGY_LIVE;
+    } else {
+        print_error("Unsupported file extension '%s'.\n", ext);
+        print_help(popt, 1);
+    }
+
+    // Interesting stuff begins here!
+
     nordlicht *n = nordlicht_init(filename, width, height);
     unsigned char *data = NULL;
 
@@ -112,132 +257,6 @@ void interesting_stuff(char *filename, char *output_file, int width, int height,
     if (! quiet) {
         printf(" -> '%s'\n", output_file);
     }
-}
-
-int main(int argc, const char **argv) {
-    int width = -1;
-    int height = -1;
-    float start = 0.0;
-    float end = 1.0;
-    char *output_file = NULL;
-    char *styles_string = NULL;
-    nordlicht_style style;
-    nordlicht_strategy strategy;
-    int free_output_file = 0;
-
-    int quiet = 0;
-    int help = 0;
-    int version = 0;
-
-    struct poptOption optionsTable[] = {
-        {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width; by default it's \"height*10\", or 1000 pixels, if both are undefined", NULL},
-        {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height; by default it's \"width/10\"", NULL},
-        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename, the default is $(basename VIDEOFILE).png; when you specify an *.bgra file, you'll get a raw 32-bit BGRA file that is updated as the barcode is generated", "FILENAME"},
-        {"style", 's', POPT_ARG_STRING, &styles_string, 0, "default is 'horizontal'; can also be 'vertical', which compresses the frames \"down\" to rows, rotates them counterclockwise by 90 degrees and then appends them, 'column', which takes the middlemost column of each frame, or 'thumbnails'. You can specify more than one style, separated by '+', to get multiple tracks", "STYLE"},
-        {"start", '\0', POPT_ARG_FLOAT, &start, 0, "specify where to start the barcode (in percent between 0 and 1)", NULL},
-        {"end", '\0', POPT_ARG_FLOAT, &end, 0, "specify where to end the barcode (in percent between 0 and 1)", NULL},
-        {"quiet", 'q', 0, &quiet, 0, "don't show progress indicator", NULL},
-        {"help", '\0', 0, &help, 0, "display this help and exit", NULL},
-        {"version", '\0', 0, &version, 0, "output version information and exit", NULL},
-        POPT_TABLEEND
-    };
-
-    poptContext popt = poptGetContext(NULL, argc, argv, optionsTable, 0);
-    poptSetOtherOptionHelp(popt, "[OPTION]... VIDEOFILE\n\nOptions:");
-
-    char c;
-
-    // The next line leaks 3 bytes, blame popt!
-    while ((c = poptGetNextOpt(popt)) >= 0) { }
-
-    if (c < -1) {
-        fprintf(stderr, "nordlicht: %s: %s\n", poptBadOption(popt, POPT_BADOPTION_NOALIAS), poptStrerror(c));
-        return 1;
-    }
-
-    if (version) {
-      printf("nordlicht %s\n\nWritten by Sebastian Morr and contributors.\n", NORDLICHT_VERSION);
-      return 0;
-    }
-
-    if (help) {
-        print_help(popt, 0);
-    }
-
-    char *filename = (char*)poptGetArg(popt);
-
-    if (filename == NULL) {
-        print_error("Please specify an input file.\n");
-        print_help(popt, 1);
-    }
-
-    if (poptGetArg(popt) != NULL) {
-        print_error("Please specify only one input file.\n");
-        print_help(popt, 1);
-    }
-
-    if (output_file == NULL) {
-        output_file = malloc(snprintf(NULL, 0, "%s.png", gnu_basename(filename)) + 1);
-        sprintf(output_file, "%s.png", gnu_basename(filename));
-        free_output_file = 1;
-    }
-
-    if (width == -1 && height != -1) {
-        width = height*10;
-    }
-    if (height == -1 && width != -1) {
-        height = width/10;
-        if (height < 1) {
-            height = 1;
-        }
-    }
-    if (height == -1 && width == -1) {
-        width = 1000;
-        height = 100;
-    }
-
-    if (styles_string == NULL) {
-        styles_string = "horizontal";
-    }
-
-    // count the occurrences of ":" in the styles_string
-    char *s = styles_string;
-    int num_tracks;
-    for (num_tracks=0; s[num_tracks]; s[num_tracks]=='+' ? num_tracks++ : *s++);
-    num_tracks++;
-
-    nordlicht_style *styles;
-    styles = malloc(num_tracks * sizeof(nordlicht_style));
-
-    char *style_string;
-    num_tracks = 0;
-    while ((style_string = strsep(&styles_string, "+"))) {
-        if (strcmp(style_string, "thumbnails") == 0) {
-            styles[num_tracks] = NORDLICHT_STYLE_THUMBNAILS;
-        } else if (strcmp(style_string, "horizontal") == 0) {
-            styles[num_tracks] = NORDLICHT_STYLE_HORIZONTAL;
-        } else if (strcmp(style_string, "vertical") == 0) {
-            styles[num_tracks] = NORDLICHT_STYLE_VERTICAL;
-        } else if (strcmp(style_string, "column") == 0) {
-            styles[num_tracks] = NORDLICHT_STYLE_COLUMN;
-        } else {
-            print_error("Unknown style '%s'.\n", style_string);
-            print_help(popt, 1);
-        }
-        num_tracks++;
-    }
-
-    const char *ext = filename_ext(output_file);
-    if (strcmp(ext, "png") == 0) {
-        strategy = NORDLICHT_STRATEGY_FAST;
-    } else if (strcmp(ext, "bgra") == 0) {
-        strategy = NORDLICHT_STRATEGY_LIVE;
-    } else {
-        print_error("Unsupported file extension '%s'.\n", ext);
-        print_help(popt, 1);
-    }
-
-    interesting_stuff(filename, output_file, width, height, start, end, styles, num_tracks, strategy, quiet);
 
     if (free_output_file) {
         free(output_file);

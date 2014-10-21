@@ -127,7 +127,7 @@ int nordlicht_set_style(nordlicht *n, nordlicht_style *styles, int num_tracks) {
     int i;
     for (i=0; i<num_tracks; i++) {
         nordlicht_style s = styles[i];
-        if (s < 0 || s > NORDLICHT_STYLE_COLUMN) {
+        if (s < 0 || s > NORDLICHT_STYLE_LAST-1) {
             return -1;
         }
 
@@ -187,7 +187,7 @@ int nordlicht_generate(nordlicht *n) {
                         column = image_compress_to_row(frame);
                         column2 = image_scale(column, 1, n->tracks[i].height);
                         break;
-                    case NORDLICHT_STYLE_COLUMN:
+                    case NORDLICHT_STYLE_MIDDLECOLUMN:
                         column = image_middle_column(frame);
                         column2 = image_scale(column, 1, n->tracks[i].height);
                         break;
