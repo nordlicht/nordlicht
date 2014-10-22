@@ -26,6 +26,9 @@ struct video {
     uint8_t *buffer;
     AVFrame *scaleframe;
     struct SwsContext *sws_context;
+    AVPacket packet;
+    double time_base;
+    double fps;
 
     long current_frame;
     int *keyframes;
@@ -33,37 +36,29 @@ struct video {
     int has_index;
 };
 
-double fps(const video *v) {
-    return av_q2d(v->format_context->streams[v->video_stream]->avg_frame_rate);
-}
-
 long packet_pts(const video *v, const AVPacket *packet) {
     long pts = packet->pts != 0 ? packet->pts : packet->dts;
-    double sec = (double)(pts - v->format_context->streams[v->video_stream]->start_time) *
-        av_q2d(v->format_context->streams[v->video_stream]->time_base);
-    return (int64_t)(fps(v)*sec + 0.5);
+    double sec = v->time_base*pts;
+    return (int64_t)(v->fps*sec + 0.5);
 }
 
 int grab_next_frame(video *v) {
     int valid = 0;
     int got_frame = 0;
 
-    AVPacket packet;
-    av_init_packet(&packet);
-
     double pts;
 
     while (!valid) {
-        if (av_read_frame(v->format_context, &packet) >= 0) {
-            if (packet.stream_index == v->video_stream) {
-                avcodec_decode_video2(v->decoder_context, v->frame, &got_frame, &packet);
+        if (av_read_frame(v->format_context, &v->packet) >= 0) {
+            if (v->packet.stream_index == v->video_stream) {
+                avcodec_decode_video2(v->decoder_context, v->frame, &got_frame, &v->packet);
                 if (got_frame) {
-                    pts = packet_pts(v, &packet);
+                    pts = packet_pts(v, &v->packet);
                     valid = 1;
                 }
-                av_free_packet(&packet);
+                av_free_packet(&v->packet);
             } else {
-                av_free_packet(&packet);
+                av_free_packet(&v->packet);
             }
         } else {
             error("av_read_frame failed.");
@@ -77,35 +72,32 @@ int grab_next_frame(video *v) {
 }
 
 void seek_keyframe(video *v, const long frame) {
-    double time_base = av_q2d(v->format_context->streams[v->video_stream]->time_base);
-    av_seek_frame(v->format_context, v->video_stream, frame/fps(v)/time_base, AVSEEK_FLAG_BACKWARD);
+    av_seek_frame(v->format_context, v->video_stream, frame/v->fps/v->time_base, AVSEEK_FLAG_BACKWARD);
     avcodec_flush_buffers(v->decoder_context);
     grab_next_frame(v);
 }
 
 int total_number_of_frames(const video *v) {
     double duration_sec = 1.0*v->format_context->duration/AV_TIME_BASE;
-    return fps(v)*duration_sec;
+    return v->fps*duration_sec;
 }
 
 void video_build_keyframe_index(video *v, const int width) {
     v->keyframes = (int *) malloc(sizeof(long)*60*60*3); // TODO: dynamic datastructure!
     v->number_of_keyframes = 0;
 
-    AVPacket packet;
-    av_init_packet(&packet);
     int frame = 0;
 
     v->has_index = 0;
     v->exact = 1;
     seek_keyframe(v, 0);
 
-    while (av_read_frame(v->format_context, &packet) >= 0) {
-        if (packet.stream_index == v->video_stream) {
-            if (!!(packet.flags & AV_PKT_FLAG_KEY)) {
+    while (av_read_frame(v->format_context, &v->packet) >= 0) {
+        if (v->packet.stream_index == v->video_stream) {
+            if (!!(v->packet.flags & AV_PKT_FLAG_KEY)) {
                 v->number_of_keyframes++;
 
-                long pts = packet_pts(v, &packet);
+                long pts = packet_pts(v, &v->packet);
                 if (pts < 1 && v->number_of_keyframes > 0) {
                     pts = frame;
                 }
@@ -125,7 +117,7 @@ void video_build_keyframe_index(video *v, const int width) {
             }
             frame++;
         }
-        av_free_packet(&packet);
+        av_free_packet(&v->packet);
     }
     v->has_index = 1;
 }
@@ -172,6 +164,9 @@ video* video_init(const char *filename) {
         return NULL;
     }
 
+    v->time_base = av_q2d(v->format_context->streams[v->video_stream]->time_base);
+    v->fps = av_q2d(v->format_context->streams[v->video_stream]->avg_frame_rate);
+
     v->frame = av_frame_alloc();
     v->current_frame = -1;
     v->last_frame = NULL;
@@ -185,6 +180,8 @@ video* video_init(const char *filename) {
     v->scaleframe->width = v->frame->width;
     v->scaleframe->height = v->frame->height;
     v->scaleframe->format = PIX_FMT_RGB24;
+
+    av_init_packet(&v->packet);
 
     v->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, v->scaleframe->width, v->scaleframe->height));
     avpicture_fill((AVPicture *)v->scaleframe, v->buffer, PIX_FMT_RGB24, v->frame->width, v->frame->height);
