@@ -158,11 +158,12 @@ int nordlicht_generate(nordlicht *n) {
     const int do_an_exact_pass = video_exact(n->source);
 
     for (exact = (!do_a_fast_pass); exact <= do_an_exact_pass; exact++) {
-        video_set_exact(n->source, exact);
-
         int i;
         int y_offset = 0;
         for(i = 0; i < n->num_tracks; i++) {
+            // call this for each track, to seek to the beginning
+            video_set_exact(n->source, exact);
+
             for (x = 0; x < n->width; x++) {
                 image *frame = video_get_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
                                                           1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
