@@ -8,23 +8,23 @@
 
 typedef struct video video;
 
-video* video_init(char *filename);
+video* video_init(const char *filename);
 
-image* video_get_frame(video *v, double min_percent, double max_percent);
+image* video_get_frame(video *v, const double min_percent, const double max_percent);
 
-void video_build_keyframe_index(video *v, int width);
+void video_build_keyframe_index(video *v, const int width);
 
-int video_exact(video *v);
+int video_exact(const video *v);
 
-void video_set_exact(video *v, int exact);
+void video_set_exact(video *v, const int exact);
 
-float video_start(video *v);
+float video_start(const video *v);
 
-void video_set_start(video *v, float start);
+void video_set_start(video *v, const float start);
 
-float video_end(video *v);
+float video_end(const video *v);
 
-void video_set_end(video *v, float end);
+void video_set_end(video *v, const float end);
 
 void video_free(video *v);
 

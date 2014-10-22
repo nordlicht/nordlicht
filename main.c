@@ -2,18 +2,19 @@
 #include <sys/file.h>
 #include <sys/mman.h>
 #include <stdarg.h>
+#include <unistd.h>
 #include <string.h>
 #include <popt.h>
 #include "nordlicht.h"
 #include "version.h"
 
 typedef struct {
-    char *name;
-    char *description;
+    const char *name;
+    const char *description;
     nordlicht_style style;
 } style;
 
-style style_table[] = {
+const style style_table[] = {
     {"horizontal", "compress frames to vertical lines and append them", NORDLICHT_STYLE_HORIZONTAL},
     {"vertical", "compress frames to horizontal lines and rotate them counterclockwise by 90 degrees", NORDLICHT_STYLE_VERTICAL},
     {"middlecolumn", "take the middlemost column of each frame", NORDLICHT_STYLE_MIDDLECOLUMN},
@@ -21,7 +22,7 @@ style style_table[] = {
     {NULL, NULL, NORDLICHT_STYLE_LAST}
 };
 
-void print_error(char *message, ...) {
+void print_error(const char *message, ...) {
     fprintf(stderr, "nordlicht: ");
     va_list arglist;
     va_start(arglist, message);
@@ -31,7 +32,7 @@ void print_error(char *message, ...) {
 }
 
 const char *gnu_basename(const char *path) {
-    char *base = strrchr(path, '/');
+    const char *base = strrchr(path, '/');
     return base ? base+1 : path;
 }
 
@@ -41,7 +42,7 @@ const char *filename_ext(const char *path) {
     return dot+1;
 }
 
-void print_help(poptContext popt, int ret) {
+void print_help(const poptContext popt, const int ret) {
     poptPrintHelp(popt, ret == 0 ? stdout : stderr, 0);
 
     printf("\nStyles:\n");
@@ -59,7 +60,7 @@ Examples:\n\
     exit(ret);
 }
 
-int main(int argc, const char **argv) {
+int main(const int argc, const char **argv) {
     int width = -1;
     int height = -1;
     float start = 0.0;
@@ -74,7 +75,7 @@ int main(int argc, const char **argv) {
     int help = 0;
     int version = 0;
 
-    struct poptOption optionsTable[] = {
+    const struct poptOption optionsTable[] = {
         {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width; by default it's \"height*10\", or 1000 pixels, if both are undefined", NULL},
         {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height; by default it's \"width/10\"", NULL},
         {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename, the default is $(basename VIDEOFILE).png; when you specify an *.bgra file, you'll get a raw 32-bit BGRA file that is updated as the barcode is generated", "FILENAME"},
@@ -87,7 +88,7 @@ int main(int argc, const char **argv) {
         POPT_TABLEEND
     };
 
-    poptContext popt = poptGetContext(NULL, argc, argv, optionsTable, 0);
+    const poptContext popt = poptGetContext(NULL, argc, argv, optionsTable, 0);
     poptSetOtherOptionHelp(popt, "[OPTION]... VIDEOFILE\n\nOptions:");
 
     char c;
@@ -109,7 +110,7 @@ int main(int argc, const char **argv) {
         print_help(popt, 0);
     }
 
-    char *filename = (char*)poptGetArg(popt);
+    const char *filename = (char*)poptGetArg(popt);
 
     if (filename == NULL) {
         print_error("Please specify an input file.\n");
@@ -122,7 +123,7 @@ int main(int argc, const char **argv) {
     }
 
     if (output_file == NULL) {
-        output_file = malloc(snprintf(NULL, 0, "%s.png", gnu_basename(filename)) + 1);
+        output_file = (char *) malloc(snprintf(NULL, 0, "%s.png", gnu_basename(filename)) + 1);
         sprintf(output_file, "%s.png", gnu_basename(filename));
         free_output_file = 1;
     }
@@ -146,15 +147,15 @@ int main(int argc, const char **argv) {
     }
 
     // count the occurrences of "+" in the styles_string
-    char *s = styles_string;
+    const char *s = styles_string;
     int num_tracks;
     for (num_tracks=0; s[num_tracks]; s[num_tracks]=='+' ? num_tracks++ : *s++);
     num_tracks++;
 
     nordlicht_style *styles;
-    styles = malloc(num_tracks * sizeof(nordlicht_style));
+    styles = (nordlicht_style *) malloc(num_tracks * sizeof(nordlicht_style));
 
-    char *style_string;
+    const char *style_string;
     num_tracks = 0;
     while ((style_string = strsep(&styles_string, "+"))) {
         int i;
@@ -209,7 +210,7 @@ int main(int argc, const char **argv) {
             exit(1);
         }
         ftruncate(fd, nordlicht_buffer_size(n));
-        data = mmap(NULL, nordlicht_buffer_size(n), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        data = (unsigned char *) mmap(NULL, nordlicht_buffer_size(n), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         nordlicht_set_buffer(n, data);
     } else {
         // Try to write the empty buffer to fail early if this does not work

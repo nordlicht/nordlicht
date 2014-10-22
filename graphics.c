@@ -2,16 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-image* image_scale(image *i, int width, int height) {
+image* image_scale(const image *i, const int width, const int height) {
     image *i2;
-    i2 = malloc(sizeof(image));
-    i2->data = malloc(width*height*3);
+    i2 = (image *) malloc(sizeof(image));
+    i2->data = (unsigned char *) malloc(width*height*3);
     i2->width = width;
     i2->height = height;
 
     // TODO: clever scaling
-    float x_factor = 1.0*i->width/width; // heh.
-    float y_factor = 1.0*i->height/height; // heh.
+    const float x_factor = 1.0*i->width/width; // heh.
+    const float y_factor = 1.0*i->height/height; // heh.
 
     int x, y;
     for (x = 0; x < width; x++) {
@@ -24,15 +24,15 @@ image* image_scale(image *i, int width, int height) {
     return i2;
 }
 
-image* image_compress_to_column(image *i) {
+image* image_compress_to_column(const image *i) {
     image *i2;
-    i2 = malloc(sizeof(image));
-    i2->data = malloc(i->height*3);
+    i2 = (image *) malloc(sizeof(image));
+    i2->data = (unsigned char *) malloc(i->height*3);
     i2->width = 1;
     i2->height = i->height;
 
     int x, y;
-    int step = i->width/20;
+    const int step = i->width/20;
     for (y = 0; y < i->height; y++) {
         long rsum = 0;
         long gsum = 0;
@@ -50,15 +50,15 @@ image* image_compress_to_column(image *i) {
     return i2;
 }
 
-image* image_compress_to_row(image *i) {
+image* image_compress_to_row(const image *i) {
     image *i2;
-    i2 = malloc(sizeof(image));
-    i2->data = malloc(i->width*3);
+    i2 = (image *) malloc(sizeof(image));
+    i2->data = (unsigned char *) malloc(i->width*3);
     i2->width = 1;
     i2->height = i->width;
 
     int x, y;
-    int step = 1;
+    const int step = 1;
     for (x = 0; x < i->width; x++) {
         long rsum = 0;
         long gsum = 0;
@@ -76,15 +76,15 @@ image* image_compress_to_row(image *i) {
     return i2;
 }
 
-image* image_middle_column(image *i) {
+image* image_middle_column(const image *i) {
     image *i2;
-    i2 = malloc(sizeof(image));
-    i2->data = malloc(i->height*3);
+    i2 = (image *) malloc(sizeof(image));
+    i2->data = (unsigned char *) malloc(i->height*3);
     i2->width = 1;
     i2->height = i->height;
 
     int y;
-    int x = i->width/2;
+    const int x = i->width/2;
     for (y = 0; y < i->height; y++) {
         i2->data[3*y+0] = i->data[y*i->width*3+3*x+0];
         i2->data[3*y+1] = i->data[y*i->width*3+3*x+1];

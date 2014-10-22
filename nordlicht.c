@@ -15,7 +15,7 @@ typedef struct {
 
 struct nordlicht {
     int width, height;
-    char *filename;
+    const char *filename;
     track *tracks;
     int num_tracks;
     unsigned char *data;
@@ -27,27 +27,27 @@ struct nordlicht {
     video *source;
 };
 
-size_t nordlicht_buffer_size(nordlicht *n) {
+size_t nordlicht_buffer_size(const nordlicht *n) {
     return n->width * n->height * 4;
 }
 
-nordlicht* nordlicht_init(char *filename, int width, int height) {
+nordlicht* nordlicht_init(const char *filename, const int width, const int height) {
     if (width < 1 || height < 1) {
         error("Dimensions must be positive (got %dx%d)", width, height);
         return NULL;
     }
     nordlicht *n;
-    n = malloc(sizeof(nordlicht));
+    n = (nordlicht *) malloc(sizeof(nordlicht));
 
     n->width = width;
     n->height = height;
     n->filename = filename;
 
-    n->data = calloc(nordlicht_buffer_size(n), 1);
+    n->data = (unsigned char *) calloc(nordlicht_buffer_size(n), 1);
     n->owns_data = 1;
 
     n->num_tracks = 1;
-    n->tracks = malloc(sizeof(track));
+    n->tracks = (track *) malloc(sizeof(track));
     n->tracks[0].style = NORDLICHT_STYLE_HORIZONTAL;
     n->tracks[0].height = n->height;
 
@@ -73,11 +73,11 @@ void nordlicht_free(nordlicht *n) {
     free(n);
 }
 
-char *nordlicht_error() {
+const char *nordlicht_error() {
     return get_error();
 }
 
-int nordlicht_set_start(nordlicht *n, float start) {
+int nordlicht_set_start(nordlicht *n, const float start) {
     if (! n->modifiable) {
         return -1;
     }
@@ -93,9 +93,10 @@ int nordlicht_set_start(nordlicht *n, float start) {
     }
 
     video_set_start(n->source, start);
+    return 0;
 }
 
-int nordlicht_set_end(nordlicht *n, float end) {
+int nordlicht_set_end(nordlicht *n, const float end) {
     if (! n->modifiable) {
         return -1;
     }
@@ -111,16 +112,17 @@ int nordlicht_set_end(nordlicht *n, float end) {
     }
 
     video_set_end(n->source, end);
+    return 0;
 }
 
-int nordlicht_set_style(nordlicht *n, nordlicht_style *styles, int num_tracks) {
+int nordlicht_set_style(nordlicht *n, const nordlicht_style *styles, const int num_tracks) {
     if (! n->modifiable) {
         return -1;
     }
 
     n->num_tracks = num_tracks;
     free(n->tracks);
-    n->tracks = malloc(n->num_tracks*sizeof(track));
+    n->tracks = (track *) malloc(n->num_tracks*sizeof(track));
     int i;
     for (i=0; i<num_tracks; i++) {
         nordlicht_style s = styles[i];
@@ -135,7 +137,7 @@ int nordlicht_set_style(nordlicht *n, nordlicht_style *styles, int num_tracks) {
     return 0;
 }
 
-int nordlicht_set_strategy(nordlicht *n, nordlicht_strategy s) {
+int nordlicht_set_strategy(nordlicht *n, const nordlicht_strategy s) {
     if (! n->modifiable) {
         return -1;
     }
@@ -152,8 +154,8 @@ int nordlicht_generate(nordlicht *n) {
     video_build_keyframe_index(n->source, n->width);
     int x, exact;
 
-    int do_a_fast_pass = (n->strategy == NORDLICHT_STRATEGY_LIVE) || !video_exact(n->source);
-    int do_an_exact_pass = video_exact(n->source);
+    const int do_a_fast_pass = (n->strategy == NORDLICHT_STRATEGY_LIVE) || !video_exact(n->source);
+    const int do_an_exact_pass = video_exact(n->source);
 
     for (exact = (!do_a_fast_pass); exact <= do_an_exact_pass; exact++) {
         video_set_exact(n->source, exact);
@@ -168,10 +170,10 @@ int nordlicht_generate(nordlicht *n) {
                 image *column, *column2;
                 switch (n->tracks[i].style) {
                     case NORDLICHT_STYLE_THUMBNAILS:
-                        column = malloc(sizeof(image));
+                        column = (image *) malloc(sizeof(image));
                         column->width = frame->width;
                         column->height = frame->height;
-                        column->data = malloc(frame->height*frame->width*3);
+                        column->data = (unsigned char *) malloc(frame->height*frame->width*3);
                         memcpy(column->data, frame->data, frame->height*frame->width*3);
                         column2 = image_scale(column, 1.0*column->width*n->tracks[i].height/column->height, n->tracks[i].height);
                         break;
@@ -187,9 +189,11 @@ int nordlicht_generate(nordlicht *n) {
                         column = image_middle_column(frame);
                         column2 = image_scale(column, 1, n->tracks[i].height);
                         break;
+                    default:
+                        // cannot happen (TM)
+                        return -1;
+                        break;
                 }
-                free(frame->data);
-                free(frame);
 
                 free(column->data);
                 free(column);
@@ -220,7 +224,7 @@ int nordlicht_generate(nordlicht *n) {
     return 0;
 }
 
-int nordlicht_write(nordlicht *n, char *filename) {
+int nordlicht_write(const nordlicht *n, const char *filename) {
     int code = 0;
 
     if (filename == NULL) {
@@ -306,11 +310,11 @@ finalize:
     return code;
 }
 
-float nordlicht_progress(nordlicht *n) {
+float nordlicht_progress(const nordlicht *n) {
     return n->progress;
 }
 
-const unsigned char* nordlicht_buffer(nordlicht *n) {
+const unsigned char* nordlicht_buffer(const nordlicht *n) {
     return n->data;
 }
 

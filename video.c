@@ -1,4 +1,5 @@
 #include "video.h"
+#include "error.h"
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
@@ -20,6 +21,8 @@ struct video {
     int video_stream;
     AVFrame *frame;
 
+    image *last_frame;
+
     uint8_t *buffer;
     AVFrame *scaleframe;
     struct SwsContext *sws_context;
@@ -30,11 +33,11 @@ struct video {
     int has_index;
 };
 
-double fps(video *v) {
+double fps(const video *v) {
     return av_q2d(v->format_context->streams[v->video_stream]->avg_frame_rate);
 }
 
-long packet_pts(video *v, AVPacket *packet) {
+long packet_pts(const video *v, const AVPacket *packet) {
     long pts = packet->pts != 0 ? packet->pts : packet->dts;
     double sec = (double)(pts - v->format_context->streams[v->video_stream]->start_time) *
         av_q2d(v->format_context->streams[v->video_stream]->time_base);
@@ -73,20 +76,20 @@ int grab_next_frame(video *v) {
     return 0;
 }
 
-void seek_keyframe(video *v, long frame) {
+void seek_keyframe(video *v, const long frame) {
     double time_base = av_q2d(v->format_context->streams[v->video_stream]->time_base);
     av_seek_frame(v->format_context, v->video_stream, frame/fps(v)/time_base, AVSEEK_FLAG_BACKWARD);
     avcodec_flush_buffers(v->decoder_context);
     grab_next_frame(v);
 }
 
-int total_number_of_frames(video *v) {
+int total_number_of_frames(const video *v) {
     double duration_sec = 1.0*v->format_context->duration/AV_TIME_BASE;
     return fps(v)*duration_sec;
 }
 
-void video_build_keyframe_index(video *v, int width) {
-    v->keyframes = malloc(sizeof(long)*60*60*3); // TODO: dynamic datastructure!
+void video_build_keyframe_index(video *v, const int width) {
+    v->keyframes = (int *) malloc(sizeof(long)*60*60*3); // TODO: dynamic datastructure!
     v->number_of_keyframes = 0;
 
     AVPacket packet;
@@ -110,8 +113,8 @@ void video_build_keyframe_index(video *v, int width) {
                 v->keyframes[v->number_of_keyframes] = pts;
             }
             if (frame == HEURISTIC_NUMBER_OF_FRAMES) {
-                float density = 1.0*v->number_of_keyframes/HEURISTIC_NUMBER_OF_FRAMES;
-                float required_density = 1.0*HEURISTIC_KEYFRAME_FACTOR/COLUMN_PRECISION*width/total_number_of_frames(v)/(v->end-v->start);
+                const float density = 1.0*v->number_of_keyframes/HEURISTIC_NUMBER_OF_FRAMES;
+                const float required_density = 1.0*HEURISTIC_KEYFRAME_FACTOR/COLUMN_PRECISION*width/total_number_of_frames(v)/(v->end-v->start);
                 if (density > required_density) {
                     // The keyframe density in the first `HEURISTIC_NUMBER_OF_FRAMES`
                     // frames is HEURISTIC_KEYFRAME_FACTOR times higher than
@@ -127,7 +130,7 @@ void video_build_keyframe_index(video *v, int width) {
     v->has_index = 1;
 }
 
-video* video_init(char *filename) {
+video* video_init(const char *filename) {
     if (filename == NULL) {
         return NULL;
     }
@@ -136,7 +139,7 @@ video* video_init(char *filename) {
     av_register_all();
 
     video *v;
-    v = malloc(sizeof(video));
+    v = (video *) malloc(sizeof(video));
     v->exact = 1;
     v->start = 0.0;
     v->end = 1.0;
@@ -171,6 +174,7 @@ video* video_init(char *filename) {
 
     v->frame = av_frame_alloc();
     v->current_frame = -1;
+    v->last_frame = NULL;
     v->has_index = 0;
 
     if (grab_next_frame(v) != 0) {
@@ -185,13 +189,13 @@ video* video_init(char *filename) {
     v->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, v->scaleframe->width, v->scaleframe->height));
     avpicture_fill((AVPicture *)v->scaleframe, v->buffer, PIX_FMT_RGB24, v->frame->width, v->frame->height);
 
-    v->sws_context = sws_getContext(v->frame->width, v->frame->height, v->frame->format,
+    v->sws_context = sws_getCachedContext(NULL, v->frame->width, v->frame->height, v->frame->format,
             v->scaleframe->width, v->scaleframe->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
     return v;
 }
 
-long preceding_keyframe(video *v, long frame_nr) {
+long preceding_keyframe(video *v, const long frame_nr) {
     int i;
     long best_keyframe = -1;
     for (i = 0; i < v->number_of_keyframes; i++) {
@@ -202,7 +206,7 @@ long preceding_keyframe(video *v, long frame_nr) {
     return best_keyframe;
 }
 
-int seek(video *v, long min_frame_nr, long max_frame_nr) {
+int seek(video *v, const long min_frame_nr, const long max_frame_nr) {
     if (v->exact) {
         long keyframe = preceding_keyframe(v, max_frame_nr);
 
@@ -224,55 +228,62 @@ int seek(video *v, long min_frame_nr, long max_frame_nr) {
     return 0;
 }
 
-image* video_get_frame(video *v, double min_percent, double max_percent) {
-    long min_frame = min_percent*total_number_of_frames(v);
-    long max_frame = max_percent*total_number_of_frames(v);
+image* video_get_frame(video *v, const double min_percent, const double max_percent) {
+    const long min_frame = min_percent*total_number_of_frames(v);
+    const long max_frame = max_percent*total_number_of_frames(v);
+
+    if (v->last_frame != NULL && !v->exact && v->has_index) {
+        if (v->current_frame >= preceding_keyframe(v, (max_frame+min_frame)/2)) {
+            return v->last_frame;
+        }
+    }
 
     if (seek(v, min_frame, max_frame) != 0) {
         return NULL;
     }
 
-    image *i;
-    i = malloc(sizeof(image));
+    if (v->last_frame == NULL) {
+        v->last_frame = (image *) malloc(sizeof(image));
 
-    i->width = v->frame->width;
-    i->height = v->frame->height;
-    i->data = malloc(i->height*i->width*3);
+        v->last_frame->width = v->frame->width;
+        v->last_frame->height = v->frame->height;
+        v->last_frame->data = (unsigned char *) malloc(v->last_frame->height*v->last_frame->width*3);
+    }
 
     sws_scale(v->sws_context, (uint8_t const * const *)v->frame->data,
             v->frame->linesize, 0, v->frame->height, v->scaleframe->data,
             v->scaleframe->linesize);
 
     int y;
-    for (y = 0; y < i->height; y++) {
-        memcpy(i->data+y*i->width*3, v->scaleframe->data[0]+y*v->scaleframe->linesize[0], v->scaleframe->linesize[0]);
+    for (y = 0; y < v->last_frame->height; y++) {
+        memcpy(v->last_frame->data+y*v->last_frame->width*3, v->scaleframe->data[0]+y*v->scaleframe->linesize[0], v->scaleframe->linesize[0]);
     }
 
-    return i;
+    return v->last_frame;
 }
 
-int video_exact(video *v) {
+int video_exact(const video *v) {
     return v->exact;
 }
 
-void video_set_exact(video *v, int exact) {
+void video_set_exact(video *v, const int exact) {
     v->exact = exact;
     seek_keyframe(v, 0);
 }
 
-float video_start(video *v) {
+float video_start(const video *v) {
     return v->start;
 }
 
-void video_set_start(video *v, float start) {
+void video_set_start(video *v, const float start) {
     v->start = start;
 }
 
-float video_end(video *v) {
+float video_end(const video *v) {
     return v->end;
 }
 
-void video_set_end(video *v, float end) {
+void video_set_end(video *v, const float end) {
     v->end = end;
 }
 
