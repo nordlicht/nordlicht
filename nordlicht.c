@@ -69,6 +69,7 @@ void nordlicht_free(nordlicht *n) {
     if (n->owns_data) {
         free(n->data);
     }
+    free(n->tracks);
     video_free(n->source);
     free(n);
 }
@@ -306,7 +307,7 @@ int nordlicht_write(const nordlicht *n, const char *filename) {
 finalize:
     if (fp != NULL) fclose(fp);
     if (png_info != NULL) png_free_data(png, png_info, PNG_FREE_ALL, -1);
-    if (png != NULL) png_destroy_write_struct(&png, (png_infopp)NULL);
+    if (png != NULL) png_destroy_write_struct(&png, &png_info);
 
     return code;
 }

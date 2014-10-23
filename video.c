@@ -56,17 +56,17 @@ int grab_next_frame(video *v) {
                     pts = packet_pts(v, &v->packet);
                     valid = 1;
                 }
-                av_free_packet(&v->packet);
-            } else {
-                av_free_packet(&v->packet);
             }
+            av_free_packet(&v->packet);
         } else {
+            av_free_packet(&v->packet);
             error("av_read_frame failed.");
             v->current_frame = -1;
             return 1;
         }
     }
 
+    av_free_packet(&v->packet);
     v->current_frame = pts;
     return 0;
 }
@@ -181,8 +181,6 @@ video* video_init(const char *filename) {
     v->scaleframe->height = v->frame->height;
     v->scaleframe->format = PIX_FMT_RGB24;
 
-    av_init_packet(&v->packet);
-
     v->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, v->scaleframe->width, v->scaleframe->height));
     avpicture_fill((AVPicture *)v->scaleframe, v->buffer, PIX_FMT_RGB24, v->frame->width, v->frame->height);
 
@@ -292,5 +290,11 @@ void video_free(video *v) {
     avcodec_close(v->decoder_context);
     avformat_close_input(&v->format_context);
     av_frame_free(&v->frame);
+
+    free(v->last_frame->data);
+    free(v->last_frame);
+
+    free(v->keyframes);
+
     free(v);
 }

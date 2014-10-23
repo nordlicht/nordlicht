@@ -212,6 +212,7 @@ int main(const int argc, const char **argv) {
         ftruncate(fd, nordlicht_buffer_size(n));
         data = (unsigned char *) mmap(NULL, nordlicht_buffer_size(n), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         nordlicht_set_buffer(n, data);
+        close(fd);
     } else {
         // Try to write the empty buffer to fail early if this does not work
         if (nordlicht_write(n, output_file) != 0) {
@@ -251,9 +252,9 @@ int main(const int argc, const char **argv) {
         }
     }
 
-    nordlicht_free(n);
+    free(styles);
     munmap(data, nordlicht_buffer_size(n));
-    // close
+    nordlicht_free(n);
 
     if (! quiet) {
         printf(" -> '%s'\n", output_file);
