@@ -9,16 +9,16 @@ function init()
 
     -- size of the barcode:
     width = mp.get_property("osd-width")
-    height = math.floor(width/30)
+    height = math.floor(width/60)
     width2 = width*5
-    height2 = math.floor(width2/30)
+    height2 = math.floor(width2/60)
 
     -- size of the progress marker:
-    mh = math.floor(height/10)*2+1
+    mh = math.floor(height/5)*2+1
     mw = mh*2-1
 
     -- styles:
-    styles = "horizontal"
+    styles = "slitscan"
     styles2 = "slitscan"
 
     mp.register_event("start-file", new_file)

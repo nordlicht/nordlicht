@@ -188,8 +188,7 @@ int nordlicht_generate(nordlicht *n) {
                         column2 = image_scale(column, 1, n->tracks[i].height);
                         break;
                     case NORDLICHT_STYLE_SLITSCAN:
-                        printf("%f\n", 1.0*(x%(n->width/20))/(n->width/20));
-                        column = image_column(frame, 1.0*(x%(n->width/20))/(n->width/20));
+                        column = image_column(frame, 1.0*(x%(n->width/40))/(n->width/40));
                         column2 = image_scale(column, 1, n->tracks[i].height);
                         break;
                     case NORDLICHT_STYLE_MIDDLECOLUMN:
