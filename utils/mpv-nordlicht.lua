@@ -6,13 +6,20 @@ function init()
     mode = 1 -- 1: single, 2: double
     -- size of the display:
     screen_width = mp.get_property("osd-width")
+
     -- size of the barcode:
     width = mp.get_property("osd-width")
-    height = math.floor(width/20)
+    height = math.floor(width/30)
     width2 = width*5
+    height2 = math.floor(width2/30)
+
     -- size of the progress marker:
-    mh = math.floor(height/16)*2+1
+    mh = math.floor(height/10)*2+1
     mw = mh*2-1
+
+    -- styles:
+    styles = "horizontal"
+    styles2 = "slitscan"
 
     mp.register_event("start-file", new_file)
     mp.register_event("shutdown", shutdown)
@@ -44,11 +51,12 @@ function new_file()
 
     kill()
 
-    local nordlicht_cmd = "nordlicht -s thumbnails+vertical"
+    local nordlicht_cmd = "nordlicht -s "..styles
+    local nordlicht_cmd2 = "nordlicht -s "..styles2
     local path = mp.get_property("path")
     local cmd = "nice "..nordlicht_cmd.." \""..path.."\" -o /tmp/nordlicht.bgra -w "..width.." -h "..height.." &"
     os.execute(cmd)
-    local cmd2 = "nice "..nordlicht_cmd.." \""..path.."\" -o /tmp/nordlicht2.bgra -w "..width2.." -h "..height.." &"
+    local cmd2 = "nice "..nordlicht_cmd2.." \""..path.."\" -o /tmp/nordlicht2.bgra -w "..width2.." -h "..height2.." &"
     os.execute(cmd2)
 
     if was_on then
@@ -70,9 +78,9 @@ function update()
         local offset = height+3*mh
 
         if pos ~= nil then
-            mp.command("overlay_add 3 "..math.floor(screen_width/2-width2*pos/100).." "..(mh+offset).." /tmp/nordlicht2.bgra 0 bgra "..width2.." "..height.." "..width2*4)
+            mp.command("overlay_add 3 "..math.floor(screen_width/2-width2*pos/100).." "..(mh+offset).." /tmp/nordlicht2.bgra 0 bgra "..width2.." "..height2.." "..width2*4)
             mp.command("overlay_add 4 "..(math.floor(screen_width/2)-(mw-1)/2).." "..(offset).." /tmp/arrow_down.bgra 0 bgra "..mw.." "..mh.." "..mw*4)
-            mp.command("overlay_add 5 "..(math.floor(screen_width/2)-(mw-1)/2).." "..(height+mh+offset).." /tmp/arrow_up.bgra 0 bgra "..mw.." "..mh.." "..mw*4)
+            mp.command("overlay_add 5 "..(math.floor(screen_width/2)-(mw-1)/2).." "..(height2+mh+offset).." /tmp/arrow_up.bgra 0 bgra "..mw.." "..mh.." "..mw*4)
         end
     end
 end
