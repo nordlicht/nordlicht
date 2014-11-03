@@ -21,11 +21,11 @@ include_directories(${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR} ${FFMPEG_INCLUDE_DIR
 
 add_library(nordlicht SHARED error.c graphics.c nordlicht.c video.c)
 set_target_properties(nordlicht PROPERTIES SOVERSION 0)
-target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${PNG_LIBRARIES} ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${PNG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 add_executable(nordlicht-bin main.c)
 set_target_properties(nordlicht-bin PROPERTIES OUTPUT_NAME nordlicht)
-target_link_libraries(nordlicht-bin nordlicht)
+target_link_libraries(nordlicht-bin nordlicht ${POPT_LIBRARIES})
 
 add_executable(testsuite tests/library.c)
 target_link_libraries(testsuite nordlicht)
