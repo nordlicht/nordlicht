@@ -10,8 +10,8 @@ image* image_scale(const image *i, const int width, const int height) {
     i2->height = height;
 
     // TODO: clever scaling
-    const float x_factor = 1.0*i->width/width; // heh.
-    const float y_factor = 1.0*i->height/height; // heh.
+    const float x_factor = 1.0*i->width/width;
+    const float y_factor = 1.0*i->height/height;
 
     int x, y;
     for (x = 0; x < width; x++) {
@@ -32,7 +32,7 @@ image* image_compress_to_column(const image *i) {
     i2->height = i->height;
 
     int x, y;
-    const int step = i->width/20;
+    const int step = 1;
     for (y = 0; y < i->height; y++) {
         long rsum = 0;
         long gsum = 0;
@@ -76,7 +76,7 @@ image* image_compress_to_row(const image *i) {
     return i2;
 }
 
-image* image_middle_column(const image *i) {
+image* image_column(const image *i, double percent) {
     image *i2;
     i2 = (image *) malloc(sizeof(image));
     i2->data = (unsigned char *) malloc(i->height*3);
@@ -84,7 +84,7 @@ image* image_middle_column(const image *i) {
     i2->height = i->height;
 
     int y;
-    const int x = i->width/2;
+    const int x = i->width*percent;
     for (y = 0; y < i->height; y++) {
         i2->data[3*y+0] = i->data[y*i->width*3+3*x+0];
         i2->data[3*y+1] = i->data[y*i->width*3+3*x+1];

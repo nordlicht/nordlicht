@@ -9,6 +9,6 @@ typedef struct {
 image* image_scale(const image *i, const int width, const int height);
 image* image_compress_to_column(const image *i);
 image* image_compress_to_row(const image *i);
-image* image_middle_column(const image *i);
+image* image_column(const image *i, double percent);
 
 #endif
