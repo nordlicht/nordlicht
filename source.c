@@ -17,6 +17,11 @@ typedef struct {
     int stream;
     AVCodecContext *codec;
     image *last_frame;
+
+    double time_base;
+    double fps;
+    AVFrame *frame;
+    long current_frame;
 } stream;
 
 struct source {
@@ -27,25 +32,20 @@ struct source {
     stream *video;
     stream *audio;
 
-    AVFrame *frame;
-
     uint8_t *buffer;
     AVFrame *scaleframe;
     struct SwsContext *sws_context;
     AVPacket packet;
-    double time_base;
-    double fps;
 
-    long current_frame;
     int *keyframes;
     int number_of_keyframes;
     int has_index;
 };
 
-long packet_pts(const source *s, const AVPacket *packet) {
+long packet_pts(stream *st, const AVPacket *packet) {
     long pts = packet->pts != 0 ? packet->pts : packet->dts;
-    double sec = s->time_base*pts;
-    return (int64_t)(s->fps*sec + 0.5);
+    double sec = st->time_base*pts;
+    return (int64_t)(st->fps*sec + 0.5);
 }
 
 int grab_next_frame(source *s, stream *st) {
@@ -59,10 +59,10 @@ int grab_next_frame(source *s, stream *st) {
             if (s->packet.stream_index == st->stream) {
                 switch (st->codec->codec_type) {
                     case AVMEDIA_TYPE_VIDEO:
-                        avcodec_decode_video2(s->video->codec, s->frame, &got_frame, &s->packet);
+                        avcodec_decode_video2(s->video->codec, st->frame, &got_frame, &s->packet);
                         break;
                     case AVMEDIA_TYPE_AUDIO:
-                        avcodec_decode_audio4(s->audio->codec, s->frame, &got_frame, &s->packet);
+                        avcodec_decode_audio4(s->audio->codec, st->frame, &got_frame, &s->packet);
                         break;
                     default:
                         error("Stream has unknown media type.");
@@ -70,7 +70,7 @@ int grab_next_frame(source *s, stream *st) {
                 }
 
                 if (got_frame) {
-                    pts = packet_pts(s, &s->packet);
+                    pts = packet_pts(st, &s->packet);
                     valid = 1;
                 }
             }
@@ -78,25 +78,25 @@ int grab_next_frame(source *s, stream *st) {
         } else {
             av_free_packet(&s->packet);
             error("av_read_frame failed.");
-            s->current_frame = -1;
+            st->current_frame = -1;
             return 1;
         }
     }
 
     av_free_packet(&s->packet);
-    s->current_frame = pts;
+    st->current_frame = pts;
     return 0;
 }
 
 void seek_keyframe(source *s, stream *st, const long frame) {
-    av_seek_frame(s->format, s->video->stream, frame/s->fps/s->time_base, AVSEEK_FLAG_BACKWARD);
-    avcodec_flush_buffers(s->video->codec);
+    av_seek_frame(s->format, st->stream, frame/st->fps/st->time_base, AVSEEK_FLAG_BACKWARD);
+    avcodec_flush_buffers(st->codec);
     grab_next_frame(s, st);
 }
 
-int total_number_of_frames(const source *s) {
+int total_number_of_frames(const source *s, stream *st) {
     double duration_sec = 1.0*s->format->duration/AV_TIME_BASE;
-    return s->fps*duration_sec;
+    return st->fps*duration_sec;
 }
 
 void source_build_keyframe_index(source *s, const int width) {
@@ -114,7 +114,7 @@ void source_build_keyframe_index(source *s, const int width) {
             if (!!(s->packet.flags & AV_PKT_FLAG_KEY)) {
                 s->number_of_keyframes++;
 
-                long pts = packet_pts(s, &s->packet);
+                long pts = packet_pts(s->video, &s->packet);
                 if (pts < 1 && s->number_of_keyframes > 0) {
                     pts = frame;
                 }
@@ -123,7 +123,7 @@ void source_build_keyframe_index(source *s, const int width) {
             }
             if (frame == HEURISTIC_NUMBER_OF_FRAMES) {
                 const float density = 1.0*s->number_of_keyframes/HEURISTIC_NUMBER_OF_FRAMES;
-                const float required_density = 1.0*HEURISTIC_KEYFRAME_FACTOR/COLUMN_PRECISION*width/total_number_of_frames(s)/(s->end-s->start);
+                const float required_density = 1.0*HEURISTIC_KEYFRAME_FACTOR/COLUMN_PRECISION*width/total_number_of_frames(s, s->video)/(s->end-s->start);
                 if (density > required_density) {
                     // The keyframe density in the first `HEURISTIC_NUMBER_OF_FRAMES`
                     // frames is HEURISTIC_KEYFRAME_FACTOR times higher than
@@ -163,6 +163,24 @@ stream* stream_init(source *s, enum AVMediaType type) {
         avformat_close_input(&s->format);
         return NULL;
     }
+
+    st->time_base = av_q2d(s->format->streams[st->stream]->time_base);
+
+    switch (st->codec->codec_type) {
+        case AVMEDIA_TYPE_VIDEO:
+            st->fps = av_q2d(s->format->streams[st->stream]->avg_frame_rate);
+            break;
+        case AVMEDIA_TYPE_AUDIO:
+            st->fps = st->codec->sample_rate;
+            break;
+        default:
+            error("Stream has unknown media type.");
+            return NULL;
+    }
+
+    st->frame = av_frame_alloc();
+    st->current_frame = -1;
+
     return st;
 }
 
@@ -191,28 +209,27 @@ source* source_init(const char *filename) {
     }
 
     s->video = stream_init(s, AVMEDIA_TYPE_VIDEO);
-    s->audio = stream_init(s, AVMEDIA_TYPE_VIDEO);
+    s->audio = stream_init(s, AVMEDIA_TYPE_AUDIO);
 
-    s->time_base = av_q2d(s->format->streams[s->video->stream]->time_base);
-    s->fps = av_q2d(s->format->streams[s->video->stream]->avg_frame_rate);
-
-    s->frame = av_frame_alloc();
-    s->current_frame = -1;
     s->has_index = 0;
 
     if (grab_next_frame(s, s->video) != 0) {
         return NULL;
     }
 
+    if (grab_next_frame(s, s->audio) != 0) {
+        return NULL;
+    }
+
     s->scaleframe = av_frame_alloc();
-    s->scaleframe->width = s->frame->width;
-    s->scaleframe->height = s->frame->height;
+    s->scaleframe->width = s->video->frame->width;
+    s->scaleframe->height = s->video->frame->height;
     s->scaleframe->format = PIX_FMT_RGB24;
 
     s->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, s->scaleframe->width, s->scaleframe->height));
-    avpicture_fill((AVPicture *)s->scaleframe, s->buffer, PIX_FMT_RGB24, s->frame->width, s->frame->height);
+    avpicture_fill((AVPicture *)s->scaleframe, s->buffer, PIX_FMT_RGB24, s->video->frame->width, s->video->frame->height);
 
-    s->sws_context = sws_getCachedContext(NULL, s->frame->width, s->frame->height, s->frame->format,
+    s->sws_context = sws_getCachedContext(NULL, s->video->frame->width, s->video->frame->height, s->video->frame->format,
             s->scaleframe->width, s->scaleframe->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
     return s;
@@ -230,22 +247,20 @@ long preceding_keyframe(source *s, const long frame_nr) {
 }
 
 int seek(source *s, stream *st, const long min_frame_nr, const long max_frame_nr) {
-    printf("seek: %ld-%ld\n", min_frame_nr, max_frame_nr);
     if (s->exact) {
         long keyframe = preceding_keyframe(s, max_frame_nr);
 
-        if (keyframe > s->current_frame) {
+        if (keyframe > st->current_frame) {
             seek_keyframe(s, st, keyframe);
         }
 
-        while (s->current_frame < min_frame_nr) {
-            if (s->current_frame > max_frame_nr) {
+        while (st->current_frame < min_frame_nr) {
+            if (st->current_frame > max_frame_nr) {
                 error("Target frame is in the past. This shoudn't happen. Please file a bug.");
             }
             if (grab_next_frame(s, st) != 0) {
                 return 1;
             }
-            printf("current: %ld\n", s->current_frame);
         }
     } else {
         seek_keyframe(s, st, (min_frame_nr+max_frame_nr)/2);
@@ -254,11 +269,11 @@ int seek(source *s, stream *st, const long min_frame_nr, const long max_frame_nr
 }
 
 image* source_get_video_frame(source *s, const double min_percent, const double max_percent) {
-    const long min_frame = min_percent*total_number_of_frames(s);
-    const long max_frame = max_percent*total_number_of_frames(s);
+    const long min_frame = min_percent*total_number_of_frames(s, s->video);
+    const long max_frame = max_percent*total_number_of_frames(s, s->video);
 
     if (s->video->last_frame != NULL && !s->exact && s->has_index) {
-        if (s->current_frame >= preceding_keyframe(s, (max_frame+min_frame)/2)) {
+        if (s->video->current_frame >= preceding_keyframe(s, (max_frame+min_frame)/2)) {
             return s->video->last_frame;
         }
     }
@@ -270,13 +285,13 @@ image* source_get_video_frame(source *s, const double min_percent, const double 
     if (s->video->last_frame == NULL) {
         s->video->last_frame = (image *) malloc(sizeof(image));
 
-        s->video->last_frame->width = s->frame->width;
-        s->video->last_frame->height = s->frame->height;
+        s->video->last_frame->width = s->video->frame->width;
+        s->video->last_frame->height = s->video->frame->height;
         s->video->last_frame->data = (unsigned char *) malloc(s->video->last_frame->height*s->video->last_frame->width*3);
     }
 
-    sws_scale(s->sws_context, (uint8_t const * const *)s->frame->data,
-            s->frame->linesize, 0, s->frame->height, s->scaleframe->data,
+    sws_scale(s->sws_context, (uint8_t const * const *)s->video->frame->data,
+            s->video->frame->linesize, 0, s->video->frame->height, s->scaleframe->data,
             s->scaleframe->linesize);
 
     int y;
@@ -288,11 +303,11 @@ image* source_get_video_frame(source *s, const double min_percent, const double 
 }
 
 image* source_get_audio_frame(source *s, const double min_percent, const double max_percent) {
-    const long min_frame = min_percent*total_number_of_frames(s);
-    const long max_frame = max_percent*total_number_of_frames(s);
+    const long min_frame = min_percent*total_number_of_frames(s, s->audio);
+    const long max_frame = max_percent*total_number_of_frames(s, s->audio);
 
     if (s->audio->last_frame != NULL && !s->exact && s->has_index) {
-        if (s->current_frame >= preceding_keyframe(s, (max_frame+min_frame)/2)) {
+        if (s->audio->current_frame >= preceding_keyframe(s, (max_frame+min_frame)/2)) {
             return s->audio->last_frame;
         }
     }
@@ -305,17 +320,15 @@ image* source_get_audio_frame(source *s, const double min_percent, const double 
         s->audio->last_frame = (image *) malloc(sizeof(image));
 
         s->audio->last_frame->width = 1;
-        s->audio->last_frame->height = 255;
+        s->audio->last_frame->height = 256;
         s->audio->last_frame->data = (unsigned char *) malloc(s->audio->last_frame->height*s->audio->last_frame->width*3);
     }
 
     float sum = 0;
     int i;
     for (i = 0; i < 1024; i++) {
-        float d = *(((float *)s->frame->data[0])+i);
-        printf("smp: %f\n", d);
+        float d = *(((float *)s->audio->frame->data[0])+i);
         sum += d*d/1024.0;
-        printf("intersum: %f\n", sum);
     }
 
     if (sum < 0) {
@@ -325,19 +338,17 @@ image* source_get_audio_frame(source *s, const double min_percent, const double 
     sum = sqrt(sum);
     sum *= 255*4;
 
-    //printf("format: %d\n", a->frame->format);
-    printf("sum: %f\n", sum);
     if (sum > 255) {
         sum = 255;
     }
 
     int y;
-    for (y = 0; y < sum; y++) {
-        memset(s->audio->last_frame->data+y*3+0, 255, 3);
-    }
-    for (y = sum; y < s->audio->last_frame->height; y++) {
-        printf("y: %d\n", y);
-        memset(s->audio->last_frame->data+y*3+0, 0, 3);
+    for (y = 0; y < s->audio->last_frame->height; y++) {
+        if (y >= s->audio->last_frame->height-sum) {
+            memset(s->audio->last_frame->data+y*3+0, 255, 3);
+        } else {
+            memset(s->audio->last_frame->data+y*3+0, 0, 3);
+        }
     }
 
     return s->audio->last_frame;
@@ -349,7 +360,8 @@ int source_exact(const source *s) {
 
 void source_set_exact(source *s, const int exact) {
     s->exact = exact;
-    seek_keyframe(s, s->video, 0); // TODO: video?
+    seek_keyframe(s, s->video, 0);
+    seek_keyframe(s, s->audio, 0);
 }
 
 float source_start(const source *s) {
@@ -376,6 +388,8 @@ void stream_free(stream *st) {
         free(st->last_frame);
     }
 
+    av_frame_free(&st->frame);
+
     free(st);
 }
 
@@ -388,7 +402,6 @@ void source_free(source *s) {
     stream_free(s->audio);
 
     avformat_close_input(&s->format);
-    av_frame_free(&s->frame);
 
     free(s->keyframes);
 

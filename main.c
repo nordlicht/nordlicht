@@ -20,6 +20,7 @@ const style style_table[] = {
     {"slitscan", "take single columns while constantly moving to the right (and wrapping back to the left)", NORDLICHT_STYLE_SLITSCAN},
     {"middlecolumn", "take the middlemost column of each frame", NORDLICHT_STYLE_MIDDLECOLUMN},
     {"thumbnails", "display small thumbnails at regular intervals", NORDLICHT_STYLE_THUMBNAILS},
+    {"volume", "...", NORDLICHT_STYLE_VOLUME},
     {NULL, NULL, NORDLICHT_STYLE_LAST}
 };
 
