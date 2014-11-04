@@ -2,7 +2,7 @@
 #include <string.h>
 #include <png.h>
 #include "error.h"
-#include "video.h"
+#include "source.h"
 
 #ifdef _WIN32
 #define realpath(N,R) _fullpath((R),(N),_MAX_PATH)
@@ -24,7 +24,7 @@ struct nordlicht {
     int modifiable;
     nordlicht_strategy strategy;
     float progress;
-    video *source;
+    source *source;
 };
 
 size_t nordlicht_buffer_size(const nordlicht *n) {
@@ -54,7 +54,7 @@ nordlicht* nordlicht_init(const char *filename, const int width, const int heigh
     n->strategy = NORDLICHT_STRATEGY_FAST;
     n->modifiable = 1;
     n->progress = 0;
-    n->source = video_init(filename);
+    n->source = source_init(filename);
 
     if (n->source == NULL) {
         error("Could not open video file '%s'", filename);
@@ -70,7 +70,7 @@ void nordlicht_free(nordlicht *n) {
         free(n->data);
     }
     free(n->tracks);
-    video_free(n->source);
+    source_free(n->source);
     free(n);
 }
 
@@ -88,12 +88,12 @@ int nordlicht_set_start(nordlicht *n, const float start) {
         return -1;
     }
 
-    if (start >= video_end(n->source)) {
+    if (start >= source_end(n->source)) {
         error("'start' has to be smaller than 'end'.");
         return -1;
     }
 
-    video_set_start(n->source, start);
+    source_set_start(n->source, start);
     return 0;
 }
 
@@ -107,12 +107,12 @@ int nordlicht_set_end(nordlicht *n, const float end) {
         return -1;
     }
 
-    if (video_start(n->source) >= end) {
+    if (source_start(n->source) >= end) {
         error("'start' has to be smaller than 'end'.");
         return -1;
     }
 
-    video_set_end(n->source, end);
+    source_set_end(n->source, end);
     return 0;
 }
 
@@ -152,21 +152,21 @@ int nordlicht_set_strategy(nordlicht *n, const nordlicht_strategy s) {
 int nordlicht_generate(nordlicht *n) {
     n->modifiable = 0;
 
-    video_build_keyframe_index(n->source, n->width);
+    source_build_keyframe_index(n->source, n->width);
     int x, exact;
 
-    const int do_a_fast_pass = (n->strategy == NORDLICHT_STRATEGY_LIVE) || !video_exact(n->source);
-    const int do_an_exact_pass = video_exact(n->source);
+    const int do_a_fast_pass = (n->strategy == NORDLICHT_STRATEGY_LIVE) || !source_exact(n->source);
+    const int do_an_exact_pass = source_exact(n->source);
 
     for (exact = (!do_a_fast_pass); exact <= do_an_exact_pass; exact++) {
         int i;
         int y_offset = 0;
         for(i = 0; i < n->num_tracks; i++) {
             // call this for each track, to seek to the beginning
-            video_set_exact(n->source, exact);
+            source_set_exact(n->source, exact);
 
             for (x = 0; x < n->width; x++) {
-                image *frame = video_get_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
+                image *frame = source_get_audio_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
                                                           1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
 
                 image *column, *column2;

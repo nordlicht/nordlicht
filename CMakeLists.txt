@@ -19,7 +19,7 @@ endif()
 
 include_directories(${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR} ${FFMPEG_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${POPT_INCLUDES})
 
-add_library(nordlicht SHARED error.c graphics.c nordlicht.c video.c)
+add_library(nordlicht SHARED error.c graphics.c nordlicht.c source.c)
 set_target_properties(nordlicht PROPERTIES SOVERSION 0)
 target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${PNG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
