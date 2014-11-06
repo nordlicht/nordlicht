@@ -1,3 +1,16 @@
 #!/usr/bin/make -f
 %:
 	dh $@
+
+override_dh_strip:
+	dh_strip -pnordlicht --dbg-package=nordlicht-dbg
+	dh_strip -plibnordlicht0 --dbg-package=libnordlicht0-dbg
+
+override_dh_installdocs:
+	dh_installdocs -pnordlicht
+	dh_installdocs -pnordlicht-dbg --link-doc=nordlicht
+	dh_installdocs -plibnordlicht0
+	dh_installdocs -plibnordlicht0-dbg --link-doc=libnordlicht0
+	dh_installdocs -plibnordlicht-dev
+
+.PHONY: override_dh_strip

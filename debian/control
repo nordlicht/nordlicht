@@ -21,6 +21,19 @@ Description: create colorful video barcodes
  This package contains the `nordlicht' tool which can be used to create
  barcodes from video files.
 
+Package: nordlicht-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: nordlicht (= ${binary:Version}), ${misc:Depends}
+Description: create colorful video barcodes -- debug symbols
+ nordlicht converts video files into colorful barcodes. It's heavily inspired
+ by the "moviebarcode" tumblr. It takes the video's frames in regular
+ intervals, scales them to 1px width, and appends them. The resulting barcodes
+ can be integrated into video players for simplified navigation.
+ .
+ This package contains the debug symbols for the `nordlicht' tool.
+
 Package: libnordlicht0
 Architecture: any
 Section: libs
@@ -33,6 +46,19 @@ Description: create colorful video barcodes -- shared library
  .
  This package contains the library which encapsulates the video barcode
  functionality.
+
+Package: libnordlicht0-dbg
+Architecture: any
+Section: debug
+Priority: extra
+Depends: libnordlicht0 (= ${binary:Version}), ${misc:Depends}
+Description: create colorful video barcodes -- shared library debug symbols
+ nordlicht converts video files into colorful barcodes. It's heavily inspired
+ by the "moviebarcode" tumblr. It takes the video's frames in regular
+ intervals, scales them to 1px width, and appends them. The resulting barcodes
+ can be integrated into video players for simplified navigation.
+ .
+ This package contains the debug symbols for the nordlicht library.
 
 Package: libnordlicht-dev
 Architecture: any

@@ -21,6 +21,7 @@ nordlicht (0.3.5+git20141105.4345819-1) unstable; urgency=medium
     - small bug fixes, cleanup and refactoring
   * make d/copyright machine-readable, as per DEP-5
   * bump Standards-Version to 3.9.6, no changes needed
+  * add debug symbols in packages nordlicht-dbg, libnordlicht0-dbg
 
  -- Roland Hieber <rohieb@rohieb.name>  Thu, 06 Nov 2014 22:38:30 +0100
 
