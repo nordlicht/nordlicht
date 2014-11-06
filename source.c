@@ -59,10 +59,10 @@ int grab_next_frame(source *s, stream *st) {
             if (s->packet.stream_index == st->stream) {
                 switch (st->codec->codec_type) {
                     case AVMEDIA_TYPE_VIDEO:
-                        avcodec_decode_video2(s->video->codec, st->frame, &got_frame, &s->packet);
+                        avcodec_decode_video2(st->codec, st->frame, &got_frame, &s->packet);
                         break;
                     case AVMEDIA_TYPE_AUDIO:
-                        avcodec_decode_audio4(s->audio->codec, st->frame, &got_frame, &s->packet);
+                        avcodec_decode_audio4(st->codec, st->frame, &got_frame, &s->packet);
                         break;
                     default:
                         error("Stream has unknown media type.");
@@ -181,6 +181,10 @@ stream* stream_init(source *s, enum AVMediaType type) {
     st->frame = av_frame_alloc();
     st->current_frame = -1;
 
+    if (grab_next_frame(s, st) != 0) {
+        return NULL;
+    }
+
     return st;
 }
 
@@ -213,14 +217,6 @@ source* source_init(const char *filename) {
 
     s->has_index = 0;
 
-    if (grab_next_frame(s, s->video) != 0) {
-        return NULL;
-    }
-
-    if (grab_next_frame(s, s->audio) != 0) {
-        return NULL;
-    }
-
     s->scaleframe = av_frame_alloc();
     s->scaleframe->width = s->video->frame->width;
     s->scaleframe->height = s->video->frame->height;
@@ -247,7 +243,7 @@ long preceding_keyframe(source *s, const long frame_nr) {
 }
 
 int seek(source *s, stream *st, const long min_frame_nr, const long max_frame_nr) {
-    if (s->exact) {
+    if (s->exact && st->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
         long keyframe = preceding_keyframe(s, max_frame_nr);
 
         if (keyframe > st->current_frame) {
@@ -269,8 +265,9 @@ int seek(source *s, stream *st, const long min_frame_nr, const long max_frame_nr
 }
 
 image* source_get_video_frame(source *s, const double min_percent, const double max_percent) {
-    const long min_frame = min_percent*total_number_of_frames(s, s->video);
-    const long max_frame = max_percent*total_number_of_frames(s, s->video);
+    float proportion = s->end-s->start;
+    const long min_frame = (min_percent*proportion + s->start)*total_number_of_frames(s, s->video);
+    const long max_frame = (max_percent*proportion + s->start)*total_number_of_frames(s, s->video);
 
     if (s->video->last_frame != NULL && !s->exact && s->has_index) {
         if (s->video->current_frame >= preceding_keyframe(s, (max_frame+min_frame)/2)) {
@@ -303,8 +300,9 @@ image* source_get_video_frame(source *s, const double min_percent, const double 
 }
 
 image* source_get_audio_frame(source *s, const double min_percent, const double max_percent) {
-    const long min_frame = min_percent*total_number_of_frames(s, s->audio);
-    const long max_frame = max_percent*total_number_of_frames(s, s->audio);
+    float proportion = s->end-s->start;
+    const long min_frame = (min_percent*proportion + s->start)*total_number_of_frames(s, s->video);
+    const long max_frame = (max_percent*proportion + s->start)*total_number_of_frames(s, s->video);
 
     if (s->audio->last_frame != NULL && !s->exact && s->has_index) {
         if (s->audio->current_frame >= preceding_keyframe(s, (max_frame+min_frame)/2)) {
@@ -360,8 +358,8 @@ int source_exact(const source *s) {
 
 void source_set_exact(source *s, const int exact) {
     s->exact = exact;
-    seek_keyframe(s, s->video, 0);
-    seek_keyframe(s, s->audio, 0);
+    s->video->current_frame = -1;
+    s->audio->current_frame = -1;
 }
 
 float source_start(const source *s) {
