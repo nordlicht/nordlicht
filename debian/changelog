@@ -1,3 +1,27 @@
+nordlicht (0.3.5+git20141105.4345819-1) unstable; urgency=medium
+
+  * build from upstream Git snapshot 4345819, changelog summary:
+    - move libpopt dependency from the library to the tool
+    - add more detailed licensing information
+    - seek to the beginning of the file for each track
+    - allow the specification of a multi-track layout in API and CLI
+    - introduce options 'start' and 'end' to set the range in the video
+      nordlicht will work on
+    - mpv lua script tweaks:
+      . separate styles for small and large nordlicht
+      . start fullscreen after 0.1 sec.
+      . add zoomed-in barcode
+    - cache some information about the video
+    - add new barcode styles:
+      . "column": take each frame's middlemost column
+      . "thumbnails": draw thumbnails in regular intervals
+      . "slitscan": take single columns, constantly moving one column per
+        frame to the right and wrapping back to the left (experimental)
+      . "volume": draw volume level
+    - small bug fixes, cleanup and refactoring
+
+ -- Roland Hieber <rohieb@rohieb.name>  Thu, 06 Nov 2014 22:38:30 +0100
+
 nordlicht (0.3.5+git20140703.31723cf-1) UNRELEASED; urgency=medium
 
   * import upstream Git snapshot 31723cf:
