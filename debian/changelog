@@ -19,6 +19,7 @@ nordlicht (0.3.5+git20141105.4345819-1) unstable; urgency=medium
         frame to the right and wrapping back to the left (experimental)
       . "volume": draw volume level
     - small bug fixes, cleanup and refactoring
+  * make d/copyright machine-readable, as per DEP-5
 
  -- Roland Hieber <rohieb@rohieb.name>  Thu, 06 Nov 2014 22:38:30 +0100
 
