@@ -5,7 +5,7 @@ Uploaders: Sebastian Morr <sebastian@morr.cc>
 Section: video
 Build-Depends: debhelper (>= 9.0.0), cmake, libavcodec-dev, libavformat-dev,
   libswscale-dev, libpng-dev, libpopt-dev, help2man
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Homepage: https://github.com/blinry/nordlicht
 
 Package: nordlicht
