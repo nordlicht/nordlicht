@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct image {
+    int width, height;
+    unsigned char *data;
+};
+
 image *image_init(const int width, const int height) {
     image *i;
     i = (image *) malloc(sizeof(image));
@@ -9,6 +14,40 @@ image *image_init(const int width, const int height) {
     i->width = width;
     i->height = height;
     return i;
+}
+
+int image_width(const image *i) {
+    return i->width;
+}
+
+int image_height(const image *i) {
+    return i->height;
+}
+
+void image_bgra(unsigned char *target, const int width, const int height, const image *i, const int offset_x, const int offset_y) {
+    int x, y;
+    for (y = 0; y < image_height(i) && offset_y+y < height ; y++) {
+        for (x = 0; x < image_width(i) && offset_x+x < width; x++) {
+            // BGRA pixel format:
+            memcpy(target+width*4*(offset_y+y)+4*(offset_x+x)+2, i->data+i->width*3*y+3*x+0, 1);
+            memcpy(target+width*4*(offset_y+y)+4*(offset_x+x)+1, i->data+i->width*3*y+3*x+1, 1);
+            memcpy(target+width*4*(offset_y+y)+4*(offset_x+x)+0, i->data+i->width*3*y+3*x+2, 1);
+            memset(target+width*4*(offset_y+y)+4*(offset_x+x)+3, 255, 1);
+        }
+    }
+}
+
+void image_copy_avframe(const image *i, AVFrame *frame) {
+    int y;
+    for (y = 0; y < image_height(i); y++) {
+        memcpy(i->data+y*i->width*3, frame->data[0]+y*frame->linesize[0], frame->linesize[0]);
+    }
+}
+
+void image_set(const image *i, const int x, const int y, const unsigned char r, const unsigned char g, const unsigned char b) {
+    i->data[y*i->width*3+x*3+0] = r;
+    i->data[y*i->width*3+x*3+1] = g;
+    i->data[y*i->width*3+x*3+2] = b;
 }
 
 image* image_scale(const image *i, const int width, const int height) {

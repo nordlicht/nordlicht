@@ -176,9 +176,8 @@ int nordlicht_generate(nordlicht *n) {
                         if (frame == NULL) {
                             continue;
                         }
-                        column = image_init(frame->width, frame->height);
-                        memcpy(column->data, frame->data, frame->height*frame->width*3);
-                        column2 = image_scale(column, 1.0*column->width*n->tracks[i].height/column->height, n->tracks[i].height);
+                        column = image_init(1, 1);
+                        column2 = image_scale(frame, 1.0*image_width(frame)*n->tracks[i].height/image_height(frame), n->tracks[i].height);
                         break;
                     case NORDLICHT_STYLE_HORIZONTAL:
                         frame = source_get_video_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
@@ -234,19 +233,10 @@ int nordlicht_generate(nordlicht *n) {
                     image_free(column);
                 }
 
-                int y, x2;
-                for (y = 0; y < column2->height; y++) {
-                    for (x2 = 0; x2 < column2->width && x+x2 < n->width; x2++) {
-                        // BGRA pixel format:
-                        memcpy(n->data+n->width*4*(y_offset+y)+4*(x+x2)+2, column2->data+column2->width*3*y+3*x2+0, 1);
-                        memcpy(n->data+n->width*4*(y_offset+y)+4*(x+x2)+1, column2->data+column2->width*3*y+3*x2+1, 1);
-                        memcpy(n->data+n->width*4*(y_offset+y)+4*(x+x2)+0, column2->data+column2->width*3*y+3*x2+2, 1);
-                        memset(n->data+n->width*4*(y_offset+y)+4*(x+x2)+3, 255, 1);
-                    }
-                }
+                image_bgra(n->data, n->width, n->height, column2, x, y_offset);
 
                 n->progress = (i+1.0*x/n->width)/n->num_tracks;
-                x = x + column2->width - 1;
+                x = x + image_width(column2) - 1;
 
                 image_free(column2);
             }

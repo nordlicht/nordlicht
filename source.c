@@ -287,18 +287,15 @@ image* source_get_video_frame(source *s, const double min_percent, const double 
             s->video->frame->linesize, 0, s->video->frame->height, s->scaleframe->data,
             s->scaleframe->linesize);
 
-    int y;
-    for (y = 0; y < s->video->last_frame->height; y++) {
-        memcpy(s->video->last_frame->data+y*s->video->last_frame->width*3, s->scaleframe->data[0]+y*s->scaleframe->linesize[0], s->scaleframe->linesize[0]);
-    }
+    image_copy_avframe(s->video->last_frame, s->scaleframe);
 
     return s->video->last_frame;
 }
 
 image* source_get_audio_frame(source *s, const double min_percent, const double max_percent) {
     float proportion = s->end-s->start;
-    const long min_frame = (min_percent*proportion + s->start)*total_number_of_frames(s, s->video);
-    const long max_frame = (max_percent*proportion + s->start)*total_number_of_frames(s, s->video);
+    const long min_frame = (min_percent*proportion + s->start)*total_number_of_frames(s, s->audio);
+    const long max_frame = (max_percent*proportion + s->start)*total_number_of_frames(s, s->audio);
 
     if (s->audio->last_frame != NULL && !s->exact && s->has_index) {
         if (s->audio->current_frame >= preceding_keyframe(s, (max_frame+min_frame)/2)) {
@@ -333,11 +330,11 @@ image* source_get_audio_frame(source *s, const double min_percent, const double 
     }
 
     int y;
-    for (y = 0; y < s->audio->last_frame->height; y++) {
-        if (y >= s->audio->last_frame->height-sum) {
-            memset(s->audio->last_frame->data+y*3+0, 255, 3);
+    for (y = 0; y < image_height(s->audio->last_frame); y++) {
+        if (y >= image_height(s->audio->last_frame)-sum) {
+            image_set(s->audio->last_frame, 0, y, 255, 255, 255);
         } else {
-            memset(s->audio->last_frame->data+y*3+0, 0, 3);
+            image_set(s->audio->last_frame, 0, y, 0, 0, 0);
         }
     }
 
