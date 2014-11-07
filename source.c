@@ -280,11 +280,7 @@ image* source_get_video_frame(source *s, const double min_percent, const double 
     }
 
     if (s->video->last_frame == NULL) {
-        s->video->last_frame = (image *) malloc(sizeof(image));
-
-        s->video->last_frame->width = s->video->frame->width;
-        s->video->last_frame->height = s->video->frame->height;
-        s->video->last_frame->data = (unsigned char *) malloc(s->video->last_frame->height*s->video->last_frame->width*3);
+        s->video->last_frame = image_init(s->video->frame->width, s->video->frame->height);
     }
 
     sws_scale(s->sws_context, (uint8_t const * const *)s->video->frame->data,
@@ -315,11 +311,7 @@ image* source_get_audio_frame(source *s, const double min_percent, const double 
     }
 
     if (s->audio->last_frame == NULL) {
-        s->audio->last_frame = (image *) malloc(sizeof(image));
-
-        s->audio->last_frame->width = 1;
-        s->audio->last_frame->height = 256;
-        s->audio->last_frame->data = (unsigned char *) malloc(s->audio->last_frame->height*s->audio->last_frame->width*3);
+        s->audio->last_frame = image_init(1, 256);
     }
 
     float sum = 0;
@@ -382,8 +374,7 @@ void stream_free(stream *st) {
     avcodec_close(st->codec);
 
     if (st->last_frame != NULL) {
-        free(st->last_frame->data);
-        free(st->last_frame);
+        image_free(st->last_frame);
     }
 
     av_frame_free(&st->frame);

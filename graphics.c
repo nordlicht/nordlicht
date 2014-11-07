@@ -2,12 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+image *image_init(const int width, const int height) {
+    image *i;
+    i = (image *) malloc(sizeof(image));
+    i->data = (unsigned char *) malloc(width*height*3);
+    i->width = width;
+    i->height = height;
+    return i;
+}
+
 image* image_scale(const image *i, const int width, const int height) {
-    image *i2;
-    i2 = (image *) malloc(sizeof(image));
-    i2->data = (unsigned char *) malloc(width*height*3);
-    i2->width = width;
-    i2->height = height;
+    image *i2 = image_init(width, height);
 
     // TODO: clever scaling
     const float x_factor = 1.0*i->width/width;
@@ -25,11 +30,7 @@ image* image_scale(const image *i, const int width, const int height) {
 }
 
 image* image_compress_to_column(const image *i) {
-    image *i2;
-    i2 = (image *) malloc(sizeof(image));
-    i2->data = (unsigned char *) malloc(i->height*3);
-    i2->width = 1;
-    i2->height = i->height;
+    image *i2 = image_init(1, i->height);
 
     int x, y;
     const int step = i->width/10;
@@ -51,11 +52,7 @@ image* image_compress_to_column(const image *i) {
 }
 
 image* image_compress_to_row(const image *i) {
-    image *i2;
-    i2 = (image *) malloc(sizeof(image));
-    i2->data = (unsigned char *) malloc(i->width*3);
-    i2->width = 1;
-    i2->height = i->width;
+    image *i2 = image_init(i->width, 1);
 
     int x, y;
     const int step = i->height/10;
@@ -77,11 +74,7 @@ image* image_compress_to_row(const image *i) {
 }
 
 image* image_column(const image *i, double percent) {
-    image *i2;
-    i2 = (image *) malloc(sizeof(image));
-    i2->data = (unsigned char *) malloc(i->height*3);
-    i2->width = 1;
-    i2->height = i->height;
+    image *i2 = image_init(1, i->height);
 
     int y;
     const int x = i->width*percent;
@@ -92,4 +85,9 @@ image* image_column(const image *i, double percent) {
     }
 
     return i2;
+}
+
+void image_free(image *i) {
+    free(i->data);
+    free(i);
 }

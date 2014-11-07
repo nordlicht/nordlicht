@@ -176,10 +176,7 @@ int nordlicht_generate(nordlicht *n) {
                         if (frame == NULL) {
                             continue;
                         }
-                        column = (image *) malloc(sizeof(image));
-                        column->width = frame->width;
-                        column->height = frame->height;
-                        column->data = (unsigned char *) malloc(frame->height*frame->width*3);
+                        column = image_init(frame->width, frame->height);
                         memcpy(column->data, frame->data, frame->height*frame->width*3);
                         column2 = image_scale(column, 1.0*column->width*n->tracks[i].height/column->height, n->tracks[i].height);
                         break;
@@ -234,8 +231,7 @@ int nordlicht_generate(nordlicht *n) {
                 }
 
                 if (column) {
-                    free(column->data);
-                    free(column);
+                    image_free(column);
                 }
 
                 int y, x2;
@@ -252,8 +248,7 @@ int nordlicht_generate(nordlicht *n) {
                 n->progress = (i+1.0*x/n->width)/n->num_tracks;
                 x = x + column2->width - 1;
 
-                free(column2->data);
-                free(column2);
+                image_free(column2);
             }
 
             y_offset += n->tracks[i].height;
