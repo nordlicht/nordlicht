@@ -1,3 +1,10 @@
+nordlicht (0.3.5+git20141107.5e7046c-1) unstable; urgency=medium
+
+  * build from upstream Git snapshot 5e7046c
+    - fixes segmentation fault on null pointer reference for some video files
+
+ -- Roland Hieber <rohieb@rohieb.name>  Fri, 07 Nov 2014 04:09:19 +0100
+
 nordlicht (0.3.5+git20141105.4345819-1) unstable; urgency=medium
 
   * build from upstream Git snapshot 4345819, changelog summary:
