@@ -32,7 +32,7 @@ image* image_compress_to_column(const image *i) {
     i2->height = i->height;
 
     int x, y;
-    const int step = 1;
+    const int step = i->width/10;
     for (y = 0; y < i->height; y++) {
         long rsum = 0;
         long gsum = 0;
@@ -58,7 +58,7 @@ image* image_compress_to_row(const image *i) {
     i2->height = i->width;
 
     int x, y;
-    const int step = 1;
+    const int step = i->height/10;
     for (x = 0; x < i->width; x++) {
         long rsum = 0;
         long gsum = 0;
