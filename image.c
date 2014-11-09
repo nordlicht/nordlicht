@@ -1,4 +1,4 @@
-#include "graphics.h"
+#include "image.h"
 #include <stdlib.h>
 #include <string.h>
 #include <libswscale/swscale.h>

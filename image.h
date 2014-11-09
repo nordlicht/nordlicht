@@ -1,5 +1,5 @@
-#ifndef INCLUDE_graphics_h__
-#define INCLUDE_graphics_h__
+#ifndef INCLUDE_image_h__
+#define INCLUDE_image_h__
 
 #include <libavcodec/avcodec.h>
 

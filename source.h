@@ -2,7 +2,7 @@
 #define INCLUDE_source_h__
 
 #include "nordlicht.h"
-#include "graphics.h"
+#include "image.h"
 
 #define COLUMN_PRECISION 0.95 // choose a frame from this percentage at the middle of each column
 
