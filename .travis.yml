@@ -4,7 +4,7 @@ compiler:
   - gcc
 before_install:
   - sudo apt-get update
-  - sudo apt-get -y install libavcodec-dev libavformat-dev libswscale-dev libpng-dev libpopt-dev help2man
+  - sudo apt-get -y install libavcodec-dev libavformat-dev libswscale-dev libpopt-dev help2man
 before_script:
   - mkdir build
   - cd build

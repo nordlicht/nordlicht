@@ -1,4 +1,5 @@
 #include "image.h"
+#include "error.h"
 #include <stdlib.h>
 #include <string.h>
 #include <libswscale/swscale.h>
@@ -47,17 +48,27 @@ unsigned char image_get_b(const image *i, const int x, const int y) {
     return *(i->frame->data[0]+y*i->frame->linesize[0]+x*3+2);
 }
 
-void image_bgra(unsigned char *target, const int width, const int height, const image *i, const int offset_x, const int offset_y) {
+void image_to_bgra(unsigned char *target, const int width, const int height, const image *i, const int offset_x, const int offset_y) {
     int x, y;
     for (y = 0; y < image_height(i) && offset_y+y < height ; y++) {
         for (x = 0; x < image_width(i) && offset_x+x < width; x++) {
-            // BGRA pixel format:
             *(target+width*4*(offset_y+y)+4*(offset_x+x)+0) = image_get_b(i, x, y);
             *(target+width*4*(offset_y+y)+4*(offset_x+x)+1) = image_get_g(i, x, y);
             *(target+width*4*(offset_y+y)+4*(offset_x+x)+2) = image_get_r(i, x, y);
             *(target+width*4*(offset_y+y)+4*(offset_x+x)+3) = 255;
         }
     }
+}
+
+image* image_from_bgra(const unsigned char *source, const int width, const int height) {
+    image *i = image_init(width, height);
+    int x, y;
+    for (y = 0; y < image_height(i); y++) {
+        for (x = 0; x < image_width(i); x++) {
+            image_set(i, x, y, *(source+width*4*y+4*x+2), *(source+width*4*y+4*x+1), *(source+width*4*y+4*x+0));
+        }
+    }
+    return i;
 }
 
 void image_copy_avframe(const image *i, AVFrame *frame) {
@@ -121,6 +132,48 @@ image* image_column(const image *i, double percent) {
     }
 
     return i2;
+}
+
+void image_write_png(const image *i, const char *file_path) {
+    AVCodec *encoder = avcodec_find_encoder_by_name("png");
+    AVCodecContext *encoder_context;
+    encoder_context = avcodec_alloc_context3(encoder);
+    encoder_context->width = i->frame->width;
+    encoder_context->height = i->frame->height;
+    encoder_context->pix_fmt = PIX_FMT_RGB24;
+    if (avcodec_open2(encoder_context, encoder, NULL) < 0) {
+        error("Could not open output codec.");
+    }
+
+    AVPacket packet;
+    av_init_packet(&packet);
+    packet.data = NULL;
+    packet.size = 0;
+
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
+    uint8_t buffer[200000]; // TODO: Why this size?
+    packet.size = avcodec_encode_video(encoder_context, buffer, 200000, code->frame);
+    packet.data = buffer;
+#else
+    int got_packet = 0;
+    avcodec_encode_video2(encoder_context, &packet, i->frame, &got_packet);
+    if (! got_packet) {
+        error("Encoding error.");
+    }
+#endif
+
+    FILE *file;
+    file = fopen(file_path, "wb");
+    if (! file) {
+        error("Could not open output file.");
+    }
+    fwrite(packet.data, 1, packet.size, file);
+    fclose(file);
+
+    av_free_packet(&packet);
+
+    avcodec_close(encoder_context);
+    av_free(encoder_context);
 }
 
 void image_free(image *i) {
