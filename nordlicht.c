@@ -178,22 +178,24 @@ int nordlicht_generate(nordlicht *n) {
                     continue;
                 }
 
+                int thumbnail_width = 1.0*(image_width(frame)*n->tracks[i].height/image_height(frame));
                 image *column = NULL;
                 image *tmp = NULL;
                 switch (n->tracks[i].style) {
                     case NORDLICHT_STYLE_THUMBNAILS:
-                        column = image_scale(frame, 1.0*image_width(frame)*n->tracks[i].height/image_height(frame), n->tracks[i].height);
+                        column = image_scale(frame, thumbnail_width, n->tracks[i].height);
                         break;
                     case NORDLICHT_STYLE_HORIZONTAL:
                         column = image_scale(frame, 1, n->tracks[i].height);
                         break;
                     case NORDLICHT_STYLE_VERTICAL:
-                        tmp = image_scale(frame, image_width(frame), 1);
+                        tmp = image_scale(frame, n->tracks[i].height, 1);
                         column = image_flip(tmp);
                         image_free(tmp);
                         break;
                     case NORDLICHT_STYLE_SLITSCAN:
-                        tmp = image_column(frame, 1.0*(x%(n->width/40))/(n->width/40));
+                        tmp = image_column(frame, 1.0*(x%thumbnail_width)/thumbnail_width);
+
                         column = image_scale(tmp, 1, n->tracks[i].height);
                         image_free(tmp);
                         break;
