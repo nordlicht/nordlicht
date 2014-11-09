@@ -115,13 +115,13 @@ int main(const int argc, const char **argv) {
     const char *filename = (char*)poptGetArg(popt);
 
     if (filename == NULL) {
-        print_error("Please specify an input file.\n");
-        print_help(popt, 1);
+        print_error("Please specify an input file.");
+        exit(1);
     }
 
     if (poptGetArg(popt) != NULL) {
-        print_error("Please specify only one input file.\n");
-        print_help(popt, 1);
+        print_error("Please specify only one input file.");
+        exit(1);
     }
 
     if (output_file == NULL) {
@@ -169,8 +169,8 @@ int main(const int argc, const char **argv) {
         }
 
         if (!style_table[i].name) {
-            print_error("Unknown style '%s'.\n", style_string);
-            print_help(popt, 1);
+            print_error("Unknown style '%s'. Use '--help' to display available styles.", style_string);
+            exit(1);
         }
         num_tracks++;
     }
@@ -181,8 +181,8 @@ int main(const int argc, const char **argv) {
     } else if (strcmp(ext, "bgra") == 0) {
         strategy = NORDLICHT_STRATEGY_LIVE;
     } else {
-        print_error("Unsupported file extension '%s'.\n", ext);
-        print_help(popt, 1);
+        print_error("Unsupported file extension '%s'.", ext);
+        exit(1);
     }
 
     // Interesting stuff begins here!
