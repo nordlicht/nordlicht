@@ -167,61 +167,44 @@ int nordlicht_generate(nordlicht *n) {
 
             for (x = 0; x < n->width; x++) {
                 image *frame;
+
+                if (n->tracks[i].style == NORDLICHT_STYLE_VOLUME) {
+                    frame = source_get_audio_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
+                            1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
+                } else {
+                    frame = source_get_video_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
+                            1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
+                }
+                if (frame == NULL) {
+                    continue;
+                }
+
                 image *column = NULL;
-                image *column2 = NULL;
+                image *tmp = NULL;
                 switch (n->tracks[i].style) {
                     case NORDLICHT_STYLE_THUMBNAILS:
-                        frame = source_get_video_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
-                                                                  1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
-                        if (frame == NULL) {
-                            continue;
-                        }
-                        column = image_init(1, 1);
-                        column2 = image_scale(frame, 1.0*image_width(frame)*n->tracks[i].height/image_height(frame), n->tracks[i].height);
+                        column = image_scale(frame, 1.0*image_width(frame)*n->tracks[i].height/image_height(frame), n->tracks[i].height);
                         break;
                     case NORDLICHT_STYLE_HORIZONTAL:
-                        frame = source_get_video_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
-                                                                  1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
-                        if (frame == NULL) {
-                            continue;
-                        }
-                        column = image_compress_to_column(frame);
-                        column2 = image_scale(column, 1, n->tracks[i].height);
+                        column = image_scale(frame, 1, n->tracks[i].height);
                         break;
                     case NORDLICHT_STYLE_VERTICAL:
-                        frame = source_get_video_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
-                                                                  1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
-                        if (frame == NULL) {
-                            continue;
-                        }
-                        column = image_compress_to_row(frame);
-                        column2 = image_scale(column, 1, n->tracks[i].height);
+                        tmp = image_scale(frame, image_width(frame), 1);
+                        column = image_flip(tmp);
+                        image_free(tmp);
                         break;
                     case NORDLICHT_STYLE_SLITSCAN:
-                        frame = source_get_video_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
-                                                                  1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
-                        if (frame == NULL) {
-                            continue;
-                        }
-                        column = image_column(frame, 1.0*(x%(n->width/40))/(n->width/40));
-                        column2 = image_scale(column, 1, n->tracks[i].height);
+                        tmp = image_column(frame, 1.0*(x%(n->width/40))/(n->width/40));
+                        column = image_scale(tmp, 1, n->tracks[i].height);
+                        image_free(tmp);
                         break;
                     case NORDLICHT_STYLE_MIDDLECOLUMN:
-                        frame = source_get_video_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
-                                                                  1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
-                        if (frame == NULL) {
-                            continue;
-                        }
-                        column = image_column(frame, 0.5);
-                        column2 = image_scale(column, 1, n->tracks[i].height);
+                        tmp = image_column(frame, 0.5);
+                        column = image_scale(tmp, 1, n->tracks[i].height);
+                        image_free(tmp);
                         break;
                     case NORDLICHT_STYLE_VOLUME:
-                        frame = source_get_audio_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
-                                                                  1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
-                        if (frame == NULL) {
-                            continue;
-                        }
-                        column2 = image_scale(frame, 1, n->tracks[i].height);
+                        column = image_scale(frame, 1, n->tracks[i].height);
                         break;
                     default:
                         // cannot happen (TM)
@@ -229,16 +212,12 @@ int nordlicht_generate(nordlicht *n) {
                         break;
                 }
 
-                if (column) {
-                    image_free(column);
-                }
-
-                image_bgra(n->data, n->width, n->height, column2, x, y_offset);
+                image_bgra(n->data, n->width, n->height, column, x, y_offset);
 
                 n->progress = (i+1.0*x/n->width)/n->num_tracks;
-                x = x + image_width(column2) - 1;
+                x = x + image_width(column) - 1;
 
-                image_free(column2);
+                image_free(column);
             }
 
             y_offset += n->tracks[i].height;

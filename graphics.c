@@ -1,6 +1,9 @@
 #include "graphics.h"
 #include <stdlib.h>
 #include <string.h>
+#include <libswscale/swscale.h>
+
+#define MAX_FILTER_SIZE 256
 
 struct image {
     AVFrame *frame;
@@ -61,63 +64,50 @@ void image_copy_avframe(const image *i, AVFrame *frame) {
     av_frame_copy(i->frame, frame);
 }
 
-image* image_scale(const image *i, const int width, const int height) {
-    image *i2 = image_init(width, height);
+image* image_scale(const image *i, int width, int height) {
+    int target_width = width;
+    int target_height = height;
 
-    // TODO: clever scaling
-    const float x_factor = 1.0*image_width(i)/width;
-    const float y_factor = 1.0*image_height(i)/height;
-
-    int x, y;
-    for (x = 0; x < width; x++) {
-        for (y = 0; y < height; y++) {
-            int orig_x = x*x_factor;
-            int orig_y = y*y_factor;
-            image_set(i2, x, y, image_get_r(i, orig_x, orig_y), image_get_g(i, orig_x, orig_y), image_get_b(i, orig_x, orig_y));
+    image *i2 = NULL;
+    image *tmp = (image *) i;
+    do {
+        width = target_width;
+        height = target_height;
+        if (image_width(tmp)/width > MAX_FILTER_SIZE) {
+            width = image_width(tmp)/MAX_FILTER_SIZE+1;
         }
-    }
+        if (image_height(tmp)/height > MAX_FILTER_SIZE) {
+            height = image_height(tmp)/MAX_FILTER_SIZE+1;
+        }
+
+        i2 = image_init(width, height);
+
+        struct SwsContext *sws_context = sws_getContext(image_width(tmp), image_height(tmp), tmp->frame->format,
+                                                        image_width(i2), image_height(i2), i2->frame->format,
+                                                        SWS_AREA, NULL, NULL, NULL);
+        sws_scale(sws_context, (uint8_t const * const *)tmp->frame->data,
+                tmp->frame->linesize, 0, tmp->frame->height, i2->frame->data,
+                i2->frame->linesize);
+        sws_freeContext(sws_context);
+
+        if (tmp != i) {
+            image_free(tmp);
+        }
+
+        tmp = i2;
+    } while (image_width(i2) != target_width || image_height(i2) != target_height);
+
     return i2;
 }
 
-image* image_compress_to_column(const image *i) {
-    image *i2 = image_init(1, image_height(i));
-
+image *image_flip(const image *i) {
+    image *i2 = image_init(image_height(i), image_width(i));
     int x, y;
-    const int step = image_width(i)/10;
-    for (y = 0; y < image_height(i); y++) {
-        long rsum = 0;
-        long gsum = 0;
-        long bsum = 0;
-        for (x = 0; x < image_width(i); x += step) {
-            rsum += image_get_r(i, x, y);
-            gsum += image_get_g(i, x, y);
-            bsum += image_get_b(i, x, y);
+    for (x = 0; x < image_width(i2); x++) {
+        for (y = 0; y < image_height(i2); y++) {
+            image_set(i2, x, y, image_get_r(i, y, x), image_get_g(i, y, x), image_get_b(i, y, x));
         }
-        int num = image_width(i)/step+1;
-        image_set(i2, 0, y, rsum/num, gsum/num, bsum/num);
     }
-
-    return i2;
-}
-
-image* image_compress_to_row(const image *i) {
-    image *i2 = image_init(1, image_width(i));
-
-    int x, y;
-    const int step = image_height(i)/10;
-    for (x = 0; x < image_width(i); x++) {
-        long rsum = 0;
-        long gsum = 0;
-        long bsum = 0;
-        for (y = 0; y < image_height(i); y += step) {
-            rsum += image_get_r(i, x, y);
-            gsum += image_get_g(i, x, y);
-            bsum += image_get_b(i, x, y);
-        }
-        int num = image_height(i)/step+1; // TODO: +1?
-        image_set(i2, 0, x, rsum/num, gsum/num, bsum/num);
-    }
-
     return i2;
 }
 
