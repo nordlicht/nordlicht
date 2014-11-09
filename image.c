@@ -4,6 +4,11 @@
 #include <string.h>
 #include <libswscale/swscale.h>
 
+#if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(52, 8, 0)
+void av_frame_get_buffer(AVFrame *frame, int magic) { avpicture_alloc(frame, frame->format, frame->width, frame->height); }
+void av_frame_copy(AVFrame *dst, AVFrame *src) { dst = src; }
+#endif
+
 #define MAX_FILTER_SIZE 256
 
 struct image {
@@ -152,7 +157,7 @@ void image_write_png(const image *i, const char *file_path) {
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54, 28, 0)
     uint8_t buffer[200000]; // TODO: Why this size?
-    packet.size = avcodec_encode_video(encoder_context, buffer, 200000, code->frame);
+    packet.size = avcodec_encode_video(encoder_context, buffer, 200000, i->frame);
     packet.data = buffer;
 #else
     int got_packet = 0;
