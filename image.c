@@ -5,7 +5,7 @@
 #include <libswscale/swscale.h>
 
 #if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(52, 8, 0)
-void av_frame_get_buffer(AVFrame *frame, int magic) { avpicture_alloc(frame, frame->format, frame->width, frame->height); }
+void av_frame_get_buffer(AVFrame *frame, int magic) { avpicture_alloc((AVPicture *)frame, frame->format, frame->width, frame->height); }
 void av_frame_copy(AVFrame *dst, AVFrame *src) { dst = src; }
 #endif
 
@@ -19,7 +19,7 @@ image *image_init(const int width, const int height) {
     image *i;
     i = (image *) malloc(sizeof(image));
 
-    i->frame = av_frame_alloc();
+    i->frame = (AVFrame *) av_frame_alloc();
     i->frame->width = width;
     i->frame->height = height;
     i->frame->format = PIX_FMT_RGB24; // best choice?
