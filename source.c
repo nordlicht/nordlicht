@@ -14,6 +14,8 @@ void av_frame_free(AVFrame **frame) { av_freep(frame); }
 #define HEURISTIC_NUMBER_OF_FRAMES 1800 // how many frames will the heuristic look at?
 #define HEURISTIC_KEYFRAME_FACTOR 1 // lower bound for the actual/required keyframe ratio
 
+#define SAMPLES_PER_FRAME 1024
+
 typedef struct {
     int stream;
     AVCodecContext *codec;
@@ -337,12 +339,12 @@ image* source_get_audio_frame(source *s, const double min_percent, const double 
 
     fftw_complex *out;
     fftw_plan p;
-    double *in = (double*) fftw_malloc(sizeof(double)*1024);
-    out = (fftw_complex *) fftw_malloc(sizeof(fftw_complex)*(1024/2+1));
-    p = fftw_plan_dft_r2c_1d(1024, in, out, FFTW_ESTIMATE);
+    double *in = (double*) fftw_malloc(sizeof(double)*SAMPLES_PER_FRAME);
+    out = (fftw_complex *) fftw_malloc(sizeof(fftw_complex)*(SAMPLES_PER_FRAME/2+1));
+    p = fftw_plan_dft_r2c_1d(SAMPLES_PER_FRAME, in, out, FFTW_ESTIMATE);
 
     int i;
-    for (i = 0; i < 1024; i++) {
+    for (i = 0; i < SAMPLES_PER_FRAME; i++) {
         double v = *(((float *)s->audio->frame->data[0])+i);
         in[i] = v;
     }
@@ -380,9 +382,9 @@ image* source_get_audio_frame2(source *s, const double min_percent, const double
 
     float sum = 0;
     int i;
-    for (i = 0; i < 1024; i++) {
+    for (i = 0; i < SAMPLES_PER_FRAME; i++) {
         float d = *(((float *)s->audio->frame->data[0])+i);
-        sum += d*d/1024.0;
+        sum += 1.0*d*d/SAMPLES_PER_FRAME;
     }
 
     if (sum < 0) {
