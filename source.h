@@ -13,7 +13,6 @@ source* source_init(const char *filename);
 image* source_get_video_frame(source *s, const double min_percent, const double max_percent);
 
 image* source_get_audio_frame(source *s, const double min_percent, const double max_percent);
-image* source_get_audio_frame2(source *s, const double min_percent, const double max_percent);
 
 void source_build_keyframe_index(source *s, const int width);
 

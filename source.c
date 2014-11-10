@@ -354,57 +354,8 @@ image* source_get_audio_frame(source *s, const double min_percent, const double 
     int f;
     for (f = 0; f < 100; f++) {
         double absval = out[f][0]*out[f][0]+out[f][1]*out[f][1];
-        double db = 10*log10(absval/10000.0); // TODO: finetune
-        image_set(s->audio->last_frame, 0, 100-f-1, colormap_r(db), colormap_g(db), colormap_b(db));
-    }
-
-    return s->audio->last_frame;
-}
-
-image* source_get_audio_frame2(source *s, const double min_percent, const double max_percent) {
-    float proportion = s->end-s->start;
-    const long min_frame = (min_percent*proportion + s->start)*total_number_of_frames(s, s->audio);
-    const long max_frame = (max_percent*proportion + s->start)*total_number_of_frames(s, s->audio);
-
-    if (s->audio->last_frame != NULL && !s->exact && s->has_index) {
-        if (s->audio->current_frame >= preceding_keyframe(s, (max_frame+min_frame)/2)) {
-            return s->audio->last_frame;
-        }
-    }
-
-    if (seek(s, s->audio, min_frame, max_frame) != 0) {
-        return NULL;
-    }
-
-    if (s->audio->last_frame == NULL) {
-        s->audio->last_frame = image_init(1, 100);
-    }
-
-    float sum = 0;
-    int i;
-    for (i = 0; i < SAMPLES_PER_FRAME; i++) {
-        float d = *(((float *)s->audio->frame->data[0])+i);
-        sum += 1.0*d*d/SAMPLES_PER_FRAME;
-    }
-
-    if (sum < 0) {
-        sum = 0;
-    }
-
-    sum = sqrt(sum);
-    sum *= 255*4;
-
-    if (sum > 255) {
-        sum = 255;
-    }
-
-    int y;
-    for (y = 0; y < image_height(s->audio->last_frame); y++) {
-        if (y >= image_height(s->audio->last_frame)-sum) {
-            image_set(s->audio->last_frame, 0, y, 255, 255, 255);
-        } else {
-            image_set(s->audio->last_frame, 0, y, 0, 0, 0);
-        }
+        double dbfs = 10*log10(absval/10000.0); // TODO: finetune
+        image_set(s->audio->last_frame, 0, 100-f-1, colormap_r(dbfs), colormap_g(dbfs), colormap_b(dbfs));
     }
 
     return s->audio->last_frame;

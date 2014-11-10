@@ -167,10 +167,7 @@ int nordlicht_generate(nordlicht *n) {
             for (x = 0; x < n->width; x++) {
                 image *frame;
 
-                if (n->tracks[i].style == NORDLICHT_STYLE_VOLUME) {
-                    frame = source_get_audio_frame2(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
-                            1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
-                } else if (n->tracks[i].style == NORDLICHT_STYLE_SPECTROGRAM) {
+                if (n->tracks[i].style == NORDLICHT_STYLE_SPECTROGRAM) {
                     frame = source_get_audio_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
                             1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
                 } else {
@@ -206,9 +203,6 @@ int nordlicht_generate(nordlicht *n) {
                         tmp = image_column(frame, 0.5);
                         column = image_scale(tmp, 1, n->tracks[i].height);
                         image_free(tmp);
-                        break;
-                    case NORDLICHT_STYLE_VOLUME:
-                        column = image_scale(frame, 1, n->tracks[i].height);
                         break;
                     case NORDLICHT_STYLE_SPECTROGRAM:
                         column = image_scale(frame, 1, n->tracks[i].height);
