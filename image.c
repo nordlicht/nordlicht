@@ -7,7 +7,7 @@
 
 #if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(52, 8, 0)
 void av_frame_get_buffer(AVFrame *frame, int magic) { avpicture_alloc((AVPicture *)frame, frame->format, frame->width, frame->height); }
-void av_frame_copy(AVFrame *dst, AVFrame *src) { dst = src; }
+void av_frame_copy(AVFrame *dst, AVFrame *src) { memcpy(dst->data[0], src->data[0], sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, dst->width, dst->height)); }
 #endif
 
 #define MAX_FILTER_SIZE 256
@@ -153,6 +153,15 @@ image* image_scale(const image *i, int width, int height) {
                 width = 8;
             } else {
                 // all hope ist lost
+                return image_dumb_scale(tmp, width, height);
+            }
+        }
+
+        if (height < 2) {
+            // This doesn't seem to work on libav...
+            if (image_height(tmp) > 2) {
+                height = 2;
+            } else {
                 return image_dumb_scale(tmp, width, height);
             }
         }
