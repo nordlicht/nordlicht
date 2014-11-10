@@ -1,0 +1,6 @@
+#!/bin/sh
+
+FILENAME="/tmp/nordlicht-video.3gp"
+rm -f "$FILENAME"
+youtube-dl -f 36 -o "$FILENAME" "$1"
+mpv "$FILENAME"
