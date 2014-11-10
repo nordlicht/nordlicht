@@ -273,34 +273,6 @@ int seek(source *s, stream *st, const long min_frame_nr, const long max_frame_nr
     return 0;
 }
 
-image* source_get_video_frame(source *s, const double min_percent, const double max_percent) {
-    float proportion = s->end-s->start;
-    const long min_frame = (min_percent*proportion + s->start)*total_number_of_frames(s, s->video);
-    const long max_frame = (max_percent*proportion + s->start)*total_number_of_frames(s, s->video);
-
-    if (s->video->last_frame != NULL && !s->exact && s->has_index) {
-        if (s->video->current_frame >= preceding_keyframe(s, (max_frame+min_frame)/2)) {
-            return s->video->last_frame;
-        }
-    }
-
-    if (seek(s, s->video, min_frame, max_frame) != 0) {
-        return NULL;
-    }
-
-    if (s->video->last_frame == NULL) {
-        s->video->last_frame = image_init(s->video->frame->width, s->video->frame->height);
-    }
-
-    sws_scale(s->sws_context, (uint8_t const * const *)s->video->frame->data,
-            s->video->frame->linesize, 0, s->video->frame->height, s->scaleframe->data,
-            s->scaleframe->linesize);
-
-    image_copy_avframe(s->video->last_frame, s->scaleframe);
-
-    return s->video->last_frame;
-}
-
 int colormap_r(float dbfs) {
     if (dbfs >= -30) return 255;
     if (dbfs <= -40) return 0;
@@ -324,36 +296,56 @@ int colormap_b(float dbfs) {
     return 0;
 }
 
-image* source_get_audio_frame(source *s, const double min_percent, const double max_percent) {
+image* get_frame(source *s, stream *st, const double min_percent, const double max_percent) {
     float proportion = s->end-s->start;
-    const long min_frame = (min_percent*proportion + s->start)*total_number_of_frames(s, s->audio);
-    const long max_frame = (max_percent*proportion + s->start)*total_number_of_frames(s, s->audio);
+    const long min_frame = (min_percent*proportion + s->start)*total_number_of_frames(s, st);
+    const long max_frame = (max_percent*proportion + s->start)*total_number_of_frames(s, st);
 
-    if (s->audio->last_frame != NULL && !s->exact && s->has_index) {
-        if (s->audio->current_frame >= preceding_keyframe(s, (max_frame+min_frame)/2)) {
-            return s->audio->last_frame;
+    if (st->last_frame != NULL && !s->exact && s->has_index) {
+        if (st->current_frame >= preceding_keyframe(s, (max_frame+min_frame)/2)) {
+            return st->last_frame;
         }
     }
 
-    if (seek(s, s->audio, min_frame, max_frame) != 0) {
+    if (seek(s, st, min_frame, max_frame) != 0) {
         return NULL;
     }
 
-    if (s->audio->last_frame == NULL) {
-        s->audio->last_frame = image_init(1, 100);
+    if (st->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+        if (st->last_frame == NULL) {
+            st->last_frame = image_init(st->frame->width, st->frame->height);
+        }
+
+        sws_scale(s->sws_context, (uint8_t const * const *)st->frame->data,
+                st->frame->linesize, 0, st->frame->height, s->scaleframe->data,
+                s->scaleframe->linesize);
+
+        image_copy_avframe(st->last_frame, s->scaleframe);
+    } else {
+        if (s->audio->last_frame == NULL) {
+            s->audio->last_frame = image_init(1, 100);
+        }
+
+        float *data = (float *) s->audio->frame->data[0];
+        av_rdft_calc(s->rdft, data);
+
+        int f;
+        for (f = 0; f < 100; f++) {
+            double absval = data[2*f+0]*data[2*f+0]+data[2*f+1]*data[2*f+1];
+            double dbfs = 10*log10(absval/10000.0); // TODO: finetune
+            image_set(s->audio->last_frame, 0, 100-f-1, colormap_r(dbfs), colormap_g(dbfs), colormap_b(dbfs));
+        }
     }
 
-    float *data = (float *) s->audio->frame->data[0];
-    av_rdft_calc(s->rdft, data);
+    return st->last_frame;
+}
 
-    int f;
-    for (f = 0; f < 100; f++) {
-        double absval = data[2*f+0]*data[2*f+0]+data[2*f+1]*data[2*f+1];
-        double dbfs = 10*log10(absval/10000.0); // TODO: finetune
-        image_set(s->audio->last_frame, 0, 100-f-1, colormap_r(dbfs), colormap_g(dbfs), colormap_b(dbfs));
-    }
+image* source_get_video_frame(source *s, const double min_percent, const double max_percent) {
+    return get_frame(s, s->video, min_percent, max_percent);
+}
 
-    return s->audio->last_frame;
+image* source_get_audio_frame(source *s, const double min_percent, const double max_percent) {
+    return get_frame(s, s->audio, min_percent, max_percent);
 }
 
 int source_exact(const source *s) {
