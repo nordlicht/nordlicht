@@ -1,5 +1,6 @@
 #include "image.h"
 #include "error.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <libswscale/swscale.h>
@@ -65,7 +66,7 @@ void image_to_bgra(unsigned char *target, const int width, const int height, con
     }
 }
 
-image* image_from_bgra(const unsigned char *source, const int width, const int height) {
+image *image_from_bgra(const unsigned char *source, const int width, const int height) {
     image *i = image_init(width, height);
     int x, y;
     for (y = 0; y < image_height(i); y++) {
@@ -76,6 +77,12 @@ image* image_from_bgra(const unsigned char *source, const int width, const int h
     return i;
 }
 
+image* image_clone(const image *i) {
+    image *i2 = image_init(image_width(i), image_height(i));
+    av_frame_copy(i2->frame, i->frame);
+    return i2;
+}
+
 void image_copy_avframe(const image *i, AVFrame *frame) {
     av_frame_copy(i->frame, frame);
 }
@@ -83,6 +90,10 @@ void image_copy_avframe(const image *i, AVFrame *frame) {
 image* image_scale(const image *i, int width, int height) {
     int target_width = width;
     int target_height = height;
+
+    if (width == image_width(i) && height == image_height(i)) {
+        return image_clone(i);
+    }
 
     image *i2 = NULL;
     image *tmp = (image *) i;

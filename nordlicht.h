@@ -11,6 +11,7 @@ typedef enum nordlicht_style {
     NORDLICHT_STYLE_SLITSCAN, // take single columns, while moving to the right (and wrapping to the left)
     NORDLICHT_STYLE_MIDDLECOLUMN, // take the frames' middlemost column
     NORDLICHT_STYLE_VOLUME,
+    NORDLICHT_STYLE_SPECTROGRAM,
     NORDLICHT_STYLE_LAST
 } nordlicht_style;
 

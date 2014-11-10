@@ -21,6 +21,7 @@ const style style_table[] = {
     {"middlecolumn", "take the middlemost column of each frame", NORDLICHT_STYLE_MIDDLECOLUMN},
     {"thumbnails", "display small thumbnails at regular intervals", NORDLICHT_STYLE_THUMBNAILS},
     {"volume", "...", NORDLICHT_STYLE_VOLUME},
+    {"spectrogram", "...", NORDLICHT_STYLE_SPECTROGRAM},
     {NULL, NULL, NORDLICHT_STYLE_LAST}
 };
 

@@ -4,6 +4,7 @@
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
 #include <libswscale/swscale.h>
+#include <fftw3.h>
 
 #if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(52, 8, 0)
 AVFrame *av_frame_alloc(void) { return avcodec_alloc_frame(); }
@@ -292,6 +293,29 @@ image* source_get_video_frame(source *s, const double min_percent, const double 
     return s->video->last_frame;
 }
 
+int colormap_r(float dbfs) {
+    if (dbfs >= -30) return 255;
+    if (dbfs <= -40) return 0;
+    return (dbfs+40)/10.0*255;
+}
+
+int colormap_g(float dbfs) {
+    if (dbfs >= -10) return (dbfs+10)/10.0*255;
+    if (dbfs < -20 && dbfs >= -30) return 255-(dbfs+30)/10.0*255;
+    if (dbfs < -30 && dbfs >= -50) return 255;
+    if (dbfs < -50 && dbfs >= -60) return (dbfs+60)/10.0*255;
+    return 0;
+}
+
+int colormap_b(float dbfs) {
+    if (dbfs >= -10) return 255;
+    if (dbfs < -10 && dbfs >= -20) return (dbfs+20)/10.0*255;
+    if (dbfs < -40 && dbfs >= -50) return 255-(dbfs+50)/10.0*255;
+    if (dbfs < -50 && dbfs >= -60) return 255;
+    if (dbfs < -60 && dbfs >= -70) return (dbfs+70)/10.0*255;
+    return 0;
+}
+
 image* source_get_audio_frame(source *s, const double min_percent, const double max_percent) {
     float proportion = s->end-s->start;
     const long min_frame = (min_percent*proportion + s->start)*total_number_of_frames(s, s->audio);
@@ -308,7 +332,50 @@ image* source_get_audio_frame(source *s, const double min_percent, const double 
     }
 
     if (s->audio->last_frame == NULL) {
-        s->audio->last_frame = image_init(1, 256);
+        s->audio->last_frame = image_init(1, 100);
+    }
+
+    fftw_complex *out;
+    fftw_plan p;
+    double *in = (double*) fftw_malloc(sizeof(double)*1024);
+    out = (fftw_complex *) fftw_malloc(sizeof(fftw_complex)*(1024/2+1));
+    p = fftw_plan_dft_r2c_1d(1024, in, out, FFTW_ESTIMATE);
+
+    int i;
+    for (i = 0; i < 1024; i++) {
+        double v = *(((float *)s->audio->frame->data[0])+i);
+        in[i] = v;
+    }
+
+    fftw_execute(p);
+
+    int f;
+    for (f = 0; f < 100; f++) {
+        double absval = out[f][0]*out[f][0]+out[f][1]*out[f][1];
+        double db = 10*log10(absval/10000.0); // TODO: finetune
+        image_set(s->audio->last_frame, 0, 100-f-1, colormap_r(db), colormap_g(db), colormap_b(db));
+    }
+
+    return s->audio->last_frame;
+}
+
+image* source_get_audio_frame2(source *s, const double min_percent, const double max_percent) {
+    float proportion = s->end-s->start;
+    const long min_frame = (min_percent*proportion + s->start)*total_number_of_frames(s, s->audio);
+    const long max_frame = (max_percent*proportion + s->start)*total_number_of_frames(s, s->audio);
+
+    if (s->audio->last_frame != NULL && !s->exact && s->has_index) {
+        if (s->audio->current_frame >= preceding_keyframe(s, (max_frame+min_frame)/2)) {
+            return s->audio->last_frame;
+        }
+    }
+
+    if (seek(s, s->audio, min_frame, max_frame) != 0) {
+        return NULL;
+    }
+
+    if (s->audio->last_frame == NULL) {
+        s->audio->last_frame = image_init(1, 100);
     }
 
     float sum = 0;
