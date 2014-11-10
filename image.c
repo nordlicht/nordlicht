@@ -87,6 +87,39 @@ void image_copy_avframe(const image *i, AVFrame *frame) {
     av_frame_copy(i->frame, frame);
 }
 
+image* image_dumb_scale(const image *i, const int width) {
+    printf("dumb %dx%d -> %dx%d \n", image_width(i),image_height(i),width,image_height(i));
+    image *i2 = image_init(width, image_height(i));
+
+    float factor = 1.0*image_width(i)/width;
+
+    int x, y;
+    for (x = 0; x < width; x++) {
+        int lower = factor*x + 0.5;
+        int upper = factor*(x+1) - 0.5;
+
+        if (lower > upper) {
+            // this can happen when upscaling. pick nearest-neighbour entry
+            lower = upper = factor*(x+0.5);
+        }
+
+        for (y = 0; y < image_height(i); y++) {
+            int rsum = 0;
+            int gsum = 0;
+            int bsum = 0;
+            int j;
+            for (j = lower; j <= upper; j++) {
+                rsum += image_get_r(i, j, y);
+                gsum += image_get_g(i, j, y);
+                bsum += image_get_b(i, j, y);
+            }
+            image_set(i2, x, y, rsum/(upper-lower+1), gsum/(upper-lower+1), bsum/(upper-lower+1));
+        }
+    }
+
+    return i2;
+}
+
 image* image_scale(const image *i, int width, int height) {
     int target_width = width;
     int target_height = height;
@@ -100,6 +133,20 @@ image* image_scale(const image *i, int width, int height) {
     do {
         width = target_width;
         height = target_height;
+
+#if LIBSWSCALE_VERSION_MICRO < 100 || LIBSWSCALE_VERSION_INT < AV_VERSION_INT(2, 1, 103)
+        if (width < 8) {
+            // libav and old FFmpeg versions don't allow scaling to a width of less than 8
+            if (image_width(tmp) > 8 || image_height(tmp) != height) {
+                // but we can use it to go down to 8
+                width = 8;
+            } else {
+                // all hope ist lost
+                return image_dumb_scale(tmp, width);
+            }
+        }
+#endif
+
         if (image_width(tmp)/width > MAX_FILTER_SIZE) {
             width = image_width(tmp)/MAX_FILTER_SIZE+1;
         }
