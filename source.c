@@ -1,10 +1,10 @@
 #include "source.h"
 #include "error.h"
 #include <libavcodec/avcodec.h>
+#include <libavcodec/avfft.h>
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
 #include <libswscale/swscale.h>
-#include <fftw3.h>
 
 #if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(52, 8, 0)
 AVFrame *av_frame_alloc(void) { return avcodec_alloc_frame(); }
@@ -39,6 +39,9 @@ struct source {
     AVFrame *scaleframe;
     struct SwsContext *sws_context;
     AVPacket packet;
+
+    // audio specific
+    RDFTContext *rdft;
 
     int *keyframes;
     int number_of_keyframes;
@@ -231,6 +234,9 @@ source* source_init(const char *filename) {
     s->sws_context = sws_getCachedContext(NULL, s->video->frame->width, s->video->frame->height, s->video->frame->format,
             s->scaleframe->width, s->scaleframe->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
+    // audio specific
+    s->rdft = av_rdft_init(log2(SAMPLES_PER_FRAME), DFT_R2C);
+
     return s;
 }
 
@@ -337,23 +343,12 @@ image* source_get_audio_frame(source *s, const double min_percent, const double 
         s->audio->last_frame = image_init(1, 100);
     }
 
-    fftw_complex *out;
-    fftw_plan p;
-    double *in = (double*) fftw_malloc(sizeof(double)*SAMPLES_PER_FRAME);
-    out = (fftw_complex *) fftw_malloc(sizeof(fftw_complex)*(SAMPLES_PER_FRAME/2+1));
-    p = fftw_plan_dft_r2c_1d(SAMPLES_PER_FRAME, in, out, FFTW_ESTIMATE);
-
-    int i;
-    for (i = 0; i < SAMPLES_PER_FRAME; i++) {
-        double v = *(((float *)s->audio->frame->data[0])+i);
-        in[i] = v;
-    }
-
-    fftw_execute(p);
+    float *data = (float *) s->audio->frame->data[0];
+    av_rdft_calc(s->rdft, data);
 
     int f;
     for (f = 0; f < 100; f++) {
-        double absval = out[f][0]*out[f][0]+out[f][1]*out[f][1];
+        double absval = data[2*f+0]*data[2*f+0]+data[2*f+1]*data[2*f+1];
         double dbfs = 10*log10(absval/10000.0); // TODO: finetune
         image_set(s->audio->last_frame, 0, 100-f-1, colormap_r(dbfs), colormap_g(dbfs), colormap_b(dbfs));
     }
@@ -400,6 +395,8 @@ void stream_free(stream *st) {
 }
 
 void source_free(source *s) {
+    av_rdft_end(s->rdft);
+
     av_free(s->buffer);
     av_frame_free(&s->scaleframe);
     sws_freeContext(s->sws_context);
