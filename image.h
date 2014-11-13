@@ -15,7 +15,7 @@ void image_set(const image *i, const int x, const int y, const unsigned char r, 
 image* image_scale(const image *i, int width, int height);
 image *image_flip(const image *i);
 image* image_column(const image *i, double percent);
-void image_write_png(const image *i, const char *file_path);
+int image_write_png(const image *i, const char *file_path);
 void image_free(image *i);
 
 #endif

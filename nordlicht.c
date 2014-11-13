@@ -263,7 +263,9 @@ int nordlicht_write(const nordlicht *n, const char *filename) {
     }
 
     image *i = image_from_bgra(n->data, n->width, n->height);
-    image_write_png(i, filename);
+    if (image_write_png(i, filename) != 0) {
+        return -1;
+    }
     image_free(i);
 
     return code;

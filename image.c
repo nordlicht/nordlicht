@@ -218,7 +218,7 @@ image* image_column(const image *i, double percent) {
     return i2;
 }
 
-void image_write_png(const image *i, const char *file_path) {
+int image_write_png(const image *i, const char *file_path) {
     AVCodec *encoder = avcodec_find_encoder_by_name("png");
     AVCodecContext *encoder_context;
     encoder_context = avcodec_alloc_context3(encoder);
@@ -227,6 +227,7 @@ void image_write_png(const image *i, const char *file_path) {
     encoder_context->pix_fmt = PIX_FMT_RGB24;
     if (avcodec_open2(encoder_context, encoder, NULL) < 0) {
         error("Could not open output codec.");
+        return -1;
     }
 
     AVPacket packet;
@@ -243,6 +244,7 @@ void image_write_png(const image *i, const char *file_path) {
     avcodec_encode_video2(encoder_context, &packet, i->frame, &got_packet);
     if (! got_packet) {
         error("Encoding error.");
+        return -1;
     }
 #endif
 
@@ -250,6 +252,7 @@ void image_write_png(const image *i, const char *file_path) {
     file = fopen(file_path, "wb");
     if (! file) {
         error("Could not open output file.");
+        return -1;
     }
     fwrite(packet.data, 1, packet.size, file);
     fclose(file);
@@ -258,6 +261,7 @@ void image_write_png(const image *i, const char *file_path) {
 
     avcodec_close(encoder_context);
     av_free(encoder_context);
+    return 0;
 }
 
 void image_free(image *i) {
