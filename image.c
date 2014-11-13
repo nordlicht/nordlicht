@@ -6,6 +6,8 @@
 #include <libswscale/swscale.h>
 
 #if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(52, 8, 0)
+#define av_frame_alloc  avcodec_alloc_frame
+#define av_frame_free av_freep
 void av_frame_get_buffer(AVFrame *frame, int magic) { avpicture_alloc((AVPicture *)frame, frame->format, frame->width, frame->height); }
 void av_frame_copy(AVFrame *dst, AVFrame *src) { memcpy(dst->data[0], src->data[0], sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, dst->width, dst->height)); }
 #endif

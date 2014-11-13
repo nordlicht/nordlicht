@@ -7,8 +7,8 @@
 #include <libswscale/swscale.h>
 
 #if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(52, 8, 0)
-AVFrame *av_frame_alloc(void) { return avcodec_alloc_frame(); }
-void av_frame_free(AVFrame **frame) { av_freep(frame); }
+#define av_frame_alloc  avcodec_alloc_frame
+#define av_frame_free av_freep
 #endif
 
 #define HEURISTIC_NUMBER_OF_FRAMES 1800 // how many frames will the heuristic look at?
