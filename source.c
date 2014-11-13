@@ -234,6 +234,8 @@ source* source_init(const char *filename) {
     s->sws_context = sws_getCachedContext(NULL, s->video->frame->width, s->video->frame->height, s->video->frame->format,
             s->scaleframe->width, s->scaleframe->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
 
+    s->keyframes = NULL;
+
     // audio specific
     s->rdft = av_rdft_init(log2(SAMPLES_PER_FRAME), DFT_R2C);
 
@@ -398,7 +400,9 @@ void source_free(source *s) {
 
     avformat_close_input(&s->format);
 
-    free(s->keyframes);
+    if (s->keyframes) {
+        free(s->keyframes);
+    }
 
     free(s);
 }
