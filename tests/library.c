@@ -1,112 +1,118 @@
-#include <assert.h>
-#include <limits.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <stdarg.h>
-#include <unistd.h>
+#include "cheat.h"
 #include "nordlicht.h"
 
-#define fail(call) assert(0 != (call))
-#define pass(call) assert(0 == (call))
-#define null(call) assert(NULL == (call))
+#define cheat_null(x) cheat_assert(NULL == (x))
+#define cheat_not_null(x) cheat_assert(NULL != (x))
+#define cheat_fail(x) cheat_assert(0 != (x))
+#define cheat_ok(x) cheat_assert(0 == (x))
 
-int file_exists(char *filename) {
-    return access(filename, F_OK) != -1;
-}
-
-int main(void) {
+CHEAT_DECLARE(
     nordlicht *n;
-    char *VID = "video.mp4";
+    char *v = "video.mp4";
+)
 
-    // test environment
-    assert(1);
-    assert(!0);
-    fail(-1);
-    pass(0);
-    assert(file_exists(VID));
+CHEAT_TEST(testfile_exists,
+    cheat_assert(-1 != access(v, F_OK));
+)
 
-    // invalid input
-    null(nordlicht_init(NULL, 100, 100));
-    null(nordlicht_init("", 100, 100));
-    null(nordlicht_init("\0", 100, 100));
-    null(nordlicht_init(".", 100, 100));
-    null(nordlicht_init("..", 100, 100));
-    null(nordlicht_init("nonexistant_file.123", 100, 100));
+CHEAT_TEST(invalid_input_file,
+    cheat_null(nordlicht_init(NULL, 100, 100));
+    cheat_null(nordlicht_init("", 100, 100));
+    cheat_null(nordlicht_init("\0", 100, 100));
+    cheat_null(nordlicht_init(".", 100, 100));
+    cheat_null(nordlicht_init("..", 100, 100));
+    cheat_null(nordlicht_init("..", 100, 100));
+    cheat_null(nordlicht_init("nonexistant_file.123", 100, 100));
+)
 
-    // invalid size
-    null(nordlicht_init(VID, 0, 100));
-    null(nordlicht_init(VID, 100, 0));
-    null(nordlicht_init(VID, 0, 0));
-    null(nordlicht_init(VID, -100, 100));
-    null(nordlicht_init(VID, 100, -100));
-    null(nordlicht_init(VID, INT_MIN, INT_MIN));
+CHEAT_TEST(valid_input_file,
+    cheat_null(nordlicht_init(NULL, 100, 100));
+    cheat_null(nordlicht_init("", 100, 100));
+    cheat_null(nordlicht_init("\0", 100, 100));
+    cheat_null(nordlicht_init(".", 100, 100));
+    cheat_null(nordlicht_init("..", 100, 100));
+    cheat_null(nordlicht_init("..", 100, 100));
+    cheat_null(nordlicht_init("nonexistant_file.123", 100, 100));
+)
 
-    // valid size
-    assert(nordlicht_init(VID, 1, 1));
-    assert(nordlicht_init(VID, INT_MAX, INT_MAX));
+CHEAT_TEST(invalid_size,
+    cheat_null(nordlicht_init(v, 0, 100));
+    cheat_null(nordlicht_init(v, 100, 0));
+    cheat_null(nordlicht_init(v, 0, 0));
+    cheat_null(nordlicht_init(v, -100, 100));
+    cheat_null(nordlicht_init(v, 100, -100));
+    cheat_null(nordlicht_init(v, INT_MIN, INT_MIN));
+)
 
-    // invalid output
-    n = nordlicht_init(VID, 1, 100);
-    assert(n);
-    fail(nordlicht_write(n, NULL));
-    fail(nordlicht_write(n, ""));
-    fail(nordlicht_write(n, "\0"));
-    fail(nordlicht_write(n, "."));
-    fail(nordlicht_write(n, ".."));
-    fail(nordlicht_write(n, VID));
+
+CHEAT_TEST(valid_size,
+    cheat_not_null(nordlicht_init(v, 1, 1));
+    cheat_not_null(nordlicht_init(v, INT_MAX, INT_MAX));
+)
+
+CHEAT_TEST(invalid_output,
+    n = nordlicht_init(v, 1, 100);
+    cheat_not_null(n);
+    cheat_fail(nordlicht_write(n, NULL));
+    cheat_fail(nordlicht_write(n, ""));
+    cheat_fail(nordlicht_write(n, "\0"));
+    cheat_fail(nordlicht_write(n, "."));
+    cheat_fail(nordlicht_write(n, ".."));
+    cheat_fail(nordlicht_write(n, v));
     nordlicht_free(n);
+)
 
-    // style
-    n = nordlicht_init(VID, 1, 100);
-    assert(n);
+CHEAT_TEST(style,
+    n = nordlicht_init(v, 1, 100);
+    cheat_not_null(n);
     nordlicht_style styles[1] = {NORDLICHT_STYLE_HORIZONTAL};
-    pass(nordlicht_set_style(n, styles, 1));
+    cheat_ok(nordlicht_set_style(n, styles, 1));
     styles[0] = NORDLICHT_STYLE_VERTICAL;
-    pass(nordlicht_set_style(n, styles, 1));
+    cheat_ok(nordlicht_set_style(n, styles, 1));
     styles[0] = 10000000;
-    fail(nordlicht_set_style(n, styles, 1));
+    cheat_fail(nordlicht_set_style(n, styles, 1));
     nordlicht_free(n);
+)
 
-    // strategy
-    n = nordlicht_init(VID, 1, 100);
-    assert(n);
-    pass(nordlicht_set_strategy(n, NORDLICHT_STRATEGY_FAST));
-    pass(nordlicht_set_strategy(n, NORDLICHT_STRATEGY_LIVE));
-    fail(nordlicht_set_strategy(n, 2));
-    fail(nordlicht_set_strategy(n, 1000000));
-    fail(nordlicht_set_strategy(n, -1));
+CHEAT_TEST(strategy,
+    n = nordlicht_init(v, 1, 100);
+    cheat_not_null(n);
+    cheat_ok(nordlicht_set_strategy(n, NORDLICHT_STRATEGY_FAST));
+    cheat_ok(nordlicht_set_strategy(n, NORDLICHT_STRATEGY_LIVE));
+    cheat_fail(nordlicht_set_strategy(n, 2));
+    cheat_fail(nordlicht_set_strategy(n, 1000000));
+    cheat_fail(nordlicht_set_strategy(n, -1));
     nordlicht_free(n);
+)
 
-    // buffer
+CHEAT_TEST(buffer,
     const unsigned char *buffer = NULL;
-    n = nordlicht_init(VID, 2, 100);
-    assert(n);
+    n = nordlicht_init(v, 2, 100);
+    cheat_not_null(n);
     buffer = nordlicht_buffer(n);
-    assert(buffer);
-    assert(2*100*4 == nordlicht_buffer_size(n));
+    cheat_not_null(buffer);
+    cheat_assert(2*100*4 == nordlicht_buffer_size(n));
     unsigned char *buffer2 = NULL;
-    fail(nordlicht_set_buffer(n, buffer2));
+    cheat_fail(nordlicht_set_buffer(n, buffer2));
     buffer2 = malloc(nordlicht_buffer_size(n));
-    pass(nordlicht_set_buffer(n, buffer2));
-    pass(nordlicht_set_buffer(n, buffer2));
-    pass(nordlicht_set_buffer(n, buffer2));
+    cheat_ok(nordlicht_set_buffer(n, buffer2));
+    cheat_ok(nordlicht_set_buffer(n, buffer2));
+    cheat_ok(nordlicht_set_buffer(n, buffer2));
     buffer = nordlicht_buffer(n);
-    assert(buffer == buffer2);
+    cheat_assert(buffer == buffer2);
     nordlicht_free(n);
     free(buffer2);
+)
 
-    // complete run
-    n = nordlicht_init(VID, 1, 100);
-    assert(n);
-    assert(0 == nordlicht_progress(n));
-    pass(nordlicht_generate(n));
-    assert(1 == nordlicht_progress(n));
+CHEAT_TEST(complete_run,
+    unsigned char *buffer2 = NULL;
+    n = nordlicht_init(v, 1, 100);
+    cheat_not_null(n);
+    cheat_ok(nordlicht_progress(n));
+    cheat_ok(nordlicht_generate(n));
+    cheat_assert(1 == nordlicht_progress(n));
     buffer2 = malloc(nordlicht_buffer_size(n));
-    fail(nordlicht_set_buffer(n, buffer2));
+    cheat_fail(nordlicht_set_buffer(n, buffer2));
     nordlicht_free(n);
     free(buffer2);
-
-    printf("--- nordlicht library test suite passed. ---\n");
-    return 0;
-}
+)
