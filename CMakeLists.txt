@@ -18,28 +18,28 @@ endif()
 
 include_directories(${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR} ${FFMPEG_INCLUDE_DIRS} ${POPT_INCLUDES})
 
-add_library(nordlicht SHARED error.c image.c nordlicht.c source.c)
-set_target_properties(nordlicht PROPERTIES SOVERSION 0)
-target_link_libraries(nordlicht ${FFMPEG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+add_library(libnordlicht SHARED error.c image.c nordlicht.c source.c)
+set_target_properties(libnordlicht PROPERTIES OUTPUT_NAME nordlicht)
+set_target_properties(libnordlicht PROPERTIES SOVERSION 0)
+target_link_libraries(libnordlicht ${FFMPEG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-add_executable(nordlicht-bin main.c)
-set_target_properties(nordlicht-bin PROPERTIES OUTPUT_NAME nordlicht)
-target_link_libraries(nordlicht-bin nordlicht ${POPT_LIBRARIES})
+add_executable(nordlicht main.c)
+target_link_libraries(nordlicht libnordlicht ${POPT_LIBRARIES})
 
 add_executable(testsuite tests/library.c)
-target_link_libraries(testsuite nordlicht)
+target_link_libraries(testsuite libnordlicht)
 
-configure_file(cmake/nordlicht.pc.in cmake/nordlicht.pc @ONLY)
+configure_file(cmake/nordlicht.pc.in nordlicht.pc @ONLY)
 configure_file(version.h.in version.h @ONLY)
-add_custom_command(TARGET nordlicht-bin POST_BUILD
+add_custom_command(TARGET nordlicht POST_BUILD
     COMMAND help2man ${CMAKE_BINARY_DIR}/nordlicht -N -n "creates colorful barcodes from video files"
     -o ${CMAKE_BINARY_DIR}/nordlicht.1
 )
 
-install(TARGETS nordlicht DESTINATION ${LIB_INSTALL_DIR})
-install(TARGETS nordlicht-bin DESTINATION bin)
+install(TARGETS libnordlicht DESTINATION ${LIB_INSTALL_DIR})
+install(TARGETS nordlicht DESTINATION bin)
 install(FILES nordlicht.h DESTINATION include)
-install(FILES ${CMAKE_BINARY_DIR}/cmake/nordlicht.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
+install(FILES ${CMAKE_BINARY_DIR}/nordlicht.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
 install(FILES ${CMAKE_BINARY_DIR}/nordlicht.1 DESTINATION share/man/man1)
 
 cmake_policy(SET CMP0037 OLD)
