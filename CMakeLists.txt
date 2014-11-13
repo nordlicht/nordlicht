@@ -41,3 +41,8 @@ install(TARGETS nordlicht-bin DESTINATION bin)
 install(FILES nordlicht.h DESTINATION include)
 install(FILES ${CMAKE_BINARY_DIR}/cmake/nordlicht.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
 install(FILES ${CMAKE_BINARY_DIR}/nordlicht.1 DESTINATION share/man/man1)
+
+cmake_policy(SET CMP0037 OLD)
+add_custom_target(test testsuite)
+add_custom_target(download_testfile ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/download_testfile.cmake)
+add_dependencies(test download_testfile)
