@@ -247,6 +247,11 @@ int main(const int argc, const char **argv) {
 
     pthread_join(thread, NULL);
 
+    if (nordlicht_error() != NULL) {
+        print_error(nordlicht_error());
+        exit(1);
+    }
+
     if (strategy != NORDLICHT_STRATEGY_LIVE) {
         if (nordlicht_write(n, output_file) != 0) {
             print_error(nordlicht_error());
