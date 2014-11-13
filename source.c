@@ -135,6 +135,7 @@ void source_build_keyframe_index(source *s, const int width) {
                     // frames is HEURISTIC_KEYFRAME_FACTOR times higher than
                     // the density we need overall.
                     s->exact = 0;
+                    av_free_packet(&s->packet);
                     return;
                 }
             }
@@ -142,6 +143,7 @@ void source_build_keyframe_index(source *s, const int width) {
         }
         av_free_packet(&s->packet);
     }
+    av_free_packet(&s->packet);
     s->has_index = 1;
 }
 
@@ -154,6 +156,7 @@ stream* stream_init(source *s, enum AVMediaType type) {
     st->stream = av_find_best_stream(s->format, type, -1, -1, NULL, 0);
     if (st->stream == -1) {
         avformat_close_input(&s->format);
+        free(st);
         return NULL;
     }
     st->codec = s->format->streams[st->stream]->codec;
@@ -162,11 +165,12 @@ stream* stream_init(source *s, enum AVMediaType type) {
     if (codec == NULL) {
         error("Unsupported codec!");
         avformat_close_input(&s->format);
+        free(st);
         return NULL;
     }
-    AVDictionary *optionsDict = NULL;
-    if (avcodec_open2(st->codec, codec, &optionsDict) < 0) {
+    if (avcodec_open2(st->codec, codec, NULL) < 0) {
         avformat_close_input(&s->format);
+        free(st);
         return NULL;
     }
 
@@ -181,6 +185,8 @@ stream* stream_init(source *s, enum AVMediaType type) {
             break;
         default:
             error("Stream has unknown media type.");
+            avformat_close_input(&s->format);
+            free(st);
             return NULL;
     }
 
@@ -188,6 +194,8 @@ stream* stream_init(source *s, enum AVMediaType type) {
     st->current_frame = -1;
 
     if (grab_next_frame(s, st) != 0) {
+        avformat_close_input(&s->format);
+        free(st);
         return NULL;
     }
 

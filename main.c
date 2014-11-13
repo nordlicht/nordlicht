@@ -69,7 +69,6 @@ int main(const int argc, const char **argv) {
     float end = 1.0;
     char *output_file = NULL;
     char *styles_string = NULL;
-    nordlicht_style style;
     nordlicht_strategy strategy;
     int free_output_file = 0;
 
@@ -226,9 +225,9 @@ int main(const int argc, const char **argv) {
     pthread_t thread;
     pthread_create(&thread, NULL, (void*(*)(void*))nordlicht_generate, n);
 
-    float progress = 0;
-
     if (! quiet) {
+        float progress = 0;
+
         printf("nordlicht: Building keyframe index... ");
         fflush(stdout);
         while (progress == 0) {

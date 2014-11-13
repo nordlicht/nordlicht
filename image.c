@@ -153,7 +153,11 @@ image* image_scale(const image *i, int width, int height) {
                 width = 8;
             } else {
                 // all hope ist lost
-                return image_dumb_scale(tmp, width, height);
+                image *i3 = image_dumb_scale(tmp, width, height);
+                if (tmp != i) {
+                    image_free(tmp);
+                }
+                return i3;
             }
         }
 
@@ -162,7 +166,11 @@ image* image_scale(const image *i, int width, int height) {
             if (image_height(tmp) > 2) {
                 height = 2;
             } else {
-                return image_dumb_scale(tmp, width, height);
+                image *i3 = image_dumb_scale(tmp, width, height);
+                if (tmp != i) {
+                    image_free(tmp);
+                }
+                return i3;
             }
         }
 #endif
