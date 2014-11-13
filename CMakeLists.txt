@@ -44,4 +44,4 @@ install(FILES ${CMAKE_BINARY_DIR}/nordlicht.1 DESTINATION share/man/man1)
 
 add_custom_target(check testsuite COMMAND ${CMAKE_SOURCE_DIR}/tests/tool.sh)
 add_custom_target(download_testfile ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/download_testfile.cmake)
-add_dependencies(check download_testfile)
+add_dependencies(check libnordlicht nordlicht download_testfile)
