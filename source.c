@@ -83,7 +83,6 @@ int grab_next_frame(source *s, stream *st) {
             av_free_packet(&s->packet);
         } else {
             av_free_packet(&s->packet);
-            error("av_read_frame failed.");
             st->current_frame = -1;
             return 1;
         }
@@ -106,6 +105,10 @@ int total_number_of_frames(const source *s, stream *st) {
 }
 
 void source_build_keyframe_index(source *s, const int width) {
+    if (! s->video) {
+        return;
+    }
+
     s->keyframes = (int *) malloc(sizeof(long)*60*60*3); // TODO: dynamic datastructure!
     s->number_of_keyframes = 0;
 
@@ -154,8 +157,7 @@ stream* stream_init(source *s, enum AVMediaType type) {
     st->last_frame = NULL;
 
     st->stream = av_find_best_stream(s->format, type, -1, -1, NULL, 0);
-    if (st->stream == -1) {
-        avformat_close_input(&s->format);
+    if (st->stream < 0) {
         free(st);
         return NULL;
     }
@@ -164,12 +166,10 @@ stream* stream_init(source *s, enum AVMediaType type) {
     codec = avcodec_find_decoder(st->codec->codec_id);
     if (codec == NULL) {
         error("Unsupported codec!");
-        avformat_close_input(&s->format);
         free(st);
         return NULL;
     }
     if (avcodec_open2(st->codec, codec, NULL) < 0) {
-        avformat_close_input(&s->format);
         free(st);
         return NULL;
     }
@@ -185,7 +185,6 @@ stream* stream_init(source *s, enum AVMediaType type) {
             break;
         default:
             error("Stream has unknown media type.");
-            avformat_close_input(&s->format);
             free(st);
             return NULL;
     }
@@ -194,7 +193,6 @@ stream* stream_init(source *s, enum AVMediaType type) {
     st->current_frame = -1;
 
     if (grab_next_frame(s, st) != 0) {
-        avformat_close_input(&s->format);
         free(st);
         return NULL;
     }
@@ -229,25 +227,43 @@ source* source_init(const char *filename) {
     s->video = stream_init(s, AVMEDIA_TYPE_VIDEO);
     s->audio = stream_init(s, AVMEDIA_TYPE_AUDIO);
 
+    if (!s->video && !s->audio) {
+        error("File contains neither video nor audio");
+        avformat_close_input(&s->format);
+        return NULL;
+    }
+
     s->has_index = 0;
 
-    s->scaleframe = av_frame_alloc();
-    s->scaleframe->width = s->video->frame->width;
-    s->scaleframe->height = s->video->frame->height;
-    s->scaleframe->format = PIX_FMT_RGB24;
+    if (s->video) {
+        s->scaleframe = av_frame_alloc();
+        s->scaleframe->width = s->video->frame->width;
+        s->scaleframe->height = s->video->frame->height;
+        s->scaleframe->format = PIX_FMT_RGB24;
 
-    s->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, s->scaleframe->width, s->scaleframe->height));
-    avpicture_fill((AVPicture *)s->scaleframe, s->buffer, PIX_FMT_RGB24, s->video->frame->width, s->video->frame->height);
+        s->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(PIX_FMT_RGB24, s->scaleframe->width, s->scaleframe->height));
+        avpicture_fill((AVPicture *)s->scaleframe, s->buffer, PIX_FMT_RGB24, s->video->frame->width, s->video->frame->height);
 
-    s->sws_context = sws_getCachedContext(NULL, s->video->frame->width, s->video->frame->height, s->video->frame->format,
-            s->scaleframe->width, s->scaleframe->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
+        s->sws_context = sws_getCachedContext(NULL, s->video->frame->width, s->video->frame->height, s->video->frame->format,
+                s->scaleframe->width, s->scaleframe->height, PIX_FMT_RGB24, SWS_AREA, NULL, NULL, NULL);
+    }
 
     s->keyframes = NULL;
 
     // audio specific
-    s->rdft = av_rdft_init(log2(SAMPLES_PER_FRAME), DFT_R2C);
+    if (s->audio) {
+        s->rdft = av_rdft_init(log2(SAMPLES_PER_FRAME), DFT_R2C);
+    }
 
     return s;
+}
+
+int source_has_video(source *s) {
+    return s->video != NULL;
+}
+
+int source_has_audio(source *s) {
+    return s->audio != NULL;
 }
 
 long preceding_keyframe(source *s, const long frame_nr) {
@@ -336,7 +352,26 @@ image* get_frame(source *s, stream *st, const double min_percent, const double m
             s->audio->last_frame = image_init(1, 100);
         }
 
-        float *data = (float *) s->audio->frame->data[0];
+        float *data;
+        int i;
+        switch(st->codec->sample_fmt) {
+            case AV_SAMPLE_FMT_FLTP:
+                data = (float *) s->audio->frame->data[0];
+                break;
+            case AV_SAMPLE_FMT_S16P:
+                data = (float *) malloc(sizeof(float)*SAMPLES_PER_FRAME);
+                for (i = 0; i < SAMPLES_PER_FRAME; i++) {
+                    float val = ((int16_t *) s->audio->frame->data[0])[i]/100000.0;
+                    //printf("%f\n", val);
+                    data[i] = val;
+                }
+
+                break;
+            default:
+                error("Unsupported audio format (%d)", st->codec->sample_fmt);
+                return NULL;
+        }
+
         av_rdft_calc(s->rdft, data);
 
         int f;
@@ -364,8 +399,12 @@ int source_exact(const source *s) {
 
 void source_set_exact(source *s, const int exact) {
     s->exact = exact;
-    s->video->current_frame = -1;
-    s->audio->current_frame = -1;
+    if (s->video) {
+        s->video->current_frame = -1;
+    }
+    if (s->audio) {
+        s->audio->current_frame = -1;
+    }
 }
 
 float source_start(const source *s) {
@@ -399,12 +438,16 @@ void stream_free(stream *st) {
 void source_free(source *s) {
     av_rdft_end(s->rdft);
 
-    av_free(s->buffer);
-    av_frame_free(&s->scaleframe);
-    sws_freeContext(s->sws_context);
+    if (s->video) {
+        av_free(s->buffer);
+        av_frame_free(&s->scaleframe);
+        sws_freeContext(s->sws_context);
+        stream_free(s->video);
+    }
 
-    stream_free(s->video);
-    stream_free(s->audio);
+    if (s->audio) {
+        stream_free(s->audio);
+    }
 
     avformat_close_input(&s->format);
 

@@ -152,6 +152,7 @@ int nordlicht_generate(nordlicht *n) {
     n->modifiable = 0;
 
     source_build_keyframe_index(n->source, n->width);
+
     int x, exact;
 
     const int do_a_fast_pass = (n->strategy == NORDLICHT_STRATEGY_LIVE) || !source_exact(n->source);
@@ -168,9 +169,19 @@ int nordlicht_generate(nordlicht *n) {
                 image *frame;
 
                 if (n->tracks[i].style == NORDLICHT_STYLE_SPECTROGRAM) {
+                    if (!source_has_audio(n->source)) {
+                        error("File contains no audio, please select an appropriate style");
+                        n->progress = 1;
+                        return -1;
+                    }
                     frame = source_get_audio_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
                             1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
                 } else {
+                    if (!source_has_video(n->source)) {
+                        error("File contains no video, please select an appropriate style");
+                        n->progress = 1;
+                        return -1;
+                    }
                     frame = source_get_video_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
                             1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
                 }
