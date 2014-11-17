@@ -43,6 +43,11 @@ nordlicht* nordlicht_init(const char *filename, const int width, const int heigh
     n->filename = filename;
 
     n->data = (unsigned char *) calloc(nordlicht_buffer_size(n), 1);
+    if (n->data == 0) {
+        error("Not enough memory to allocate %d bytes", nordlicht_buffer_size(n));
+        return NULL;
+    }
+
     n->owns_data = 1;
 
     n->num_tracks = 1;
