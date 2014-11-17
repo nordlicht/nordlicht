@@ -121,8 +121,16 @@ int nordlicht_set_style(nordlicht *n, const nordlicht_style *styles, const int n
     }
 
     n->num_tracks = num_tracks;
+
+    if (n->num_tracks > n->height) {
+        error("Height of %d px is too low for %d styles", n->height, n->num_tracks);
+        return -1;
+    }
+
     free(n->tracks);
     n->tracks = (track *) malloc(n->num_tracks*sizeof(track));
+
+    int height_of_each_track = n->height/n->num_tracks;
     int i;
     for (i=0; i<num_tracks; i++) {
         nordlicht_style s = styles[i];
@@ -131,8 +139,9 @@ int nordlicht_set_style(nordlicht *n, const nordlicht_style *styles, const int n
         }
 
         n->tracks[i].style = s;
-        n->tracks[i].height = n->height/n->num_tracks;
+        n->tracks[i].height = height_of_each_track;
     }
+    n->tracks[0].height = n->height - (n->num_tracks-1)*height_of_each_track;
 
     return 0;
 }

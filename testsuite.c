@@ -160,7 +160,9 @@ CHEAT_TEST(tool_output,
 CHEAT_TEST(tool_style,
     cheat_ok(tool("video.mp4 -w 1 -s vertical"));
     cheat_ok(tool("video.mp4 -w 1 -s horizontal"));
-    cheat_ok(tool("video.mp4 -w 1 -s horizontal+vertical"));
+    cheat_fail(tool("video.mp4 -h 1 -s horizontal+vertical"));
+    cheat_fail(tool("video.mp4 -h 2 -s horizontal+vertical+horizontal"));
+    cheat_ok(tool("video.mp4 -h 2 -s horizontal+vertical"));
     cheat_fail(tool("video.mp4 -s horizontal+"));
     cheat_fail(tool("video.mp4 -s +"));
     cheat_fail(tool("video.mp4 -s horizontal++horizontal"));
