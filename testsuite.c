@@ -16,6 +16,16 @@ CHEAT_DECLARE(
     }
 )
 
+CHEAT_SET_UP(
+    n = NULL;
+)
+
+CHEAT_TEAR_DOWN(
+    if (n != NULL) {
+        nordlicht_free(n);
+    }
+)
+
 CHEAT_TEST(testfile_exists,
     cheat_assert(-1 != access("video.mp4", F_OK));
 )
@@ -26,17 +36,6 @@ CHEAT_TEST(invalid_input_file,
     cheat_null(nordlicht_init("\0", 100, 100));
     cheat_null(nordlicht_init(".", 100, 100));
     cheat_null(nordlicht_init("..", 100, 100));
-    cheat_null(nordlicht_init("..", 100, 100));
-    cheat_null(nordlicht_init("nonexistant_file.123", 100, 100));
-)
-
-CHEAT_TEST(valid_input_file,
-    cheat_null(nordlicht_init(NULL, 100, 100));
-    cheat_null(nordlicht_init("", 100, 100));
-    cheat_null(nordlicht_init("\0", 100, 100));
-    cheat_null(nordlicht_init(".", 100, 100));
-    cheat_null(nordlicht_init("..", 100, 100));
-    cheat_null(nordlicht_init("..", 100, 100));
     cheat_null(nordlicht_init("nonexistant_file.123", 100, 100));
 )
 
@@ -44,6 +43,8 @@ CHEAT_TEST(invalid_size,
     cheat_null(nordlicht_init("video.mp4", 0, 100));
     cheat_null(nordlicht_init("video.mp4", 100, 0));
     cheat_null(nordlicht_init("video.mp4", 0, 0));
+    cheat_null(nordlicht_init("video.mp4", -1, 1));
+    cheat_null(nordlicht_init("video.mp4", 1, -1));
     cheat_null(nordlicht_init("video.mp4", -100, 100));
     cheat_null(nordlicht_init("video.mp4", 100, -100));
     cheat_null(nordlicht_init("video.mp4", INT_MIN, INT_MIN));
@@ -64,7 +65,6 @@ CHEAT_TEST(invalid_output,
     cheat_fail(nordlicht_write(n, "."));
     cheat_fail(nordlicht_write(n, ".."));
     cheat_fail(nordlicht_write(n, "video.mp4"));
-    nordlicht_free(n);
 )
 
 CHEAT_TEST(style,
@@ -76,7 +76,6 @@ CHEAT_TEST(style,
     cheat_ok(nordlicht_set_style(n, styles, 1));
     styles[0] = 10000000;
     cheat_fail(nordlicht_set_style(n, styles, 1));
-    nordlicht_free(n);
 )
 
 CHEAT_TEST(strategy,
@@ -87,7 +86,6 @@ CHEAT_TEST(strategy,
     cheat_fail(nordlicht_set_strategy(n, 2));
     cheat_fail(nordlicht_set_strategy(n, 1000000));
     cheat_fail(nordlicht_set_strategy(n, -1));
-    nordlicht_free(n);
 )
 
 CHEAT_TEST(buffer,
@@ -105,7 +103,6 @@ CHEAT_TEST(buffer,
     cheat_ok(nordlicht_set_buffer(n, buffer2));
     buffer = nordlicht_buffer(n);
     cheat_assert(buffer == buffer2);
-    nordlicht_free(n);
     free(buffer2);
 )
 
@@ -118,7 +115,6 @@ CHEAT_TEST(complete_run,
     cheat_assert(1 == nordlicht_progress(n));
     buffer2 = malloc(nordlicht_buffer_size(n));
     cheat_fail(nordlicht_set_buffer(n, buffer2));
-    nordlicht_free(n);
     free(buffer2);
 )
 
