@@ -177,6 +177,12 @@ image* image_scale(const image *i, int width, int height) {
         }
 #endif
 
+        // When scaling from a high width directly to 1, FFmpeg sometimes (?)
+        // introduces noise. So we avoid this situation.
+        if (width == 1 && image_width(tmp) > 2) {
+            width = 2;
+        }
+
         if (image_width(tmp)/width > MAX_FILTER_SIZE) {
             width = image_width(tmp)/MAX_FILTER_SIZE+1;
         }
