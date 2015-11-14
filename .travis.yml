@@ -1,0 +1,14 @@
+language: c
+compiler:
+  - clang
+  - gcc
+before_install:
+  - sudo apt-get update
+  - sudo apt-get -y install libavcodec-dev libavformat-dev libswscale-dev libpopt-dev help2man
+before_script:
+  - mkdir build
+  - cd build
+  - cmake ..
+script:
+  - make
+  - make check

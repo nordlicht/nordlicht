@@ -2,13 +2,17 @@
 #define INCLUDE_source_h__
 
 #include "nordlicht.h"
-#include "graphics.h"
+#include "image.h"
 
 #define COLUMN_PRECISION 0.95 // choose a frame from this percentage at the middle of each column
 
 typedef struct source source;
 
 source* source_init(const char *filename);
+
+int source_has_video(source *s);
+
+int source_has_audio(source *s);
 
 image* source_get_video_frame(source *s, const double min_percent, const double max_percent);
 

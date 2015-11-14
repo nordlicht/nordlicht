@@ -20,7 +20,7 @@ const style style_table[] = {
     {"slitscan", "take single columns while constantly moving to the right (and wrapping back to the left)", NORDLICHT_STYLE_SLITSCAN},
     {"middlecolumn", "take the middlemost column of each frame", NORDLICHT_STYLE_MIDDLECOLUMN},
     {"thumbnails", "display small thumbnails at regular intervals", NORDLICHT_STYLE_THUMBNAILS},
-    {"volume", "...", NORDLICHT_STYLE_VOLUME},
+    {"spectrogram", "calculate a spectrogram of the first audio track", NORDLICHT_STYLE_SPECTROGRAM},
     {NULL, NULL, NORDLICHT_STYLE_LAST}
 };
 
@@ -69,7 +69,6 @@ int main(const int argc, const char **argv) {
     float end = 1.0;
     char *output_file = NULL;
     char *styles_string = NULL;
-    nordlicht_style style;
     nordlicht_strategy strategy;
     int free_output_file = 0;
 
@@ -115,13 +114,13 @@ int main(const int argc, const char **argv) {
     const char *filename = (char*)poptGetArg(popt);
 
     if (filename == NULL) {
-        print_error("Please specify an input file.\n");
-        print_help(popt, 1);
+        print_error("Please specify an input file.");
+        exit(1);
     }
 
     if (poptGetArg(popt) != NULL) {
-        print_error("Please specify only one input file.\n");
-        print_help(popt, 1);
+        print_error("Please specify only one input file.");
+        exit(1);
     }
 
     if (output_file == NULL) {
@@ -169,8 +168,8 @@ int main(const int argc, const char **argv) {
         }
 
         if (!style_table[i].name) {
-            print_error("Unknown style '%s'.\n", style_string);
-            print_help(popt, 1);
+            print_error("Unknown style '%s'. Use '--help' to display available styles.", style_string);
+            exit(1);
         }
         num_tracks++;
     }
@@ -181,8 +180,8 @@ int main(const int argc, const char **argv) {
     } else if (strcmp(ext, "bgra") == 0) {
         strategy = NORDLICHT_STRATEGY_LIVE;
     } else {
-        print_error("Unsupported file extension '%s'.\n", ext);
-        print_help(popt, 1);
+        print_error("Unsupported file extension '%s'.", ext);
+        exit(1);
     }
 
     // Interesting stuff begins here!
@@ -213,6 +212,10 @@ int main(const int argc, const char **argv) {
         }
         ftruncate(fd, nordlicht_buffer_size(n));
         data = (unsigned char *) mmap(NULL, nordlicht_buffer_size(n), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        if (data == (void *) -1) {
+            print_error("Could not mmap %d bytes.", nordlicht_buffer_size(n));
+            exit(1);
+        }
         nordlicht_set_buffer(n, data);
         close(fd);
     } else {
@@ -226,9 +229,9 @@ int main(const int argc, const char **argv) {
     pthread_t thread;
     pthread_create(&thread, NULL, (void*(*)(void*))nordlicht_generate, n);
 
-    float progress = 0;
-
     if (! quiet) {
+        float progress = 0;
+
         printf("nordlicht: Building keyframe index... ");
         fflush(stdout);
         while (progress == 0) {
@@ -247,6 +250,11 @@ int main(const int argc, const char **argv) {
 
     pthread_join(thread, NULL);
 
+    if (nordlicht_error() != NULL) {
+        print_error(nordlicht_error());
+        exit(1);
+    }
+
     if (strategy != NORDLICHT_STRATEGY_LIVE) {
         if (nordlicht_write(n, output_file) != 0) {
             print_error(nordlicht_error());
@@ -255,7 +263,11 @@ int main(const int argc, const char **argv) {
     }
 
     free(styles);
-    munmap(data, nordlicht_buffer_size(n));
+
+    if (strategy == NORDLICHT_STRATEGY_LIVE) {
+        munmap(data, nordlicht_buffer_size(n));
+    }
+
     nordlicht_free(n);
 
     if (! quiet) {

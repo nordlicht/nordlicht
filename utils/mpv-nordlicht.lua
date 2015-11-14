@@ -9,17 +9,16 @@ function init()
 
     -- size of the barcode:
     width = mp.get_property("osd-width")
-    height = math.floor(width/60)
+    height = math.floor(width/20)
     width2 = width*5
-    height2 = math.floor(width2/60)
+    height2 = math.floor(width2/50)
 
     -- size of the progress marker:
-    mh = math.floor(height/5)*2+1
+    mh = math.floor(height/15)*2+1
     mw = mh*2-1
 
     -- styles:
-    styles = "slitscan"
-    styles2 = "slitscan"
+    styles = os.getenv("NORDLICHT_STYLE") or "horizontal"
 
     mp.register_event("start-file", new_file)
     mp.register_event("shutdown", shutdown)
@@ -52,7 +51,7 @@ function new_file()
     kill()
 
     local nordlicht_cmd = "nordlicht -s "..styles
-    local nordlicht_cmd2 = "nordlicht -s "..styles2
+    local nordlicht_cmd2 = "nordlicht -s "..styles
     local path = mp.get_property("path")
     local cmd = "nice "..nordlicht_cmd.." \""..path.."\" -o /tmp/nordlicht.bgra -w "..width.." -h "..height.." &"
     os.execute(cmd)
