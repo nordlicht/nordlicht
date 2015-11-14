@@ -1,3 +1,11 @@
+nordlicht (0.3.5+git20151005.bb21ed2-1) unstable; urgency=medium
+
+  * sync upstream snapshot bb21ed2
+  * set Homepage field to the nordlicht GitHub organization
+  * fix lintian dep5-copyright-license-name-not-unique
+
+ -- Roland Hieber <rohieb@rohieb.name>  Sat, 14 Nov 2015 01:40:58 +0100
+
 nordlicht (0.3.5+git20141107.5e7046c-1) unstable; urgency=medium
 
   * build from upstream Git snapshot 5e7046c
