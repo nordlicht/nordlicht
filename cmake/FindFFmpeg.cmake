@@ -9,7 +9,6 @@
 #
 # For each of the components it will additionally set.
 #   - AVCODEC
-#   - AVDEVICE
 #   - AVFORMAT
 #   - AVUTIL
 #   - SWSCALE
@@ -99,7 +98,6 @@ if (NOT FFMPEG_LIBRARIES)
   # Check for all possible component.
   find_component(AVCODEC  libavcodec  avcodec  libavcodec/avcodec.h)
   find_component(AVFORMAT libavformat avformat libavformat/avformat.h)
-  find_component(AVDEVICE libavdevice avdevice libavdevice/avdevice.h)
   find_component(AVUTIL   libavutil   avutil   libavutil/avutil.h)
   find_component(SWSCALE  libswscale  swscale  libswscale/swscale.h)
 
@@ -132,7 +130,7 @@ if (NOT FFMPEG_LIBRARIES)
 endif ()
 
 # Now set the noncached _FOUND vars for the components.
-foreach (_component AVCODEC AVDEVICE AVFORMAT AVUTIL SWSCALE)
+foreach (_component AVCODEC AVFORMAT AVUTIL SWSCALE)
   set_component_found(${_component})
 endforeach ()
 
