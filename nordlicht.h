@@ -10,7 +10,7 @@ typedef enum nordlicht_style {
     NORDLICHT_STYLE_VERTICAL, // compress frames to rows, "move downwards"
     NORDLICHT_STYLE_SLITSCAN, // take single columns, while moving to the right (and wrapping to the left)
     NORDLICHT_STYLE_MIDDLECOLUMN, // take the frames' middlemost column
-    NORDLICHT_STYLE_SPECTROGRAM,
+    NORDLICHT_STYLE_SPECTROGRAM, // create a spectrogram of the first audio track
     NORDLICHT_STYLE_LAST
 } nordlicht_style;
 
@@ -37,7 +37,8 @@ int nordlicht_set_start(nordlicht *n, const float start);
 // Specify where to end the nordlicht, in percent between 0 and 1.
 int nordlicht_set_end(nordlicht *n, const float end);
 
-// Set the output style of the nordlicht. Default is NORDLICHT_STYLE_HORIZONTAL.
+// Set the output style(s) of the nordlicht. Default is NORDLICHT_STYLE_HORIZONTAL.
+// Expects a pointer to an array of nordlicht_style-s of length `num_styles`.
 // Returns 0 on success.
 int nordlicht_set_style(nordlicht *n, const nordlicht_style *s, const int num_styles);
 
