@@ -236,7 +236,7 @@ int main(const int argc, const char **argv) {
         fflush(stdout);
         while (progress == 0) {
             progress = nordlicht_progress(n);
-            usleep(100000);
+            nanosleep((const struct timespec[]){{0, 100000000L}}, NULL);
         }
         printf("done.\n");
 
@@ -244,7 +244,7 @@ int main(const int argc, const char **argv) {
             progress = nordlicht_progress(n);
             printf("\rnordlicht: %02.0f%%", progress*100);
             fflush(stdout);
-            usleep(100000);
+            nanosleep((const struct timespec[]){{0, 100000000L}}, NULL);
         }
     }
 
