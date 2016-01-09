@@ -19,14 +19,6 @@ Development of *nordlicht* happens on GitHub. Please report any bugs or ideas to
 
 You can also help by packaging the software for your favorite operating system, or writing an integration for your favorite video player. Even rough prototypes are highly appreciated!
 
-*nordlicht* uses [semantic versioning](http://semver.org/).
-
 ## License: GPLv2+
 
-Copyright (C) 2015, Sebastian Morr and contributors.
-
-*nordlicht* is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
-
-*nordlicht* is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-
-You can get a copy of the GNU General Public License at <http://www.gnu.org/licenses/>.
+See [LICENSE.md] for details.
