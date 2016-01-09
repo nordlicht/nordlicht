@@ -124,8 +124,9 @@ int main(const int argc, const char **argv) {
     }
 
     if (output_file == NULL) {
-        output_file = (char *) malloc(snprintf(NULL, 0, "%s.png", gnu_basename(filename)) + 1);
-        sprintf(output_file, "%s.png", gnu_basename(filename));
+        size_t len = snprintf(NULL, 0, "%s.png", gnu_basename(filename)) + 1;
+        output_file = (char *) malloc(len);
+        snprintf(output_file, len, "%s.png", gnu_basename(filename));
         free_output_file = 1;
     }
 
