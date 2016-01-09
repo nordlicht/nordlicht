@@ -11,7 +11,7 @@ Get CMake, FFmpeg/libav, [popt](http://freecode.com/projects/popt), and [help2ma
     $ cmake ..
     $ make
 
-To run the test suite, make sure some `video.mp4` exists and run the `testsuite` binary.
+To run the test suite, run `make check`.
 
 ## Contributing
 
