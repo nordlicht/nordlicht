@@ -26,11 +26,11 @@ struct nordlicht {
     source *source;
 };
 
-size_t nordlicht_buffer_size(const nordlicht *n) {
+NORDLICHT_API size_t nordlicht_buffer_size(const nordlicht *n) {
     return n->width * n->height * 4;
 }
 
-nordlicht* nordlicht_init(const char *filename, const int width, const int height) {
+NORDLICHT_API nordlicht* nordlicht_init(const char *filename, const int width, const int height) {
     if (width < 1 || height < 1) {
         error("Dimensions must be positive (got %dx%d)", width, height);
         return NULL;
@@ -69,7 +69,7 @@ nordlicht* nordlicht_init(const char *filename, const int width, const int heigh
     return n;
 }
 
-void nordlicht_free(nordlicht *n) {
+NORDLICHT_API void nordlicht_free(nordlicht *n) {
     if (n->owns_data) {
         free(n->data);
     }
@@ -78,11 +78,11 @@ void nordlicht_free(nordlicht *n) {
     free(n);
 }
 
-const char *nordlicht_error() {
+NORDLICHT_API const char *nordlicht_error() {
     return get_error();
 }
 
-int nordlicht_set_start(nordlicht *n, const float start) {
+NORDLICHT_API int nordlicht_set_start(nordlicht *n, const float start) {
     if (! n->modifiable) {
         return -1;
     }
@@ -101,7 +101,7 @@ int nordlicht_set_start(nordlicht *n, const float start) {
     return 0;
 }
 
-int nordlicht_set_end(nordlicht *n, const float end) {
+NORDLICHT_API int nordlicht_set_end(nordlicht *n, const float end) {
     if (! n->modifiable) {
         return -1;
     }
@@ -120,7 +120,7 @@ int nordlicht_set_end(nordlicht *n, const float end) {
     return 0;
 }
 
-int nordlicht_set_style(nordlicht *n, const nordlicht_style *styles, const int num_tracks) {
+NORDLICHT_API int nordlicht_set_style(nordlicht *n, const nordlicht_style *styles, const int num_tracks) {
     if (! n->modifiable) {
         return -1;
     }
@@ -151,7 +151,7 @@ int nordlicht_set_style(nordlicht *n, const nordlicht_style *styles, const int n
     return 0;
 }
 
-int nordlicht_set_strategy(nordlicht *n, const nordlicht_strategy s) {
+NORDLICHT_API int nordlicht_set_strategy(nordlicht *n, const nordlicht_strategy s) {
     if (! n->modifiable) {
         return -1;
     }
@@ -162,7 +162,7 @@ int nordlicht_set_strategy(nordlicht *n, const nordlicht_strategy s) {
     return 0;
 }
 
-int nordlicht_generate(nordlicht *n) {
+NORDLICHT_API int nordlicht_generate(nordlicht *n) {
     n->modifiable = 0;
 
     source_build_keyframe_index(n->source, n->width);
@@ -254,7 +254,7 @@ int nordlicht_generate(nordlicht *n) {
     return 0;
 }
 
-int nordlicht_write(const nordlicht *n, const char *filename) {
+NORDLICHT_API int nordlicht_write(const nordlicht *n, const char *filename) {
     int code = 0;
 
     if (filename == NULL) {
@@ -296,15 +296,15 @@ int nordlicht_write(const nordlicht *n, const char *filename) {
     return code;
 }
 
-float nordlicht_progress(const nordlicht *n) {
+NORDLICHT_API float nordlicht_progress(const nordlicht *n) {
     return n->progress;
 }
 
-const unsigned char* nordlicht_buffer(const nordlicht *n) {
+NORDLICHT_API const unsigned char* nordlicht_buffer(const nordlicht *n) {
     return n->data;
 }
 
-int nordlicht_set_buffer(nordlicht *n, unsigned char *data) {
+NORDLICHT_API int nordlicht_set_buffer(nordlicht *n, unsigned char *data) {
     if (! n->modifiable) {
         return -1;
     }
