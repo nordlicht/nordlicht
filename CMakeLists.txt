@@ -11,9 +11,11 @@ find_package(Threads REQUIRED)
 find_package(FFmpeg COMPONENTS AVUTIL AVFORMAT AVCODEC SWSCALE REQUIRED)
 find_package(Popt REQUIRED)
 
-find_program(HELP2MAN help2man)
-if (NOT HELP2MAN)
-    message(FATAL_ERROR "help2man not found, aborting.")
+if (NOT WIN32)
+    find_program(HELP2MAN help2man)
+    if (NOT HELP2MAN)
+        message(FATAL_ERROR "help2man not found, aborting.")
+    endif()
 endif()
 
 include_directories(${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR} ${FFMPEG_INCLUDE_DIRS} ${POPT_INCLUDES})
@@ -25,22 +27,31 @@ target_link_libraries(libnordlicht ${FFMPEG_LIBRARIES})
 
 add_executable(nordlicht main.c)
 target_link_libraries(nordlicht libnordlicht ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+if (WIN32)
+    target_link_libraries(nordlicht mman)
+endif()
 
 add_executable(testsuite testsuite.c)
 target_link_libraries(testsuite libnordlicht)
 
 configure_file(cmake/nordlicht.pc.in nordlicht.pc @ONLY)
 configure_file(version.h.in version.h @ONLY)
-add_custom_command(TARGET nordlicht POST_BUILD
-    COMMAND help2man ${CMAKE_BINARY_DIR}/nordlicht -N -n "creates colorful barcodes from video files"
-    -o ${CMAKE_BINARY_DIR}/nordlicht.1
-)
+
+if (NOT WIN32)
+    add_custom_command(TARGET nordlicht POST_BUILD
+        COMMAND help2man ${CMAKE_BINARY_DIR}/nordlicht -N -n "creates colorful barcodes from video files"
+        -o ${CMAKE_BINARY_DIR}/nordlicht.1
+    )
+endif()
 
 install(TARGETS libnordlicht DESTINATION ${LIB_INSTALL_DIR})
 install(TARGETS nordlicht DESTINATION bin)
 install(FILES nordlicht.h DESTINATION include)
-install(FILES ${CMAKE_BINARY_DIR}/nordlicht.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
-install(FILES ${CMAKE_BINARY_DIR}/nordlicht.1 DESTINATION share/man/man1)
+
+if (NOT WIN32)
+    install(FILES ${CMAKE_BINARY_DIR}/nordlicht.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
+    install(FILES ${CMAKE_BINARY_DIR}/nordlicht.1 DESTINATION share/man/man1)
+endif()
 
 add_custom_target(check testsuite)
 add_custom_target(download_testfile ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/download_testfile.cmake)

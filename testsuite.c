@@ -1,6 +1,12 @@
 #include "cheat.h"
 #include "nordlicht.h"
 
+#ifdef _WIN32
+#include <io.h>
+#define F_OK 0
+#define access _access
+#endif
+
 #define cheat_null(x) cheat_assert(NULL == (x))
 #define cheat_not_null(x) cheat_assert(NULL != (x))
 #define cheat_fail(x) cheat_assert(0 != (x))

@@ -8,6 +8,25 @@
 #include "nordlicht.h"
 #include "version.h"
 
+#ifdef _WIN32
+// from http://stackoverflow.com/a/8514474/248734
+char* strsep(char** stringp, const char* delim) {
+    char* start = *stringp;
+    char* p;
+
+    p = (start != NULL) ? strpbrk(start, delim) : NULL;
+
+    if (p == NULL) {
+        *stringp = NULL;
+    } else {
+        *p = '\0';
+        *stringp = p + 1;
+    }
+
+    return start;
+}
+#endif
+
 typedef struct {
     const char *name;
     const char *description;
