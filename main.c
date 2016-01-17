@@ -52,11 +52,6 @@ void print_error(const char *message, ...) {
     fprintf(stderr, "\n");
 }
 
-const char *gnu_basename(const char *path) {
-    const char *base = strrchr(path, '/');
-    return base ? base+1 : path;
-}
-
 const char *filename_ext(const char *path) {
     const char *dot = strrchr(path, '.');
     if (!dot || dot == path) return "";
@@ -96,9 +91,9 @@ int main(const int argc, const char **argv) {
     int version = 0;
 
     const struct poptOption optionsTable[] = {
-        {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width; by default it's \"height*10\", or 1000 pixels, if both are undefined", NULL},
+        {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width; by default it's \"height*10\", or 1920 pixels, if both are undefined", NULL},
         {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height; by default it's \"width/10\"", NULL},
-        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename, the default is $(basename VIDEOFILE).png; when you specify an *.bgra file, you'll get a raw 32-bit BGRA file that is updated as the barcode is generated", "FILENAME"},
+        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename, the default is VIDEOFILE.png; when you specify an *.bgra file, you'll get a raw 32-bit BGRA file that is updated as the barcode is generated", "FILENAME"},
         {"style", 's', POPT_ARG_STRING, &styles_string, 0, "default is 'horizontal', see \"Styles\" section below. You can specify more than one style, separated by '+', to get multiple tracks", "STYLE"},
         {"start", '\0', POPT_ARG_FLOAT, &start, 0, "specify where to start the barcode (in percent between 0 and 1)", NULL},
         {"end", '\0', POPT_ARG_FLOAT, &end, 0, "specify where to end the barcode (in percent between 0 and 1)", NULL},
@@ -143,9 +138,9 @@ int main(const int argc, const char **argv) {
     }
 
     if (output_file == NULL) {
-        size_t len = snprintf(NULL, 0, "%s.png", gnu_basename(filename)) + 1;
+        size_t len = snprintf(NULL, 0, "%s.nordlicht.png", filename) + 1;
         output_file = (char *) malloc(len);
-        snprintf(output_file, len, "%s.png", gnu_basename(filename));
+        snprintf(output_file, len, "%s.nordlicht.png", filename);
         free_output_file = 1;
     }
 
@@ -159,8 +154,8 @@ int main(const int argc, const char **argv) {
         }
     }
     if (height == -1 && width == -1) {
-        width = 1000;
-        height = 100;
+        width = 1920;
+        height = 192;
     }
 
     if (styles_string == NULL) {

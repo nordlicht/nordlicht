@@ -42,7 +42,7 @@ CHEAT_TEST(invalid_input_file,
     cheat_null(nordlicht_init("\0", 100, 100));
     cheat_null(nordlicht_init(".", 100, 100));
     cheat_null(nordlicht_init("..", 100, 100));
-    cheat_null(nordlicht_init("nonexistant_file.123", 100, 100));
+    cheat_null(nordlicht_init("nonexistent_file.123", 100, 100));
 )
 
 CHEAT_TEST(invalid_size,
@@ -150,6 +150,8 @@ CHEAT_TEST(tool_size,
 )
 
 CHEAT_TEST(tool_output,
+    cheat_ok(tool("video.mp4 -w 1"));
+    cheat_assert(-1 != access("video.mp4.nordlicht.png", F_OK));
     cheat_ok(tool("video.mp4 -w 1 -o ünîç⌀də.png"));
     cheat_assert(-1 != access("ünîç⌀də.png", F_OK));
     cheat_fail(tool("video.mp4 -o video.mp4"));
