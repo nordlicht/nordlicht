@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 *nordlicht* uses [Semantic Versioning](http://semver.org/).
 
+## 0.4.3 - 2016-01-17
+
+- add LICENSE.md and CHANGELOG.md
+- add export specifier to API functions (thanks, Peter!)
+- improve documentation at various places
+- mpv plugin: Seek when clicking into the nordlicht
+
 ## 0.4.2 - 2016-01-02
 
 - report the correct version number when using `--version`. Oops.
