@@ -1,31 +1,24 @@
 -- nordlicht integration for mpv. You need mpv >= 0.3.6 to correctly support
 -- lua scripting.
 
+utils = require "mp.utils"
+
 function init()
-    is_on = false
-
-    -- size of the barcode:
-    width = mp.get_property("osd-width")
-    height = math.floor(width/20)
-
-    -- size of the progress marker:
-    mh = math.floor(height/15)*2+1
-    mw = mh*2-1
-
-    -- styles:
     styles = os.getenv("NORDLICHT_STYLE") or "horizontal"
 
     mp.register_event("file-loaded", new_file)
     mp.register_event("shutdown", shutdown)
     mp.add_key_binding("n", "nordlicht-toggle", toggle)
+    mp.add_key_binding("N", "nordlicht-regenerate", regenerate)
+    mp.add_key_binding("mouse_btn0", "jump", jump)
+
+    -- size of the progress marker
+    mh = 10
+    mw = mh*2-1
 
     -- yeah, I know. But it's flexible :-P
-    os.execute("convert -depth 8 -size "..mw.."x"..mh.." xc:none -fill white -stroke black -strokewidth 0.5 +antialias -draw \"path 'M "..((mw-1)/2)..",0 L "..(mw-1)..","..(mh-1).." L 0,"..(mh-1).." Z'\" bgra:/tmp/arrow_up.bgra")
-    os.execute("convert -depth 8 -size "..mw.."x"..mh.." bgra:/tmp/arrow_up.bgra -flip bgra:/tmp/arrow_down.bgra")
-
-    new_file()
-    -- wait for the convert commands to finish
-    mp.add_timeout(0.5, on)
+    utils.subprocess({args={"convert", "-depth", "8", "-size", mw.."x"..mh, "xc:none", "-fill", "white", "-stroke", "black", "-strokewidth", "0.5", "+antialias", "-draw", "path 'M"..((mw-1)/2)..",0L"..(mw-1)..","..(mh-1).."L0,"..(mh-1).."Z'", "bgra:/tmp/arrow_up.bgra"}})
+    utils.subprocess({args={"convert", "-depth", "8", "-size", mw.."x"..mh, "bgra:/tmp/arrow_up.bgra", "-flip", "bgra:/tmp/arrow_down.bgra"}})
 end
 
 function shutdown()
@@ -39,28 +32,43 @@ end
 
 function new_file()
     local was_on = is_on
-    if was_on then
-        off()
+    shutdown()
+
+    -- size of the barcode
+    width = mp.get_property("osd-width")
+    height = math.floor(width/20)
+
+    video = mp.get_property("path")
+    nordlicht = video..".nordlicht.png"
+    buffer = "/tmp/nordlicht.bgra"
+
+    local f = io.open(nordlicht, "r")
+    if f ~= nil then
+        -- a suitable nordlicht already exists, use that
+        io.close(f)
+        local cmd = {"convert", nordlicht, "-depth", "8", "-resize", width.."x"..height.."!", buffer}
+        utils.subprocess({args=cmd})
+
+        if was_on then
+            on()
+        end
+    else
+        -- no nordlicht exists, generate one
+        regenerate()
+
+        if was_on then
+            -- wait for the buffer to be opened and truncated
+            mp.add_timeout(0.5, on)
+        end
     end
 
-    kill()
-
-    local nordlicht_cmd = "nordlicht -s "..styles
-    local path = mp.get_property("path")
-    local cmd = "nice "..nordlicht_cmd.." \""..path.."\" -o /tmp/nordlicht.bgra -w "..width.." -h "..height.." &"
-    os.execute(cmd)
-
-    if was_on then
-        -- wait for the file to be opened and truncated
-        mp.add_timeout(0.5, on)
-    end
 end
 
 function update()
     local pos = mp.get_property("percent-pos")
 
     if pos ~= nil then
-        mp.command("overlay_add 0 0 "..mh.." /tmp/nordlicht.bgra 0 bgra "..width.." "..height.." "..width*4)
+        mp.command("overlay_add 0 0 "..mh.." "..buffer.." 0 bgra "..width.." "..height.." "..width*4)
         mp.command("overlay_add 1 "..(math.floor(pos/100*width)-(mw-1)/2).." "..(0).." /tmp/arrow_down.bgra 0 bgra "..mw.." "..mh.." "..mw*4)
         mp.command("overlay_add 2 "..(math.floor(pos/100*width)-(mw-1)/2).." "..(height+mh).." /tmp/arrow_up.bgra 0 bgra "..mw.." "..mh.." "..mw*4)
     end
@@ -91,19 +99,31 @@ function toggle()
     end
 end
 
-mp.add_key_binding("mouse_btn0", "jump",
-    function(e)
-        local mouseX, mouseY = mp.get_mouse_pos()
-        local osdX, osdY = mp.get_osd_resolution()
-        mouseX = 100.0*mouseX/osdX
-
-        mp.commandv("seek", mouseX, "absolute-percent", "exact")
+function regenerate()
+    local was_on = is_on
+    off()
+    local cmd = "(nice nordlicht -s "..styles.." \""..video.."\" -o "..buffer.." -w "..width.." -h "..height.." && convert -depth 8 -size "..width.."x"..height.." "..buffer.." \""..nordlicht.."\") &"
+    os.execute(cmd)
+    if was_on then
+        on()
     end
-)
+end
 
+function jump(e)
+    local mouseX, mouseY = mp.get_mouse_pos()
+    local osdX, osdY = mp.get_osd_resolution()
+    mouseX = 100.0*mouseX/osdX
+
+    mp.commandv("seek", mouseX, "absolute-percent", "exact")
+end
+
+-- wait until the osd-width is > 0, then init
 function maybeinit()
     if tonumber(mp.get_property("osd-width")) > 0 then
         init()
+        is_on = false
+        new_file()
+        on()
     else
         mp.add_timeout(0.1, maybeinit)
     end
