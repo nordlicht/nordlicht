@@ -211,7 +211,7 @@ int main(const int argc, const char **argv) {
 
     nordlicht_set_start(n, start);
     nordlicht_set_end(n, end);
-    nordlicht_set_style(n, styles, num_tracks);
+    nordlicht_set_styles(n, styles, num_tracks);
     nordlicht_set_strategy(n, strategy);
 
     if (nordlicht_error() != NULL) {

@@ -60,14 +60,18 @@ NORDLICHT_API int nordlicht_set_start(nordlicht *n, const float start);
 // Specify where to end the nordlicht, in percent between 0 and 1.
 NORDLICHT_API int nordlicht_set_end(nordlicht *n, const float end);
 
-// Set the output style(s) of the nordlicht. Default is NORDLICHT_STYLE_HORIZONTAL.
+// Set the output style of the nordlicht. Default is NORDLICHT_STYLE_HORIZONTAL.
+// Returns 0 on success. To set multiple styles at once, use `nordlicht_set_styles`.
+NORDLICHT_API int nordlicht_set_style(nordlicht *n, const nordlicht_style style);
+
+// Set multiple output styles, which will be displayed on top of each other.
 // Expects a pointer to an array of nordlicht_style-s of length `num_styles`.
 // Returns 0 on success.
-NORDLICHT_API int nordlicht_set_style(nordlicht *n, const nordlicht_style *s, const int num_styles);
+NORDLICHT_API int nordlicht_set_styles(nordlicht *n, const nordlicht_style *styles, const int num_styles);
 
 // Set the generation strategy of the nordlicht. Default is NORDLICHT_STRATEGY_FAST.
 // Returns 0 on success. This function will be removed in the future.
-NORDLICHT_API int nordlicht_set_strategy(nordlicht *n, const nordlicht_strategy s);
+NORDLICHT_API int nordlicht_set_strategy(nordlicht *n, const nordlicht_strategy strategy);
 
 // Returns a pointer to the nordlicht's internal buffer. You can use it to draw
 // the barcode while it is generated. The pixel format is 32-bit BGRA.

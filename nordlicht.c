@@ -120,7 +120,16 @@ NORDLICHT_API int nordlicht_set_end(nordlicht *n, const float end) {
     return 0;
 }
 
-NORDLICHT_API int nordlicht_set_style(nordlicht *n, const nordlicht_style *styles, const int num_tracks) {
+NORDLICHT_API int nordlicht_set_style(nordlicht *n, const nordlicht_style style) {
+    if (! n->modifiable) {
+        return -1;
+    }
+
+    nordlicht_style styles[1] = {style};
+    return nordlicht_set_styles(n, styles, 1);
+}
+
+NORDLICHT_API int nordlicht_set_styles(nordlicht *n, const nordlicht_style *styles, const int num_tracks) {
     if (! n->modifiable) {
         return -1;
     }
