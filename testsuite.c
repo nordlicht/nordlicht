@@ -82,14 +82,14 @@ CHEAT_TEST(style,
 )
 
 CHEAT_TEST(styles,
-        n = nordlicht_init("video.mp4", 1, 100);
-        cheat_not_null(n);
-        nordlicht_style styles[2] = {NORDLICHT_STYLE_HORIZONTAL, NORDLICHT_STYLE_VERTICAL};
-        cheat_ok(nordlicht_set_styles(n, styles, 2));
-        styles[0] = NORDLICHT_STYLE_THUMBNAILS;
-        cheat_ok(nordlicht_set_styles(n, styles, 2));
-        styles[0] = 10000000;
-        cheat_fail(nordlicht_set_styles(n, styles, 2));
+    n = nordlicht_init("video.mp4", 1, 100);
+    cheat_not_null(n);
+    nordlicht_style styles[2] = {NORDLICHT_STYLE_HORIZONTAL, NORDLICHT_STYLE_VERTICAL};
+    cheat_ok(nordlicht_set_styles(n, styles, 2));
+    styles[0] = NORDLICHT_STYLE_THUMBNAILS;
+    cheat_ok(nordlicht_set_styles(n, styles, 2));
+    styles[0] = 10000000;
+    cheat_fail(nordlicht_set_styles(n, styles, 2));
 )
 
 CHEAT_TEST(strategy,
