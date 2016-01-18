@@ -3,9 +3,18 @@ cmake_minimum_required(VERSION 2.6)
 project(nordlicht C)
 set(NORDLICHT_VERSION 0.4.3)
 
+option (BUILD_SHARED_LIBS "Build shared libraries." ON)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 set(LIB_SUFFIX "" CACHE STRING "Suffix of library directory name (for example '32' or '64')")
 set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}" CACHE STRING "Directory where library will be installed")
+
+if (BUILD_SHARED_LIBS)
+    add_definitions(-DNORDLICHT_BUILD_SHARED)
+else()
+    add_definitions(-DNORDLICHT_BUILD_STATIC)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+endif()
 
 find_package(Threads REQUIRED)
 find_package(FFmpeg COMPONENTS AVUTIL AVFORMAT AVCODEC SWSCALE REQUIRED)
@@ -20,7 +29,7 @@ endif()
 
 include_directories(${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR} ${FFMPEG_INCLUDE_DIRS} ${POPT_INCLUDES})
 
-add_library(libnordlicht SHARED error.c image.c nordlicht.c source.c)
+add_library(libnordlicht error.c image.c nordlicht.c source.c)
 set_target_properties(libnordlicht PROPERTIES OUTPUT_NAME nordlicht)
 set_target_properties(libnordlicht PROPERTIES SOVERSION 0)
 target_link_libraries(libnordlicht ${FFMPEG_LIBRARIES})
@@ -34,10 +43,10 @@ endif()
 add_executable(testsuite testsuite.c)
 target_link_libraries(testsuite libnordlicht)
 
-configure_file(cmake/nordlicht.pc.in nordlicht.pc @ONLY)
 configure_file(version.h.in version.h @ONLY)
 
 if (NOT WIN32)
+    configure_file(cmake/nordlicht.pc.in nordlicht.pc @ONLY)
     add_custom_command(TARGET nordlicht POST_BUILD
         COMMAND help2man ${CMAKE_BINARY_DIR}/nordlicht -N -n "creates colorful barcodes from video files"
         -o ${CMAKE_BINARY_DIR}/nordlicht.1
