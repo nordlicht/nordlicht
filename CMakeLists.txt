@@ -11,6 +11,7 @@ set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}" CACHE STRING "Dir
 
 if (BUILD_SHARED_LIBS)
     add_definitions(-DNORDLICHT_BUILD_SHARED)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed")
 else()
     add_definitions(-DNORDLICHT_BUILD_STATIC)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
@@ -32,7 +33,7 @@ include_directories(${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR} ${FFMPEG_INCLUDE_DIR
 add_library(libnordlicht error.c image.c nordlicht.c source.c)
 set_target_properties(libnordlicht PROPERTIES OUTPUT_NAME nordlicht)
 set_target_properties(libnordlicht PROPERTIES SOVERSION 0)
-target_link_libraries(libnordlicht ${FFMPEG_LIBRARIES})
+target_link_libraries(libnordlicht m ${FFMPEG_LIBRARIES})
 
 add_executable(nordlicht main.c)
 target_link_libraries(nordlicht libnordlicht ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
