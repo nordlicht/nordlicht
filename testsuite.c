@@ -84,7 +84,9 @@ CHEAT_TEST(style,
 CHEAT_TEST(styles,
     n = nordlicht_init("video.mp4", 1, 100);
     cheat_not_null(n);
-    nordlicht_style styles[2] = {NORDLICHT_STYLE_HORIZONTAL, NORDLICHT_STYLE_VERTICAL};
+    nordlicht_style styles[2];
+    styles[0] = NORDLICHT_STYLE_HORIZONTAL;
+    styles[1] = NORDLICHT_STYLE_VERTICAL;
     cheat_ok(nordlicht_set_styles(n, styles, 2));
     styles[0] = NORDLICHT_STYLE_THUMBNAILS;
     cheat_ok(nordlicht_set_styles(n, styles, 2));
