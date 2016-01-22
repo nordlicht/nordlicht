@@ -4,6 +4,7 @@ includedir=@CMAKE_INSTALL_PREFIX@/include
 Name: nordlicht
 Description: A library that creates video barcodes
 Requires:
+Requires.private: libavutil libavformat libavcodec libswscale
 Libs: -L${libdir} -lnordlicht
 Libs.private: -lm
 Cflags: -I${includedir}
