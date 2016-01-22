@@ -5,4 +5,5 @@ Name: nordlicht
 Description: A library that creates video barcodes
 Requires:
 Libs: -L${libdir} -lnordlicht
+Libs.private: -lm
 Cflags: -I${includedir}

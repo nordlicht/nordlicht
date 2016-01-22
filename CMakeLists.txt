@@ -32,7 +32,7 @@ include_directories(${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR} ${FFMPEG_INCLUDE_DIR
 add_library(libnordlicht error.c image.c nordlicht.c source.c)
 set_target_properties(libnordlicht PROPERTIES OUTPUT_NAME nordlicht)
 set_target_properties(libnordlicht PROPERTIES SOVERSION 0)
-target_link_libraries(libnordlicht ${FFMPEG_LIBRARIES})
+target_link_libraries(libnordlicht m ${FFMPEG_LIBRARIES})
 
 add_executable(nordlicht main.c)
 target_link_libraries(nordlicht libnordlicht ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
