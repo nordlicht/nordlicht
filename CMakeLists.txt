@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.0.2)
 
 project(nordlicht C)
 set(NORDLICHT_VERSION 0.4.3)
@@ -6,8 +6,8 @@ set(NORDLICHT_VERSION 0.4.3)
 option (BUILD_SHARED_LIBS "Build shared libraries." ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-set(LIB_SUFFIX "" CACHE STRING "Suffix of library directory name (for example '32' or '64')")
-set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}" CACHE STRING "Directory where library will be installed")
+
+include(GNUInstallDirs)
 
 if (BUILD_SHARED_LIBS)
     add_definitions(-DNORDLICHT_BUILD_SHARED)
@@ -55,12 +55,12 @@ if (NOT WIN32)
     )
 endif()
 
-install(TARGETS libnordlicht DESTINATION ${LIB_INSTALL_DIR})
+install(TARGETS libnordlicht DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS nordlicht DESTINATION bin)
 install(FILES nordlicht.h DESTINATION include)
 
 if (NOT WIN32)
-    install(FILES ${CMAKE_BINARY_DIR}/nordlicht.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
+		install(FILES ${CMAKE_BINARY_DIR}/nordlicht.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
     install(FILES ${CMAKE_BINARY_DIR}/nordlicht.1 DESTINATION share/man/man1)
 endif()
 
