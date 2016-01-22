@@ -11,7 +11,7 @@ Get CMake, FFmpeg/libav, [popt](http://freecode.com/projects/popt), and [help2ma
     $ cmake ..
     $ make
 
-To run the test suite, run `make check`.
+To run the test suite, run `make check`. Note that the test suite will download a ~20 MB test video from Wikimedia Commons.
 
 ## Contributing
 
