@@ -1,13 +1,19 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
 
 project(nordlicht C)
-set(NORDLICHT_VERSION 0.4.3)
+
+set(MAJOR_VERSION 0)
+set(MINOR_VERSION 4)
+set(PATCH_VERSION 3)
+set(SO_VERSION    0)
+
+set(NORDLICHT_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}")
 
 option (BUILD_SHARED_LIBS "Build shared libraries." ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-set(LIB_SUFFIX "" CACHE STRING "Suffix of library directory name (for example '32' or '64')")
-set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}" CACHE STRING "Directory where library will be installed")
+
+include(GNUInstallDirs)
 
 if (BUILD_SHARED_LIBS)
     add_definitions(-DNORDLICHT_BUILD_SHARED)
@@ -32,7 +38,7 @@ include_directories(${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR} ${FFMPEG_INCLUDE_DIR
 
 add_library(libnordlicht error.c image.c nordlicht.c source.c)
 set_target_properties(libnordlicht PROPERTIES OUTPUT_NAME nordlicht)
-set_target_properties(libnordlicht PROPERTIES SOVERSION 0)
+set_target_properties(libnordlicht PROPERTIES SOVERSION ${SO_VERSION} VERSION ${NORDLICHT_VERSION})
 set_target_properties(libnordlicht PROPERTIES C_VISIBILITY_PRESET hidden)
 target_link_libraries(libnordlicht m ${FFMPEG_LIBRARIES})
 
@@ -55,12 +61,12 @@ if (NOT WIN32)
     )
 endif()
 
-install(TARGETS libnordlicht DESTINATION ${LIB_INSTALL_DIR})
+install(TARGETS libnordlicht DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS nordlicht DESTINATION bin)
 install(FILES nordlicht.h DESTINATION include)
 
 if (NOT WIN32)
-    install(FILES ${CMAKE_BINARY_DIR}/nordlicht.pc DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
+		install(FILES ${CMAKE_BINARY_DIR}/nordlicht.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
     install(FILES ${CMAKE_BINARY_DIR}/nordlicht.1 DESTINATION share/man/man1)
 endif()
 
