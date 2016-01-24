@@ -33,22 +33,22 @@ endif()
 
 include_directories(${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR} ${FFMPEG_INCLUDE_DIRS} ${POPT_INCLUDES})
 
-add_library(libnordlicht error.c image.c nordlicht.c source.c)
+add_library(libnordlicht src/error.c src/image.c src/nordlicht.c src/source.c)
 set_target_properties(libnordlicht PROPERTIES OUTPUT_NAME nordlicht)
 set_target_properties(libnordlicht PROPERTIES SOVERSION ${MAJOR_VERSION} VERSION ${NORDLICHT_VERSION})
 set_target_properties(libnordlicht PROPERTIES C_VISIBILITY_PRESET hidden)
 target_link_libraries(libnordlicht m ${FFMPEG_LIBRARIES})
 
-add_executable(nordlicht main.c)
+add_executable(nordlicht src/main.c)
 target_link_libraries(nordlicht libnordlicht ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 if (WIN32)
     target_link_libraries(nordlicht mman)
 endif()
 
-add_executable(testsuite testsuite.c)
+add_executable(testsuite src/testsuite.c)
 target_link_libraries(testsuite libnordlicht)
 
-configure_file(version.h.in version.h @ONLY)
+configure_file(src/version.h.in version.h @ONLY)
 
 if (NOT WIN32)
     configure_file(cmake/nordlicht.pc.in nordlicht.pc @ONLY)
