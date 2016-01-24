@@ -376,7 +376,7 @@ image* get_frame(source *s, stream *st, const double min_percent, const double m
 
                 break;
             default:
-                error("Unsupported audio format (%d)", st->codec->sample_fmt);
+                error("Unsupported sample format (%d), see https://github.com/nordlicht/nordlicht/issues/26", st->codec->sample_fmt);
                 return NULL;
         }
 
