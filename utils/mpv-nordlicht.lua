@@ -8,6 +8,7 @@ function init()
 
     mp.register_event("file-loaded", new_file)
     mp.register_event("shutdown", shutdown)
+    mp.register_event("seek", seek)
     mp.add_key_binding("n", "nordlicht-toggle", toggle)
     mp.add_key_binding("N", "nordlicht-regenerate", regenerate)
     mp.add_key_binding("mouse_btn0", "jump", jump)
@@ -97,6 +98,15 @@ function toggle()
     else
         on()
     end
+end
+
+function seek()
+	on()
+
+	if seek_off_timer then
+		seek_off_timer:kill()
+	end
+	seek_off_timer = mp.add_timeout(1, off)
 end
 
 function regenerate()
