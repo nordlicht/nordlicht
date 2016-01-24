@@ -294,7 +294,7 @@ int seek(source *s, stream *st, const long min_frame_nr, const long max_frame_nr
 
         while (st->current_frame < min_frame_nr) {
             if (st->current_frame > max_frame_nr) {
-                error("Target frame is in the past. This shoudn't happen. Please file a bug.");
+                error("Target frame is in the past. This shouldn't happen. Please file a bug.");
             }
             if (grab_next_frame(s, st) != 0) {
                 return 1;
