@@ -21,4 +21,4 @@ You can also help by packaging the software for your favorite operating system, 
 
 ## License: GPLv2+
 
-See [LICENSE.md] for details.
+See [LICENSE.md](LICENSE.md) for details.
