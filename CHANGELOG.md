@@ -3,6 +3,19 @@
 All notable changes to this project will be documented in this file.
 *nordlicht* uses [Semantic Versioning](http://semver.org/).
 
+## 0.4.4 - 2016-01-24
+
+- introduce the convention that the nordlicht is always written to `VIDEOFILE.nordlicht.png`
+- increase default size to 1920x192, to get nice results on 1080p displays
+- introduce `nordlicht_set_style`, which only accepts one style
+- rename old `nordlicht_set_style` to `nordlicht_set_styles`
+- fixes to the build system: don't over-/underlink (thanks, Roland!), set library `VERSION` only export symbols of the public API
+- make pkg-config file more specific (thanks, Roland!)
+
+- mpv: check whether this file exists before generating a new one
+- mpv: press *N* to re-generate nordlicht
+- mpv: show nordlicht for 1 second when navigating in "off" mode (thanks, Roland!)
+
 ## 0.4.3 - 2016-01-17
 
 - add LICENSE.md and CHANGELOG.md
