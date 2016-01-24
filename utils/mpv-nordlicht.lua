@@ -101,12 +101,14 @@ function toggle()
 end
 
 function seek()
-	on()
+    if not is_on then
+        on()
 
-	if seek_off_timer then
-		seek_off_timer:kill()
-	end
-	seek_off_timer = mp.add_timeout(1, off)
+        if seek_off_timer then
+            seek_off_timer:kill()
+        end
+        seek_off_timer = mp.add_timeout(1, off)
+    end
 end
 
 function regenerate()
