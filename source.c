@@ -76,6 +76,11 @@ int grab_next_frame(source *s, stream *st) {
                 }
 
                 if (got_frame) {
+                    if (st->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
+                        if (st->frame->data[0] == 0) {
+                            return 1;
+                        }
+                    }
                     pts = packet_pts(st, &s->packet);
                     valid = 1;
                 }
@@ -93,10 +98,10 @@ int grab_next_frame(source *s, stream *st) {
     return 0;
 }
 
-void seek_keyframe(source *s, stream *st, const long frame) {
+int seek_keyframe(source *s, stream *st, const long frame) {
     av_seek_frame(s->format, st->stream, frame/st->fps/st->time_base, AVSEEK_FLAG_BACKWARD);
     avcodec_flush_buffers(st->codec);
-    grab_next_frame(s, st);
+    return grab_next_frame(s, st) != 0;
 }
 
 int total_number_of_frames(const source *s, stream *st) {
@@ -282,7 +287,9 @@ int seek(source *s, stream *st, const long min_frame_nr, const long max_frame_nr
         long keyframe = preceding_keyframe(s, max_frame_nr);
 
         if (keyframe > st->current_frame) {
-            seek_keyframe(s, st, keyframe);
+            if (seek_keyframe(s, st, keyframe) != 0) {
+                return 1;
+            }
         }
 
         while (st->current_frame < min_frame_nr) {
@@ -294,7 +301,9 @@ int seek(source *s, stream *st, const long min_frame_nr, const long max_frame_nr
             }
         }
     } else {
-        seek_keyframe(s, st, (min_frame_nr+max_frame_nr)/2);
+        if (seek_keyframe(s, st, (min_frame_nr+max_frame_nr)/2) != 0) {
+            return 1;
+        }
     }
     return 0;
 }
@@ -362,7 +371,6 @@ image* get_frame(source *s, stream *st, const double min_percent, const double m
                 data = (float *) malloc(sizeof(float)*SAMPLES_PER_FRAME);
                 for (i = 0; i < SAMPLES_PER_FRAME; i++) {
                     float val = ((int16_t *) s->audio->frame->data[0])[i]/100000.0;
-                    //printf("%f\n", val);
                     data[i] = val;
                 }
 
