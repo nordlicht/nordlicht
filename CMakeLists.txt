@@ -1,12 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 
 project(nordlicht C)
-
 set(MAJOR_VERSION 0)
 set(MINOR_VERSION 4)
 set(PATCH_VERSION 3)
-set(SO_VERSION    0)
-
 set(NORDLICHT_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}")
 
 option (BUILD_SHARED_LIBS "Build shared libraries." ON)
@@ -38,7 +35,7 @@ include_directories(${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR} ${FFMPEG_INCLUDE_DIR
 
 add_library(libnordlicht error.c image.c nordlicht.c source.c)
 set_target_properties(libnordlicht PROPERTIES OUTPUT_NAME nordlicht)
-set_target_properties(libnordlicht PROPERTIES SOVERSION ${SO_VERSION} VERSION ${NORDLICHT_VERSION})
+set_target_properties(libnordlicht PROPERTIES SOVERSION ${MAJOR_VERSION} VERSION ${NORDLICHT_VERSION})
 set_target_properties(libnordlicht PROPERTIES C_VISIBILITY_PRESET hidden)
 target_link_libraries(libnordlicht m ${FFMPEG_LIBRARIES})
 
