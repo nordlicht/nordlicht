@@ -70,8 +70,8 @@ void print_help(const poptContext popt, const int ret) {
     printf("\n\
 Examples:\n\
   nordlicht video.mp4                                   generate video.mp4.png of default size\n\
-  nordlicht video.mp4 --style=vertical                  compress individual frames to columns\n\
-  nordlicht video.mp4 -w 1920 -h 200 -o barcode.png     override size and name of the output file\n");
+  nordlicht video.mp4 -s vertical                       compress individual frames to columns\n\
+  nordlicht video.mp4 -w 1000 -h 1000 -o barcode.png    override size and name of the output file\n");
 
     exit(ret);
 }
