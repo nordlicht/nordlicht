@@ -63,7 +63,7 @@ install(TARGETS nordlicht DESTINATION bin)
 install(FILES nordlicht.h DESTINATION include)
 
 if (NOT WIN32)
-		install(FILES ${CMAKE_BINARY_DIR}/nordlicht.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+    install(FILES ${CMAKE_BINARY_DIR}/nordlicht.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
     install(FILES ${CMAKE_BINARY_DIR}/nordlicht.1 DESTINATION share/man/man1)
 endif()
 
