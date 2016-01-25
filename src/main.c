@@ -106,6 +106,10 @@ int main(const int argc, const char **argv) {
     const poptContext popt = poptGetContext(NULL, argc, argv, optionsTable, 0);
     poptSetOtherOptionHelp(popt, "[OPTION]... VIDEOFILE\n\nOptions:");
 
+    if (argc == 1) {
+        print_help(popt, 1);
+    }
+
     char c;
 
     // The next line leaks 3 bytes, blame popt!
