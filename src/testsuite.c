@@ -167,8 +167,9 @@ CHEAT_TEST(tool_output,
     cheat_fail(tool("video.mp4 -o video.mp4"));
     cheat_fail(tool("video.mp4 -o ''"));
     cheat_ok(tool("video.mp4 -w 1 -o barcode.bgra"));
-    cheat_fail(tool("video.mp4 -o barcode.abc"));
-    cheat_fail(tool("video.mp4 -o barcode"));
+    // fall back to PNG in these cases:
+    cheat_ok(tool("video.mp4 -w 1 -o barcode.abc"));
+    cheat_ok(tool("video.mp4 -w 1 -o barcode"));
 )
 
 CHEAT_TEST(tool_style,
