@@ -1,0 +1,4 @@
+[Thumbnailer Entry]
+TryExec=nordlicht
+Exec=nordlicht --quiet %i --output %o --width %s --height %s
+MimeType=video/jpeg;video/mp4;video/mpeg;video/quicktime;video/x-ms-asf;video/x-ms-wm;video/x-ms-wmv;video/x-msvideo;video/x-flv;video/x-matroska;video/webm;
