@@ -194,13 +194,13 @@ int main(const int argc, const char **argv) {
     }
 
     const char *ext = filename_ext(output_file);
-    if (strcmp(ext, "png") == 0) {
-        strategy = NORDLICHT_STRATEGY_FAST;
-    } else if (strcmp(ext, "bgra") == 0) {
+    if (strcmp(ext, "bgra") == 0) {
         strategy = NORDLICHT_STRATEGY_LIVE;
+    } else if (strcmp(ext, "png") == 0) {
+        strategy = NORDLICHT_STRATEGY_FAST;
     } else {
-        print_error("Unsupported file extension '%s'.", ext);
-        exit(1);
+        strategy = NORDLICHT_STRATEGY_FAST;
+        fprintf(stderr, "nordlicht: Unsupported file extension '%s', will write a PNG.\n", ext);
     }
 
     // Interesting stuff begins here!
