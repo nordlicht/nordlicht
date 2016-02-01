@@ -229,7 +229,10 @@ int main(const int argc, const char **argv) {
             print_error("Could not open '%s'.", output_file);
             exit(1);
         }
-        ftruncate(fd, nordlicht_buffer_size(n));
+        if (ftruncate(fd, nordlicht_buffer_size(n)) == -1) {
+            print_error("Could not truncate '%s'.", output_file);
+            exit(1);
+        }
         data = (unsigned char *) mmap(NULL, nordlicht_buffer_size(n), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         if (data == (void *) -1) {
             print_error("Could not mmap %d bytes.", nordlicht_buffer_size(n));
