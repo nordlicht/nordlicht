@@ -110,13 +110,13 @@ int main(const int argc, const char **argv) {
         print_help(popt, 1);
     }
 
-    char c;
+    int option;
 
-    // The next line leaks 3 bytes, blame popt!
-    while ((c = poptGetNextOpt(popt)) >= 0) { }
+    // The next line leaks 2 bytes, blame popt!
+    while ((option = poptGetNextOpt(popt)) >= 0) { }
 
-    if (c < -1) {
-        fprintf(stderr, "nordlicht: %s: %s\n", poptBadOption(popt, POPT_BADOPTION_NOALIAS), poptStrerror(c));
+    if (option < -1) {
+        fprintf(stderr, "nordlicht: %s: %s\n", poptBadOption(popt, POPT_BADOPTION_NOALIAS), poptStrerror(option));
         return 1;
     }
 
