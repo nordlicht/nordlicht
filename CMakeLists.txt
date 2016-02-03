@@ -20,7 +20,6 @@ else()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
 endif()
 
-find_package(Threads REQUIRED)
 find_package(FFmpeg COMPONENTS AVUTIL AVFORMAT AVCODEC SWSCALE REQUIRED)
 find_package(Popt REQUIRED)
 
@@ -40,7 +39,7 @@ set_target_properties(libnordlicht PROPERTIES C_VISIBILITY_PRESET hidden)
 target_link_libraries(libnordlicht m ${FFMPEG_LIBRARIES})
 
 add_executable(nordlicht src/main.c)
-target_link_libraries(nordlicht libnordlicht ${POPT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(nordlicht libnordlicht ${POPT_LIBRARIES})
 if (WIN32)
     target_link_libraries(nordlicht mman)
 endif()

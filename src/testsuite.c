@@ -122,6 +122,22 @@ CHEAT_TEST(buffer,
     free(buffer2);
 )
 
+CHEAT_TEST(generate_step,
+    n = nordlicht_init("video.mp4", 1, 100);
+    cheat_assert(0 == nordlicht_progress(n));
+    cheat_assert(!nordlicht_done(n));
+    cheat_ok(nordlicht_set_start(n, 0.5));
+    cheat_assert(0 == nordlicht_generate_step(n));
+    cheat_assert(!nordlicht_done(n));
+    cheat_fail(nordlicht_set_start(n, 0.5));
+    cheat_assert(0 == nordlicht_generate_step(n));
+    cheat_assert(0 == nordlicht_generate_step(n));
+    cheat_ok(nordlicht_generate(n));
+    cheat_assert(nordlicht_done(n));
+    cheat_assert(0 == nordlicht_generate_step(n));
+    cheat_assert(nordlicht_done(n));
+)
+
 CHEAT_TEST(complete_run,
     unsigned char *buffer2 = NULL;
     n = nordlicht_init("video.mp4", 1, 100);

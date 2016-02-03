@@ -46,6 +46,7 @@ struct source {
     int *keyframes;
     int number_of_keyframes;
     int has_index;
+    int current_frame;
 };
 
 long packet_pts(stream *st, const AVPacket *packet) {
@@ -109,50 +110,56 @@ int total_number_of_frames(const source *s, stream *st) {
     return st->fps*duration_sec;
 }
 
-void source_build_keyframe_index(source *s, const int width) {
-    if (! s->video) {
-        return;
+// Returns 0 if done
+int source_build_keyframe_index_step(source *s, const int width) {
+    if (s->keyframes == NULL) {
+        if (! s->video) {
+            return 0;
+        }
+        s->keyframes = (int *) malloc(sizeof(long)*60*60*3); // TODO: dynamic datastructure!
+        s->number_of_keyframes = 0;
+
+        s->current_frame = 0;
+
+        s->has_index = 0;
+        s->exact = 1;
+        seek_keyframe(s, s->video, 0);
     }
 
-    s->keyframes = (int *) malloc(sizeof(long)*60*60*3); // TODO: dynamic datastructure!
-    s->number_of_keyframes = 0;
-
-    int frame = 0;
-
-    s->has_index = 0;
-    s->exact = 1;
-    seek_keyframe(s, s->video, 0);
-
-    while (av_read_frame(s->format, &s->packet) >= 0) {
+    if (av_read_frame(s->format, &s->packet) >= 0) {
         if (s->packet.stream_index == s->video->stream) {
             if (!!(s->packet.flags & AV_PKT_FLAG_KEY)) {
                 s->number_of_keyframes++;
 
                 long pts = packet_pts(s->video, &s->packet);
                 if (pts < 1 && s->number_of_keyframes > 0) {
-                    pts = frame;
+                    pts = s->current_frame;
                 }
 
                 s->keyframes[s->number_of_keyframes] = pts;
             }
-            if (frame == HEURISTIC_NUMBER_OF_FRAMES) {
+            if (s->current_frame == HEURISTIC_NUMBER_OF_FRAMES) {
                 const float density = 1.0*s->number_of_keyframes/HEURISTIC_NUMBER_OF_FRAMES;
                 const float required_density = 1.0*HEURISTIC_KEYFRAME_FACTOR/COLUMN_PRECISION*width/total_number_of_frames(s, s->video)/(s->end-s->start);
                 if (density > required_density) {
                     // The keyframe density in the first `HEURISTIC_NUMBER_OF_FRAMES`
                     // frames is HEURISTIC_KEYFRAME_FACTOR times higher than
-                    // the density we need overall.
-                    s->exact = 0;
+                    // the density we need overall. This means that we can abort build
+                    // the keyframe index and just seek inexactly to get good results.
                     av_free_packet(&s->packet);
-                    return;
+                    return 0;
                 }
             }
-            frame++;
+            s->current_frame++;
         }
         av_free_packet(&s->packet);
+        return 1;
+    } else {
+        // we read through the whole file
+        av_free_packet(&s->packet);
+        s->has_index = 1;
+        return 0;
     }
-    av_free_packet(&s->packet);
-    s->has_index = 1;
 }
 
 stream* stream_init(source *s, enum AVMediaType type) {
@@ -401,8 +408,8 @@ image* source_get_audio_frame(source *s, const double min_percent, const double 
     return get_frame(s, s->audio, min_percent, max_percent);
 }
 
-int source_exact(const source *s) {
-    return s->exact;
+int source_has_index(const source *s) {
+    return s->has_index;
 }
 
 void source_set_exact(source *s, const int exact) {

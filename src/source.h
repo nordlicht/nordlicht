@@ -18,9 +18,9 @@ image* source_get_video_frame(source *s, const double min_percent, const double 
 
 image* source_get_audio_frame(source *s, const double min_percent, const double max_percent);
 
-void source_build_keyframe_index(source *s, const int width);
+int source_build_keyframe_index_step(source *s, const int width);
 
-int source_exact(const source *s);
+int source_has_index(const source *s);
 
 void source_set_exact(source *s, const int exact);
 

@@ -1,4 +1,3 @@
-#include <pthread.h>
 #include <sys/file.h>
 #include <sys/mman.h>
 #include <stdarg.h>
@@ -248,33 +247,30 @@ int main(const int argc, const char **argv) {
         }
     }
 
-    pthread_t thread;
-    pthread_create(&thread, NULL, (void*(*)(void*))nordlicht_generate, n);
-
-    if (! quiet) {
-        float progress = 0;
-
-        printf("nordlicht: Building keyframe index... ");
-        fflush(stdout);
-        while (progress == 0) {
-            progress = nordlicht_progress(n);
-            nanosleep((const struct timespec[]){{0, 100000000L}}, NULL);
+    int phase = -1;
+    while(!nordlicht_done(n)) {
+        if (nordlicht_generate_step(n) == 0) {
+            if (! quiet) {
+                float progress = nordlicht_progress(n);
+                if (progress == 0) {
+                    if (phase == -1) {
+                        phase = 0;
+                        printf("nordlicht: Building keyframe index... ");
+                        fflush(stdout);
+                    }
+                } else {
+                    if (phase == 0) {
+                        phase = 1;
+                        printf("done.\n");
+                    }
+                    printf("\rnordlicht: %02.0f%%", progress*100);
+                    fflush(stdout);
+                }
+            }
+        } else {
+            print_error(nordlicht_error());
+            exit(1);
         }
-        printf("done.\n");
-
-        while (progress < 1) {
-            progress = nordlicht_progress(n);
-            printf("\rnordlicht: %02.0f%%", progress*100);
-            fflush(stdout);
-            nanosleep((const struct timespec[]){{0, 100000000L}}, NULL);
-        }
-    }
-
-    pthread_join(thread, NULL);
-
-    if (nordlicht_error() != NULL) {
-        print_error(nordlicht_error());
-        exit(1);
     }
 
     if (strategy != NORDLICHT_STRATEGY_LIVE) {

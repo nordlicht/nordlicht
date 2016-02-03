@@ -22,8 +22,13 @@ struct nordlicht {
     int owns_data;
     int modifiable;
     nordlicht_strategy strategy;
-    float progress;
     source *source;
+
+    int current_pass;
+    int current_track;
+    int current_column;
+    int current_y_offset;
+    float progress;
 };
 
 NORDLICHT_API size_t nordlicht_buffer_size(const nordlicht *n) {
@@ -57,8 +62,13 @@ NORDLICHT_API nordlicht* nordlicht_init(const char *filename, const int width, c
 
     n->strategy = NORDLICHT_STRATEGY_FAST;
     n->modifiable = 1;
-    n->progress = 0;
     n->source = source_init(filename);
+
+    n->current_pass = -1;
+    n->current_track = 0;
+    n->current_column = 0;
+    n->current_y_offset = 0;
+    n->progress = 0;
 
     if (n->source == NULL) {
         error("Could not open video file '%s'", filename);
@@ -171,95 +181,117 @@ NORDLICHT_API int nordlicht_set_strategy(nordlicht *n, const nordlicht_strategy 
     return 0;
 }
 
-NORDLICHT_API int nordlicht_generate(nordlicht *n) {
+NORDLICHT_API int nordlicht_generate_step(nordlicht *n) {
     n->modifiable = 0;
 
-    source_build_keyframe_index(n->source, n->width);
+    if (nordlicht_done(n)) {
+        return 0;
+    } else if (n->current_pass == -1) {
+        // we don't have a (finished) keyframe index yet
+        if (source_build_keyframe_index_step(n->source, n->width) == 0) {
+            // keyframe index building is done
+            if (n->strategy == NORDLICHT_STRATEGY_LIVE || !source_has_index(n->source)) {
+                n->current_pass = 0;
+            } else {
+                n->current_pass = 1;
+            }
+            source_set_exact(n->source, n->current_pass);
+        }
+    } else {
+        image *frame;
 
-    int x, exact;
+        if (n->tracks[n->current_track].style == NORDLICHT_STYLE_SPECTROGRAM) {
+            if (!source_has_audio(n->source)) {
+                error("File contains no audio, please select an appropriate style");
+                n->progress = 1;
+                return -1;
+            }
+            frame = source_get_audio_frame(n->source, 1.0*(n->current_column+0.5-COLUMN_PRECISION/2.0)/n->width,
+                    1.0*(n->current_column+0.5+COLUMN_PRECISION/2.0)/n->width);
+        } else {
+            if (!source_has_video(n->source)) {
+                error("File contains no video, please select an appropriate style");
+                n->progress = 1;
+                return -1;
+            }
+            frame = source_get_video_frame(n->source, 1.0*(n->current_column+0.5-COLUMN_PRECISION/2.0)/n->width,
+                    1.0*(n->current_column+0.5+COLUMN_PRECISION/2.0)/n->width);
+        }
 
-    const int do_a_fast_pass = (n->strategy == NORDLICHT_STRATEGY_LIVE) || !source_exact(n->source);
-    const int do_an_exact_pass = source_exact(n->source);
+        if (frame != NULL) {
+            int thumbnail_width = 1.0*(image_width(frame)*n->tracks[n->current_track].height/image_height(frame));
+            image *column = NULL;
+            image *tmp = NULL;
+            switch (n->tracks[n->current_track].style) {
+                case NORDLICHT_STYLE_THUMBNAILS:
+                    column = image_scale(frame, thumbnail_width, n->tracks[n->current_track].height);
+                    break;
+                case NORDLICHT_STYLE_HORIZONTAL:
+                    column = image_scale(frame, 1, n->tracks[n->current_track].height);
+                    break;
+                case NORDLICHT_STYLE_VERTICAL:
+                    tmp = image_scale(frame, n->tracks[n->current_track].height, 1);
+                    column = image_flip(tmp);
+                    image_free(tmp);
+                    break;
+                case NORDLICHT_STYLE_SLITSCAN:
+                    tmp = image_column(frame, 1.0*(n->current_column%thumbnail_width)/thumbnail_width);
 
-    for (exact = (!do_a_fast_pass); exact <= do_an_exact_pass; exact++) {
-        int i;
-        int y_offset = 0;
-        for(i = 0; i < n->num_tracks; i++) {
-            // call this for each track, to seek to the beginning
-            source_set_exact(n->source, exact);
-
-            for (x = 0; x < n->width; x++) {
-                image *frame;
-
-                if (n->tracks[i].style == NORDLICHT_STYLE_SPECTROGRAM) {
-                    if (!source_has_audio(n->source)) {
-                        error("File contains no audio, please select an appropriate style");
-                        n->progress = 1;
-                        return -1;
-                    }
-                    frame = source_get_audio_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
-                            1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
-                } else {
-                    if (!source_has_video(n->source)) {
-                        error("File contains no video, please select an appropriate style");
-                        n->progress = 1;
-                        return -1;
-                    }
-                    frame = source_get_video_frame(n->source, 1.0*(x+0.5-COLUMN_PRECISION/2.0)/n->width,
-                            1.0*(x+0.5+COLUMN_PRECISION/2.0)/n->width);
-                }
-                if (frame == NULL) {
-                    continue;
-                }
-
-                int thumbnail_width = 1.0*(image_width(frame)*n->tracks[i].height/image_height(frame));
-                image *column = NULL;
-                image *tmp = NULL;
-                switch (n->tracks[i].style) {
-                    case NORDLICHT_STYLE_THUMBNAILS:
-                        column = image_scale(frame, thumbnail_width, n->tracks[i].height);
-                        break;
-                    case NORDLICHT_STYLE_HORIZONTAL:
-                        column = image_scale(frame, 1, n->tracks[i].height);
-                        break;
-                    case NORDLICHT_STYLE_VERTICAL:
-                        tmp = image_scale(frame, n->tracks[i].height, 1);
-                        column = image_flip(tmp);
-                        image_free(tmp);
-                        break;
-                    case NORDLICHT_STYLE_SLITSCAN:
-                        tmp = image_column(frame, 1.0*(x%thumbnail_width)/thumbnail_width);
-
-                        column = image_scale(tmp, 1, n->tracks[i].height);
-                        image_free(tmp);
-                        break;
-                    case NORDLICHT_STYLE_MIDDLECOLUMN:
-                        tmp = image_column(frame, 0.5);
-                        column = image_scale(tmp, 1, n->tracks[i].height);
-                        image_free(tmp);
-                        break;
-                    case NORDLICHT_STYLE_SPECTROGRAM:
-                        column = image_scale(frame, 1, n->tracks[i].height);
-                        break;
-                    default:
-                        // cannot happen (TM)
-                        return -1;
-                        break;
-                }
-
-                image_to_bgra(n->data, n->width, n->height, column, x, y_offset);
-
-                n->progress = (i+1.0*x/n->width)/n->num_tracks;
-                x = x + image_width(column) - 1;
-
-                image_free(column);
+                    column = image_scale(tmp, 1, n->tracks[n->current_track].height);
+                    image_free(tmp);
+                    break;
+                case NORDLICHT_STYLE_MIDDLECOLUMN:
+                    tmp = image_column(frame, 0.5);
+                    column = image_scale(tmp, 1, n->tracks[n->current_track].height);
+                    image_free(tmp);
+                    break;
+                case NORDLICHT_STYLE_SPECTROGRAM:
+                    column = image_scale(frame, 1, n->tracks[n->current_track].height);
+                    break;
+                default:
+                    // cannot happen (TM)
+                    return -1;
+                    break;
             }
 
-            y_offset += n->tracks[i].height;
+            image_to_bgra(n->data, n->width, n->height, column, n->current_column, n->current_y_offset);
+
+            n->progress = (n->current_track+1.0*n->current_column/n->width)/n->num_tracks;
+            n->current_column = n->current_column + image_width(column) - 1;
+
+            image_free(column);
+        }
+
+        n->current_column++;
+        if (n->current_column == n->width) {
+            n->current_column = 0;
+            n->current_y_offset += n->tracks[n->current_track].height;
+            n->current_track++;
+            if (n->current_track == n->num_tracks) {
+                n->current_track = 0;
+                n->current_y_offset = 0;
+                n->current_pass++;
+                if (n->current_pass == 2 || !source_has_index(n->source)) {
+                    // we're done :)
+                    n->progress = 1.0;
+                    n->current_pass = 2;
+                    return 0;
+                } else {
+                    source_set_exact(n->source, n->current_pass);
+                }
+            }
         }
     }
 
-    n->progress = 1.0;
+    return 0;
+}
+
+NORDLICHT_API int nordlicht_generate(nordlicht *n) {
+    while(!nordlicht_done(n)) {
+        if (nordlicht_generate_step(n) != 0) {
+            return -1;
+        }
+    }
     return 0;
 }
 
@@ -303,6 +335,10 @@ NORDLICHT_API int nordlicht_write(const nordlicht *n, const char *filename) {
     image_free(i);
 
     return code;
+}
+
+NORDLICHT_API int nordlicht_done(const nordlicht *n) {
+    return n->current_pass == 2;
 }
 
 NORDLICHT_API float nordlicht_progress(const nordlicht *n) {

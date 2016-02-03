@@ -84,11 +84,24 @@ NORDLICHT_API int nordlicht_set_buffer(nordlicht *n, unsigned char *data);
 // Returns the size of this nordlicht's buffer in bytes.
 NORDLICHT_API size_t nordlicht_buffer_size(const nordlicht *n);
 
-// Generate the nordlicht. Calling this will freeze the nordlicht:
-// "set" functions will fail. Returns 0 on success.
+// Generate the nordlicht in one pass. Use this function from a thread if you don't
+// want to block execution.
+// Calling this will freeze the nordlicht: "set" functions will fail.
+// Returns 0 on success.
 NORDLICHT_API int nordlicht_generate(nordlicht *n);
 
-// Returns a value between 0 and 1 indicating how much of the nordlicht is done.
+// Do one step of generation, which will be as small as possible. Use this
+// if you don't want to start a seperate thread, but be aware that this function
+// might still take too long for real-time applications.
+// Calling this will freeze the nordlicht: "set" functions will fail.
+// Returns 0 on success.
+NORDLICHT_API int nordlicht_generate_step(nordlicht *n);
+
+// Returns 1 if the nordlicht has been completely generated, and 0 otherwise.
+NORDLICHT_API int nordlicht_done(const nordlicht *n);
+
+// Returns a value between 0 and 1 indicating how much of the nordlicht has been
+// generated.
 NORDLICHT_API float nordlicht_progress(const nordlicht *n);
 
 // Write the nordlicht to a PNG file. Returns 0 on success.
