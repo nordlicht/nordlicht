@@ -2,7 +2,6 @@
 #define INCLUDE_nordlicht_h__
 #include <stdlib.h> // for size_t
 
-
 #ifndef NORDLICHT_API
 #  ifdef _WIN32
 #     if defined(NORDLICHT_BUILD_SHARED) /* build dll */
@@ -28,13 +27,13 @@ extern "C" {
 typedef struct nordlicht nordlicht;
 
 typedef enum nordlicht_style {
-    NORDLICHT_STYLE_THUMBNAILS,
-    NORDLICHT_STYLE_HORIZONTAL, // compress frames to columns, "move to the right"
-    NORDLICHT_STYLE_VERTICAL, // compress frames to rows, "move downwards"
+    NORDLICHT_STYLE_THUMBNAILS, // a row of thumbnails
+    NORDLICHT_STYLE_HORIZONTAL, // compress frames to columns
+    NORDLICHT_STYLE_VERTICAL, // compress frames to rows and rotate them counterclockwise
     NORDLICHT_STYLE_SLITSCAN, // take single columns, while moving to the right (and wrapping to the left)
     NORDLICHT_STYLE_MIDDLECOLUMN, // take the frames' middlemost column
     NORDLICHT_STYLE_SPECTROGRAM, // spectrogram of the first audio track (not all sample formats are supported yet)
-    NORDLICHT_STYLE_LAST
+    NORDLICHT_STYLE_LAST // just a marker so that we can count the number of available styles
 } nordlicht_style;
 
 typedef enum nordlicht_strategy {
@@ -42,26 +41,26 @@ typedef enum nordlicht_strategy {
     NORDLICHT_STRATEGY_LIVE, // generate a fast approximation first, good for live display
 } nordlicht_strategy;
 
-// Returns a description of the last error, or NULL if the was no error.
+// Returns a description of the last error, or NULL if there was no error.
 NORDLICHT_API const char *nordlicht_error();
 
-// Allocate a new nordlicht of specific width and height, for a given video
-// file. When `live` is true, give a fast approximation before starting the
-// slow, exact generation. Use `nordlicht_free` to free the nordlicht again.
+// Allocate a new nordlicht of specified width and height, for a given video
+// file. Use `nordlicht_free` to free the nordlicht again.
 // Returns NULL on errors.
 NORDLICHT_API nordlicht* nordlicht_init(const char *filename, const int width, const int height);
 
 // Free a nordlicht.
 NORDLICHT_API void nordlicht_free(nordlicht *n);
 
-// Specify where to start the nordlicht, in percent between 0 and 1.
+// Specify where to start the nordlicht in the file, in percent between 0 and 1.
 NORDLICHT_API int nordlicht_set_start(nordlicht *n, const float start);
 
-// Specify where to end the nordlicht, in percent between 0 and 1.
+// Specify where to end the nordlicht in the file, in percent between 0 and 1.
 NORDLICHT_API int nordlicht_set_end(nordlicht *n, const float end);
 
-// Set the output style of the nordlicht. Default is NORDLICHT_STYLE_HORIZONTAL.
-// Returns 0 on success. To set multiple styles at once, use `nordlicht_set_styles`.
+// Set the output style of the nordlicht, see above. Default is NORDLICHT_STYLE_HORIZONTAL.
+// To set multiple styles at once, use `nordlicht_set_styles`.
+// Returns 0 on success. 
 NORDLICHT_API int nordlicht_set_style(nordlicht *n, const nordlicht_style style);
 
 // Set multiple output styles, which will be displayed on top of each other.
@@ -69,31 +68,34 @@ NORDLICHT_API int nordlicht_set_style(nordlicht *n, const nordlicht_style style)
 // Returns 0 on success.
 NORDLICHT_API int nordlicht_set_styles(nordlicht *n, const nordlicht_style *styles, const int num_styles);
 
-// Set the generation strategy of the nordlicht. Default is NORDLICHT_STRATEGY_FAST.
-// Returns 0 on success. This function will be removed in the future.
+// Set the generation strategy of the nordlicht, see above. Default is NORDLICHT_STRATEGY_FAST.
+// Returns 0 on success.
 NORDLICHT_API int nordlicht_set_strategy(nordlicht *n, const nordlicht_strategy strategy);
 
-// Returns a pointer to the nordlicht's internal buffer. You can use it to draw
+// Return a pointer to the nordlicht's internal buffer. You can use it to draw
 // the barcode while it is generated. The pixel format is 32-bit BGRA.
 NORDLICHT_API const unsigned char* nordlicht_buffer(const nordlicht *n);
 
 // Replace the internal nordlicht's internal buffer. The data pointer is owned
-// by the caller and must be freed after `nordlicht_free`. Returns 0 on success.
+// by the caller and must be freed after `nordlicht_free`. You can use this to
+// render the nordlicht into caller-owned data structures, like mmap-ed files.
+// The pixel format is 32-bit BGRA.
+// Returns 0 on success.
 NORDLICHT_API int nordlicht_set_buffer(nordlicht *n, unsigned char *data);
 
 // Returns the size of this nordlicht's buffer in bytes.
 NORDLICHT_API size_t nordlicht_buffer_size(const nordlicht *n);
 
 // Generate the nordlicht in one pass. Use this function from a thread if you don't
-// want to block execution.
-// Calling this will freeze the nordlicht: "set" functions will fail.
+// want to block execution. Calling this will freeze the nordlicht: "set"
+// functions will fail.
 // Returns 0 on success.
 NORDLICHT_API int nordlicht_generate(nordlicht *n);
 
 // Do one step of generation, which will be as small as possible. Use this
-// if you don't want to start a seperate thread, but be aware that this function
-// might still take too long for real-time applications.
-// Calling this will freeze the nordlicht: "set" functions will fail.
+// if you don't want to start a seperate thread, but be aware that this
+// function might still take too long for real-time applications. Calling this
+// will freeze the nordlicht: "set" functions will fail.
 // Returns 0 on success.
 NORDLICHT_API int nordlicht_generate_step(nordlicht *n);
 
