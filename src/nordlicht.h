@@ -52,10 +52,10 @@ NORDLICHT_API nordlicht* nordlicht_init(const char *filename, const int width, c
 // Free a nordlicht.
 NORDLICHT_API void nordlicht_free(nordlicht *n);
 
-// Specify where to start the nordlicht in the file, in percent between 0 and 1.
+// Specify where to start the nordlicht in the file, as a ratio between 0 and 1.
 NORDLICHT_API int nordlicht_set_start(nordlicht *n, const float start);
 
-// Specify where to end the nordlicht in the file, in percent between 0 and 1.
+// Specify where to end the nordlicht in the file, as a ratio between 0 and 1.
 NORDLICHT_API int nordlicht_set_end(nordlicht *n, const float end);
 
 // Set the output style of the nordlicht, see above. Default is NORDLICHT_STYLE_HORIZONTAL.
