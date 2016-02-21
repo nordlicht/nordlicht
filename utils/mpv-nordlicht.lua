@@ -114,7 +114,14 @@ end
 function regenerate()
     local was_on = is_on
     off()
-    local cmd = "(nice nordlicht -s "..styles.." \""..video.."\" -o "..buffer.." -w "..width.." -h "..height.." && convert -depth 8 -size "..width.."x"..height.." "..buffer.." \""..nordlicht.."\") &"
+
+    local safe_buffer    = buffer:gsub('"', '\\"')
+    local safe_video     = video:gsub('"', '\\"')
+    local safe_nordlicht = nordlicht:gsub('"', '\\"')
+    local cmd = ('(nice nordlicht -s %s "%s" -o "%s" -w %d -h %d' ..
+                 ' && convert -depth 8 -size %dx%d "%s" "%s") &')
+                :format(styles, safe_video, safe_buffer, width, height,
+                        width, height, safe_buffer, safe_nordlicht)
     os.execute(cmd)
     if was_on then
         on()
