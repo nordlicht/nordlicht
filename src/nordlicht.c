@@ -98,12 +98,12 @@ NORDLICHT_API int nordlicht_set_start(nordlicht *n, const float start) {
     }
 
     if (start < 0) {
-        error("'start' has to be >= 0.");
+        error("'start' has to be greater than or equal to 0.");
         return -1;
     }
 
     if (start >= source_end(n->source)) {
-        error("'start' has to be smaller than 'end'.");
+        error("'start' has to be less than 'end'.");
         return -1;
     }
 
@@ -117,12 +117,12 @@ NORDLICHT_API int nordlicht_set_end(nordlicht *n, const float end) {
     }
 
     if (end > 1) {
-        error("'end' has to be <= 1.");
+        error("'end' has to less than or equal to 1.");
         return -1;
     }
 
     if (source_start(n->source) >= end) {
-        error("'start' has to be smaller than 'end'.");
+        error("'start' has to be less than 'end'.");
         return -1;
     }
 
