@@ -120,8 +120,8 @@ function regenerate()
     local safe_nordlicht = nordlicht:gsub('"', '\\"')
     local cmd = ('(nice nordlicht -s %s "%s" -o "%s" -w %d -h %d' ..
                  ' && convert -depth 8 -size %dx%d "%s" "%s") &')
-                :format(styles, safe_video, safe_buffer, width, height,
-                        width, height, safe_buffer, safe_nordlicht)
+                :format(styles, safe_video, safe_nordlicht, width, height,
+                        width, height, safe_nordlicht, safe_buffer)
     os.execute(cmd)
     if was_on then
         on()
