@@ -25,6 +25,10 @@ end
 function shutdown()
     off()
     kill()
+
+    if buffer and buffer:len() > 0 then
+        os.remove(buffer)
+    end
 end
 
 function kill()
@@ -41,7 +45,13 @@ function new_file()
 
     video = mp.get_property("path")
     nordlicht = video..".nordlicht.png"
-    buffer = "/tmp/nordlicht.bgra"
+
+    if buffer and buffer:len() > 0 then
+        os.remove(buffer)
+    end
+    local tmpbuffer = os.tmpname()
+    buffer = tmpbuffer .. ".nordlicht.mpv.bgra"
+    os.rename(tmpbuffer, buffer)
 
     local f = io.open(nordlicht, "r")
     if f ~= nil then
@@ -49,6 +59,7 @@ function new_file()
         io.close(f)
         local cmd = {"convert", nordlicht, "-depth", "8", "-resize", width.."x"..height.."!", buffer}
         utils.subprocess({args=cmd})
+        utils.subprocess({args={"chmod", "600", buffer}})
 
         if was_on then
             on()
