@@ -129,11 +129,14 @@ function regenerate()
 end
 
 function jump(e)
-    local mouseX, mouseY = mp.get_mouse_pos()
-    local osdX, osdY = mp.get_osd_resolution()
-    mouseX = 100.0*mouseX/osdX
+    local mouse_x, mouse_y = mp.get_mouse_pos()
+    local osd_x, osd_y = mp.get_osd_resolution()
+    local screen_y = mp.get_property("osd-height")
+    local absolute_mouse_y = 1.0*mouse_y/osd_y*screen_y
 
-    mp.commandv("seek", mouseX, "absolute-percent", "exact")
+    if absolute_mouse_y <= mh+height and is_on then
+        mp.commandv("seek", 100.0*mouse_x/osd_x, "absolute-percent", "exact")
+    end
 end
 
 -- wait until the osd-width is > 0, then init
