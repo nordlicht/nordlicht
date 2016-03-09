@@ -6,6 +6,13 @@
 #include <libavutil/avutil.h>
 #include <libswscale/swscale.h>
 
+// Changes for ffmpeg 3.0
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57,24,0)
+#  include <libavutil/imgutils.h>
+#  define av_free_packet av_packet_unref
+#  define avpicture_get_size(fmt,w,h) av_image_get_buffer_size(fmt,w,h,1)
+#endif
+
 // PIX_FMT was renamed to AV_PIX_FMT on this version
 #if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(51,74,100)
 #  define AVPixelFormat PixelFormat
@@ -272,7 +279,11 @@ source* source_init(const char *filename) {
         s->scaleframe->format = AV_PIX_FMT_RGB24;
 
         s->buffer = (uint8_t *)av_malloc(sizeof(uint8_t)*avpicture_get_size(s->scaleframe->format, s->scaleframe->width, s->scaleframe->height));
-        avpicture_fill((AVPicture *)s->scaleframe, s->buffer, s->scaleframe->format, s->video->frame->width, s->video->frame->height);
+        #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57,24,0)
+            av_image_fill_arrays(s->scaleframe->data, s->scaleframe->linesize, s->buffer, s->scaleframe->format, s->video->frame->width, s->video->frame->height, 1);
+        #else
+            avpicture_fill((AVPicture *)s->scaleframe, s->buffer, s->scaleframe->format, s->video->frame->width, s->video->frame->height);
+        #endif
 
         s->sws_context = sws_getCachedContext(NULL, s->video->frame->width, s->video->frame->height, s->video->frame->format,
                 s->scaleframe->width, s->scaleframe->height, s->scaleframe->format, SWS_AREA, NULL, NULL, NULL);

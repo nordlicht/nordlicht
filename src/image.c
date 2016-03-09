@@ -5,6 +5,13 @@
 #include <string.h>
 #include <libswscale/swscale.h>
 
+// Changes for ffmpeg 3.0
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57,24,0)
+#  include <libavutil/imgutils.h>
+#  define av_free_packet av_packet_unref
+#  define avpicture_get_size(fmt,w,h) av_image_get_buffer_size(fmt,w,h,1)
+#endif
+
 // PIX_FMT was renamed to AV_PIX_FMT on this version
 #if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(51,74,100)
 #  define AVPixelFormat PixelFormat
