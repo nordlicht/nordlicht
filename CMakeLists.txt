@@ -59,7 +59,7 @@ endif()
 
 install(TARGETS libnordlicht DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS nordlicht DESTINATION bin)
-install(FILES nordlicht.h DESTINATION include)
+install(FILES ${CMAKE_SOURCE_DIR}/src/nordlicht.h DESTINATION include)
 
 if (NOT WIN32)
     install(FILES ${CMAKE_BINARY_DIR}/nordlicht.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
