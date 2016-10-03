@@ -266,6 +266,8 @@ int image_write_png(const image *i, const char *file_path) {
     encoder_context->width = i->frame->width;
     encoder_context->height = i->frame->height;
     encoder_context->pix_fmt = AV_PIX_FMT_RGB24;
+    encoder_context->time_base.num = 1;
+    encoder_context->time_base.den = 1;
     if (avcodec_open2(encoder_context, encoder, NULL) < 0) {
         error("Could not open output codec.");
         return -1;
