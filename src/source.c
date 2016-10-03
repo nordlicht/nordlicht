@@ -258,6 +258,7 @@ source* source_init(const char *filename) {
     }
     if (avformat_find_stream_info(s->format, NULL) < 0) {
         avformat_close_input(&s->format);
+        free(s);
         return NULL;
     }
 
@@ -267,6 +268,7 @@ source* source_init(const char *filename) {
     if (!s->video && !s->audio) {
         error("File contains neither video nor audio");
         avformat_close_input(&s->format);
+        free(s);
         return NULL;
     }
 
