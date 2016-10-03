@@ -14,7 +14,7 @@ typedef struct {
 
 struct nordlicht {
     int width, height;
-    const char *filename;
+    char *filename;
     track *tracks;
     int num_tracks;
     unsigned char *data;
@@ -45,7 +45,18 @@ NORDLICHT_API nordlicht* nordlicht_init(const char *filename, const int width, c
 
     n->width = width;
     n->height = height;
-    n->filename = filename;
+
+    // prepend "file:" if filename contains a colon and is not a URL,
+    // otherwise ffmpeg will fail to open the file
+    if (filename && strstr(filename, ":") != 0 && strstr(filename, "://") == 0) {
+        size_t filename_len = strlen(filename);
+        n->filename = malloc(filename_len + 5 + 1);
+        strncpy(n->filename, "file:", 5);
+        strncpy(n->filename + 5, filename, filename_len);
+        n->filename[filename_len + 5] = '\0';
+    } else {
+        n->filename = filename;
+    }
 
     n->data = (unsigned char *) calloc(nordlicht_buffer_size(n), 1);
     if (n->data == 0) {
@@ -62,7 +73,7 @@ NORDLICHT_API nordlicht* nordlicht_init(const char *filename, const int width, c
 
     n->strategy = NORDLICHT_STRATEGY_FAST;
     n->modifiable = 1;
-    n->source = source_init(filename);
+    n->source = source_init(n->filename);
 
     n->current_pass = -1;
     n->current_track = 0;
