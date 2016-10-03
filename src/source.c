@@ -244,6 +244,9 @@ source* source_init(const char *filename) {
 
     av_log_set_level(AV_LOG_FATAL);
     av_register_all();
+    if (strstr(filename, "://") != 0) {
+      avformat_network_init();
+    }
 
     source *s;
     s = (source *) malloc(sizeof(source));
