@@ -81,6 +81,9 @@ long packet_pts(stream *st, const AVPacket *packet) {
 }
 
 int grab_next_frame(source *s, stream *st) {
+#ifdef DEBUG
+    printf("gnf called\n");
+#endif
     int valid = 0;
     int got_frame = 0;
 
@@ -98,12 +101,18 @@ int grab_next_frame(source *s, stream *st) {
                         break;
                     default:
                         error("Stream has unknown media type.");
+#ifdef DEBUG
+    printf("Unknown media type?\n");
+#endif
                         return 1;
                 }
 
                 if (got_frame) {
                     if (st->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
                         if (st->frame->data[0] == 0) {
+#ifdef DEBUG
+    printf("grab_next_frame: st->frame->data[0] == 0\n");
+#endif
                             return 1;
                         }
                     }
@@ -115,16 +124,25 @@ int grab_next_frame(source *s, stream *st) {
         } else {
             av_free_packet(&s->packet);
             st->current_frame = -1;
+#ifdef DEBUG
+    printf("grab_next_frame: av_read_frame() == 0\n");
+#endif
             return 1;
         }
     }
 
     av_free_packet(&s->packet);
     st->current_frame = pts;
+#ifdef DEBUG
+    printf("grab_next_frame() grabbed frame %d\n", pts);
+#endif
     return 0;
 }
 
 int seek_keyframe(source *s, stream *st, const long frame) {
+#ifdef DEBUG
+    printf("seek_keyframe(%ld)\n", frame);
+#endif
     av_seek_frame(s->format, st->stream, frame/st->fps/st->time_base, AVSEEK_FLAG_BACKWARD);
     avcodec_flush_buffers(st->codec);
     return grab_next_frame(s, st) != 0;
@@ -148,7 +166,6 @@ int source_build_keyframe_index_step(source *s, const int width) {
 
         s->has_index = 0;
         s->exact = 1;
-        seek_keyframe(s, s->video, 0);
     }
 
     if (av_read_frame(s->format, &s->packet) >= 0) {
@@ -161,6 +178,9 @@ int source_build_keyframe_index_step(source *s, const int width) {
                     pts = s->current_frame;
                 }
 
+#ifdef DEBUG
+        printf("Found a keyframe: %ld\n", pts);
+#endif
                 s->keyframes[s->number_of_keyframes] = pts;
             }
             if (s->current_frame == HEURISTIC_NUMBER_OF_FRAMES) {
@@ -172,6 +192,9 @@ int source_build_keyframe_index_step(source *s, const int width) {
                     // the density we need overall. This means that we can abort build
                     // the keyframe index and just seek inexactly to get good results.
                     av_free_packet(&s->packet);
+#ifdef DEBUG
+        printf("Keyframe indexing not necessary. Aborting.\n");
+#endif
                     return 0;
                 }
             }
@@ -183,6 +206,9 @@ int source_build_keyframe_index_step(source *s, const int width) {
         // we read through the whole file
         av_free_packet(&s->packet);
         s->has_index = 1;
+#ifdef DEBUG
+    printf("Keyframe indexing complete.\n");
+#endif
         return 0;
     }
 }
@@ -320,15 +346,24 @@ long preceding_keyframe(source *s, const long frame_nr) {
             best_keyframe = s->keyframes[i];
         }
     }
+#ifdef DEBUG
+    printf("preceding_keyframe(%ld) -> %ld\n", frame_nr, best_keyframe);
+#endif
     return best_keyframe;
 }
 
 int seek(source *s, stream *st, const long min_frame_nr, const long max_frame_nr) {
+#ifdef DEBUG
+    printf("seek(%ld, %ld)\n", min_frame_nr, max_frame_nr);
+#endif
     if (s->exact && st->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
         long keyframe = preceding_keyframe(s, max_frame_nr);
 
         if (keyframe > st->current_frame) {
             if (seek_keyframe(s, st, keyframe) != 0) {
+#ifdef DEBUG
+    printf("seek_keyframe() == 0\n");
+#endif
                 return 1;
             }
         }
@@ -338,11 +373,17 @@ int seek(source *s, stream *st, const long min_frame_nr, const long max_frame_nr
                 error("Target frame is in the past. This shouldn't happen. Please file a bug.");
             }
             if (grab_next_frame(s, st) != 0) {
+#ifdef DEBUG
+    printf("grab_next_frame() == 0\n");
+#endif
                 return 1;
             }
         }
     } else {
         if (seek_keyframe(s, st, (min_frame_nr+max_frame_nr)/2) != 0) {
+#ifdef DEBUG
+    printf("seek_keyframe() == 0\n");
+#endif
             return 1;
         }
     }

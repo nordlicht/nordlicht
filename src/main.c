@@ -264,6 +264,9 @@ int main(const int argc, const char **argv) {
                         printf("done.\n");
                     }
                     printf("\rnordlicht: %02.0f%%", progress*100);
+#ifdef DEBUG
+                    printf("\n");
+#endif
                     fflush(stdout);
                 }
             }
