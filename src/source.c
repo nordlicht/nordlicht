@@ -160,7 +160,8 @@ int source_build_keyframe_index_step(source *s, const int width) {
             return 0;
         }
         s->keyframes = (int *) malloc(sizeof(long)*60*60*3); // TODO: dynamic datastructure!
-        s->number_of_keyframes = 0;
+        s->keyframes[0] = 0;
+        s->number_of_keyframes = 1;
 
         s->current_frame = 0;
 
