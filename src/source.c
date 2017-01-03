@@ -81,9 +81,6 @@ long packet_pts(stream *st, const AVPacket *packet) {
 }
 
 int grab_next_frame(source *s, stream *st) {
-#ifdef DEBUG
-    printf("gnf called\n");
-#endif
     int valid = 0;
     int got_frame = 0;
 

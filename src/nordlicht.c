@@ -267,8 +267,11 @@ NORDLICHT_API int nordlicht_generate_step(nordlicht *n) {
 
             image_to_bgra(n->data, n->width, n->height, column, n->current_column, n->current_y_offset);
 
-            n->progress = (n->current_track+1.0*n->current_column/n->width)/n->num_tracks;
             n->current_column = n->current_column + image_width(column) - 1;
+            if (n->current_column >= n->width) {
+                n->current_column = n->width - 1;
+            }
+            n->progress = (n->current_track+1.0*n->current_column/n->width)/n->num_tracks;
 
             image_free(column);
         }
