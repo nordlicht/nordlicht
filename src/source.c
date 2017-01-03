@@ -360,7 +360,7 @@ int seek(source *s, stream *st, const long min_frame_nr, const long max_frame_nr
     if (s->exact && st->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
         long keyframe = preceding_keyframe(s, max_frame_nr);
 
-        if (keyframe > st->current_frame) {
+        if (keyframe > st->current_frame || max_frame_nr < st->current_frame) {
             if (seek_keyframe(s, st, keyframe) != 0) {
 #ifdef DEBUG
     printf("seek_keyframe() == 0\n");
