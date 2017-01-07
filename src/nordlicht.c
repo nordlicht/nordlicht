@@ -40,6 +40,10 @@ NORDLICHT_API nordlicht* nordlicht_init(const char *filename, const int width, c
         error("Dimensions must be positive (got %dx%d)", width, height);
         return NULL;
     }
+    if (width > 100000 || height > 100000) {
+        error("Both dimensions may be at most 100000 (got %dx%d)", width, height);
+        return NULL;
+    }
     nordlicht *n;
     n = (nordlicht *) malloc(sizeof(nordlicht));
 
