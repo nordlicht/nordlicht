@@ -59,7 +59,7 @@ NORDLICHT_API nordlicht* nordlicht_init(const char *filename, const int width, c
         strncpy(n->filename + 5, filename, filename_len);
         n->filename[filename_len + 5] = '\0';
     } else {
-        n->filename = filename;
+        n->filename = (char *) filename;
     }
 
     n->data = (unsigned char *) calloc(nordlicht_buffer_size(n), 1);
