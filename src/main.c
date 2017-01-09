@@ -81,6 +81,7 @@ int main(const int argc, const char **argv) {
     float start = 0.0;
     float end = 1.0;
     char *output_file = NULL;
+    char *buffer_file = NULL;
     char *styles_string = NULL;
     nordlicht_strategy strategy;
     int free_output_file = 0;
@@ -92,7 +93,8 @@ int main(const int argc, const char **argv) {
     const struct poptOption optionsTable[] = {
         {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width; by default it's \"height*10\", or 1920 pixels, if both are undefined", NULL},
         {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height; by default it's \"width/10\"", NULL},
-        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename, the default is VIDEOFILE.png; when you specify an *.bgra file, you'll get a raw 32-bit BGRA file that is updated as the barcode is generated", "FILENAME"},
+        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename, the default is VIDEOFILE.png", "FILENAME"},
+        {"buffer", 'b', POPT_ARG_STRING, &buffer_file, 0, "the internal raw 32-bit BGRA image buffer will be mmapped to this file, can be used for live display", "FILENAME"},
         {"style", 's', POPT_ARG_STRING, &styles_string, 0, "default is 'horizontal', see \"Styles\" section below. You can specify more than one style, separated by '+', to get multiple tracks", "STYLE"},
         {"start", '\0', POPT_ARG_FLOAT, &start, 0, "specify where to start the barcode (ratio between 0 and 1)", NULL},
         {"end", '\0', POPT_ARG_FLOAT, &end, 0, "specify where to end the barcode (ratio between 0 and 1)", NULL},
@@ -193,13 +195,14 @@ int main(const int argc, const char **argv) {
     }
 
     const char *ext = filename_ext(output_file);
-    if (strcmp(ext, "bgra") == 0) {
-        strategy = NORDLICHT_STRATEGY_LIVE;
-    } else if (strcmp(ext, "png") == 0) {
+    if (strcmp(ext, "png") != 0) {
+        fprintf(stderr, "nordlicht: Unsupported file extension '%s', will write a PNG.\n", ext);
+    }
+
+    if (buffer_file == NULL) {
         strategy = NORDLICHT_STRATEGY_FAST;
     } else {
-        strategy = NORDLICHT_STRATEGY_FAST;
-        fprintf(stderr, "nordlicht: Unsupported file extension '%s', will write a PNG.\n", ext);
+        strategy = NORDLICHT_STRATEGY_LIVE;
     }
 
     // Interesting stuff begins here!
@@ -222,14 +225,14 @@ int main(const int argc, const char **argv) {
         exit(1);
     }
 
-    if (strategy == NORDLICHT_STRATEGY_LIVE) {
-        int fd = open(output_file, O_CREAT | O_TRUNC | O_RDWR, 0666);
+    if (buffer_file != NULL) {
+        int fd = open(buffer_file, O_CREAT | O_TRUNC | O_RDWR, 0666);
         if (fd == -1) {
-            print_error("Could not open '%s'.", output_file);
+            print_error("Could not open '%s'.", buffer_file);
             exit(1);
         }
         if (ftruncate(fd, nordlicht_buffer_size(n)) == -1) {
-            print_error("Could not truncate '%s'.", output_file);
+            print_error("Could not truncate '%s'.", buffer_file);
             exit(1);
         }
         data = (unsigned char *) mmap(NULL, nordlicht_buffer_size(n), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -239,12 +242,6 @@ int main(const int argc, const char **argv) {
         }
         nordlicht_set_buffer(n, data);
         close(fd);
-    } else {
-        // Try to write the empty buffer to fail early if this does not work
-        if (nordlicht_write(n, output_file) != 0) {
-            print_error(nordlicht_error());
-            exit(1);
-        }
     }
 
     int phase = -1;
@@ -276,16 +273,14 @@ int main(const int argc, const char **argv) {
         }
     }
 
-    if (strategy != NORDLICHT_STRATEGY_LIVE) {
-        if (nordlicht_write(n, output_file) != 0) {
-            print_error(nordlicht_error());
-            exit(1);
-        }
+    if (nordlicht_write(n, output_file) != 0) {
+        print_error(nordlicht_error());
+        exit(1);
     }
 
     free(styles);
 
-    if (strategy == NORDLICHT_STRATEGY_LIVE) {
+    if (buffer_file != NULL) {
         munmap(data, nordlicht_buffer_size(n));
     }
 
