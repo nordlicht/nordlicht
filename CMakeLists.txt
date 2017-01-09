@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(nordlicht C)
 set(MAJOR_VERSION 0)
 set(MINOR_VERSION 4)
-set(PATCH_VERSION 4)
+set(PATCH_VERSION 5)
 set(NORDLICHT_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}.${PATCH_VERSION}")
 
 option (BUILD_SHARED_LIBS "Build shared libraries." ON)

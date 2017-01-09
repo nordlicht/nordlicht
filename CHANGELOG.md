@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 *nordlicht* uses [Semantic Versioning](http://semver.org/).
 
+## 0.4.5 - 2017-01-09
+
+- introduce `nordlicht_generate_step` and `nordlicht_done` to the API, for simple, non-blocking applications
+- improve FFmpeg backwards compability down to v3.0 (thanks, Manuel!)
+- fix build on ARM platforms
+- correctly open files which contain a colon (thanks, Roland!)
+- various bug fixes and stability improvements
+
+- tool: when the user specifies a non-PNG file as output, warn them but don't fail
+
 ## 0.4.4 - 2016-01-24
 
 - introduce the convention that the nordlicht is always written to `VIDEOFILE.nordlicht.png`
