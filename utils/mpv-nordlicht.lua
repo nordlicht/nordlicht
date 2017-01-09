@@ -1,108 +1,106 @@
--- nordlicht integration for mpv. You need mpv >= 0.3.6 to correctly support
--- lua scripting.
+-- nordlicht integration for mpv. You need mpv >= 0.3.6 to correctly support lua scripting.
+-- You also need ImageMagick's "convert" in your PATH, as well as the luaposix package.
 
 utils = require "mp.utils"
+posix = require "posix"
 
-function init()
-    styles = os.getenv("NORDLICHT_STYLE") or "horizontal"
-
-    mp.register_event("file-loaded", new_file)
-    mp.register_event("shutdown", shutdown)
-    mp.register_event("seek", seek)
-    mp.add_key_binding("n", "nordlicht-toggle", toggle)
-    mp.add_key_binding("N", "nordlicht-regenerate", regenerate)
-    mp.add_key_binding("mouse_btn0", "jump", jump)
-
-    -- size of the progress marker
-    mh = 10
-    mw = mh*2-1
-
-    -- yeah, I know. But it's flexible :-P
-    utils.subprocess({args={"convert", "-depth", "8", "-size", mw.."x"..mh, "xc:none", "-fill", "white", "-stroke", "black", "-strokewidth", "0.5", "+antialias", "-draw", "path 'M"..((mw-1)/2)..",0L"..(mw-1)..","..(mh-1).."L0,"..(mh-1).."Z'", "bgra:/tmp/arrow_up.bgra"}})
-    utils.subprocess({args={"convert", "-depth", "8", "-size", mw.."x"..mh, "bgra:/tmp/arrow_up.bgra", "-flip", "bgra:/tmp/arrow_down.bgra"}})
+-- check if a file exists
+function file_exists(name)
+   local f = io.open(name, "r")
+   if f ~= nil then io.close(f) return true else return false end
 end
 
-function shutdown()
-    off()
+-- to be called when the played file changes
+function new_file()
     kill()
 
-    if buffer and buffer:len() > 0 then
-        os.remove(buffer)
-    end
-end
-
-function kill()
-    os.execute("killall -9 nordlicht")
-end
-
-function new_file()
-    local was_on = is_on
-    shutdown()
-
-    -- size of the barcode
-    width = mp.get_property("osd-width")
-    height = math.floor(width/20)
-
     video = mp.get_property("path")
+
+    if video == nil then
+        -- no path yet, try again...
+        mp.add_timeout(1/30, new_file)
+        return
+    end
+
+    resize()
     nordlicht = video..".nordlicht.png"
 
-    if buffer and buffer:len() > 0 then
-        os.remove(buffer)
-    end
-    local tmpbuffer = os.tmpname()
-    buffer = tmpbuffer .. ".nordlicht.mpv.bgra"
-    os.rename(tmpbuffer, buffer)
+    if not file_exists(nordlicht) then
+        livewidth = width
+        liveheight = math.floor(livewidth/20)
+        local styles = os.getenv("NORDLICHT_STYLE") or "horizontal"
 
-    local f = io.open(nordlicht, "r")
-    if f ~= nil then
-        -- a suitable nordlicht already exists, use that
-        io.close(f)
+        local pfd = posix.popen({"nordlicht", "-s", styles, video, "-o", nordlicht, "-b", livebuffer, "-w", tostring(livewidth), "-h", tostring(liveheight)}, "r")
+        pid = pfd.pids[1]
+    end
+end
+
+-- to be called when the nordlicht changes
+function update()
+    if not is_on then
+        return
+    end
+
+    if file_exists(nordlicht) then
+        -- final PNG nordlicht exists
         local cmd = {"convert", nordlicht, "-depth", "8", "-resize", width.."x"..height.."!", buffer}
         utils.subprocess({args=cmd})
-        utils.subprocess({args={"chmod", "600", buffer}})
-
-        if was_on then
-            on()
-        end
+        mp.command("overlay_add 0 0 0 "..buffer.." 0 bgra "..width.." "..height.." "..width*4)
+        -- process must have ended
+        pid = nil
+    elseif file_exists(livebuffer) then
+        -- nordlicht is probably being generated right now
+        local cmd = {"convert", "-size", livewidth.."x"..liveheight, "-depth", "8", livebuffer, "-depth", "8", "-resize", width.."x"..height.."!", buffer}
+        utils.subprocess({args=cmd})
+        mp.command("overlay_add 0 0 0 "..buffer.." 0 bgra "..width.." "..height.." "..width*4)
     else
-        -- no nordlicht exists, generate one
-        regenerate()
-
-        if was_on then
-            -- wait for the buffer to be opened and truncated
-            mp.add_timeout(0.5, on)
-        end
+        -- no nordlicht available yet
+        mp.command("overlay_remove 0")
     end
 
-end
-
-function update()
     local pos = mp.get_property("percent-pos")
-
     if pos ~= nil then
-        mp.command("overlay_add 0 0 "..mh.." "..buffer.." 0 bgra "..width.." "..height.." "..width*4)
-        mp.command("overlay_add 1 "..(math.floor(pos/100*width)-(mw-1)/2).." "..(0).." /tmp/arrow_down.bgra 0 bgra "..mw.." "..mh.." "..mw*4)
-        mp.command("overlay_add 2 "..(math.floor(pos/100*width)-(mw-1)/2).." "..(height+mh).." /tmp/arrow_up.bgra 0 bgra "..mw.." "..mh.." "..mw*4)
+        mp.command("overlay_add 1 "..(math.floor(pos/100*width)-(mw-1)/2).." "..(height).." /tmp/arrow_up.bgra 0 bgra "..mw.." "..mh.." "..mw*4)
     end
+
+    mp.add_timeout(1.0/30, update)
 end
 
+-- to be called when the user request a regeneration
+function regenerate()
+    os.remove(nordlicht)
+    new_file()
+end
+
+-- start update loop, always show the nordlicht
 function on()
     if not is_on then
-        timer = mp.add_periodic_timer(1.0/30, update)
+        --timer = mp.add_periodic_timer(1.0/10, update)
         is_on = true
+        update()
     end
 end
 
+-- hide the nordlicht as soon as the mouse leaves it
 function off()
     if is_on then
-        mp.cancel_timer(timer)
-        mp.command("overlay_remove 0")
-        mp.command("overlay_remove 1")
-        mp.command("overlay_remove 2")
-        is_on = false
+        local mouse_x, mouse_y = mp.get_mouse_pos()
+
+        if mouse_y > 2*height then
+            --mp.cancel_timer(timer)
+            mp.command("overlay_remove 0")
+            mp.command("overlay_remove 1")
+            is_on = false
+        else
+            if off_timer then
+                off_timer:kill()
+            end
+            off_timer = mp.add_timeout(1/30, off)
+        end
     end
 end
 
+-- toggle between on and off state
 function toggle()
     if is_on then
         off()
@@ -111,56 +109,93 @@ function toggle()
     end
 end
 
-function seek()
+-- to be called when the window size changes
+function resize()
+    width = mp.get_property_number("osd-width")
+    height = math.floor(width/20)
+
+    -- size of the progress marker
+    mh = math.floor(height/5)
+    mw = mh*2-1
+
+    -- create the little marker triangle using ImageMagick
+    utils.subprocess({args={"convert", "-depth", "8", "-size", mw.."x"..mh, "xc:none", "-fill", "white", "-stroke", "black", "-strokewidth", "0.5", "+antialias", "-draw", "path 'M"..((mw-1)/2)..",0L"..(mw-1)..","..(mh-1).."L0,"..(mh-1).."Z'", "bgra:/tmp/arrow_up.bgra"}})
+end
+
+-- kill the current nordlicht process, if there is one
+function kill()
+    if pid then
+        posix.kill(pid)
+        pid = nil
+    end
+end
+
+-- to be called when the left mouse button is pressed
+function click()
+    if not is_on then
+        return
+    end
+
+    local mouse_x, mouse_y = mp.get_mouse_pos()
+
+    if mouse_y <= 2*height then
+        mp.commandv("seek", 100.0*mouse_x/width, "absolute-percent", "exact")
+    end
+end
+
+-- poke the nordlicht awake for 1 second
+function poke()
     if not is_on then
         on()
-
-        if seek_off_timer then
-            seek_off_timer:kill()
+        if off_timer then
+            off_timer:kill()
         end
-        seek_off_timer = mp.add_timeout(1, off)
+        off_timer = mp.add_timeout(1, off)
     end
 end
 
-function regenerate()
-    local was_on = is_on
-    off()
+-- poke the nordlicht awake when moving the mouse over it
+function mouse_move()
+    if not is_on then
+        local mouse_x, mouse_y = mp.get_mouse_pos()
 
-    local safe_buffer    = buffer:gsub('"', '\\"')
-    local safe_video     = video:gsub('"', '\\"')
-    local safe_nordlicht = nordlicht:gsub('"', '\\"')
-    local cmd = ('(nice nordlicht -s %s "%s" -o "%s" -w %d -h %d' ..
-                 ' && convert -depth 8 -size %dx%d "%s" "%s") &')
-                :format(styles, safe_video, safe_buffer, width, height,
-                        width, height, safe_buffer, safe_nordlicht)
-    os.execute(cmd)
-    if was_on then
-        on()
+        if mouse_y <= 2*height then
+            poke()
+        end
     end
 end
 
-function jump(e)
-    local mouse_x, mouse_y = mp.get_mouse_pos()
-    local osd_x, osd_y = mp.get_osd_resolution()
-    local screen_y = mp.get_property("osd-height")
-    local absolute_mouse_y = 1.0*mouse_y/osd_y*screen_y
+-- tset up buffer filenames and hooks
+function init()
+    -- nordlicht's internal bgra buffer will be mmapped to this file
+    local tmpbuffer = os.tmpname()
+    livebuffer = tmpbuffer .. ".nordlicht.mpv.bgra"
 
-    if absolute_mouse_y <= mh+height and is_on then
-        mp.commandv("seek", 100.0*mouse_x/osd_x, "absolute-percent", "exact")
-    end
+    -- buffer will be used for the bgra data that is displayed on screen
+    local tmpbuffer = os.tmpname()
+    buffer = tmpbuffer .. ".nordlicht.mpv.bgra"
+    os.rename(tmpbuffer, buffer)
+
+    mp.register_event("file-loaded", new_file)
+    mp.register_event("shutdown", shutdown)
+    mp.register_event("seek", poke)
+    mp.observe_property("osd-width", "number", resize)
+    mp.add_key_binding("n", "nordlicht-toggle", toggle)
+    mp.add_key_binding("N", "nordlicht-regenerate", regenerate)
+    mp.add_key_binding("mouse_btn0", "nordlicht-click", click)
+    mp.add_key_binding("mouse_move", mouse_move)
+
+    new_file()
+    on()
 end
 
 -- wait until the osd-width is > 0, then init
 function maybeinit()
-    if tonumber(mp.get_property("osd-width")) > 0 then
+    if mp.get_property_number("osd-width") > 0 and mp.get_property("path") ~= nil then
         init()
-        is_on = false
-        new_file()
-        on()
     else
         mp.add_timeout(0.1, maybeinit)
     end
 end
 
-mp.set_property("fullscreen", "yes")
 maybeinit()
