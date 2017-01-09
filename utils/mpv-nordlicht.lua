@@ -37,30 +37,28 @@ end
 
 -- to be called when the nordlicht changes
 function update()
-    if not is_on then
-        return
-    end
+    if is_on then
+        if file_exists(nordlicht) then
+            -- final PNG nordlicht exists
+            local cmd = {"convert", nordlicht, "-depth", "8", "-resize", width.."x"..height.."!", buffer}
+            utils.subprocess({args=cmd})
+            mp.command("overlay_add 0 0 0 "..buffer.." 0 bgra "..width.." "..height.." "..width*4)
+            -- process must have ended
+            pid = nil
+        elseif file_exists(livebuffer) then
+            -- nordlicht is probably being generated right now
+            local cmd = {"convert", "-size", livewidth.."x"..liveheight, "-depth", "8", livebuffer, "-depth", "8", "-resize", width.."x"..height.."!", buffer}
+            utils.subprocess({args=cmd})
+            mp.command("overlay_add 0 0 0 "..buffer.." 0 bgra "..width.." "..height.." "..width*4)
+        else
+            -- no nordlicht available yet
+            mp.command("overlay_remove 0")
+        end
 
-    if file_exists(nordlicht) then
-        -- final PNG nordlicht exists
-        local cmd = {"convert", nordlicht, "-depth", "8", "-resize", width.."x"..height.."!", buffer}
-        utils.subprocess({args=cmd})
-        mp.command("overlay_add 0 0 0 "..buffer.." 0 bgra "..width.." "..height.." "..width*4)
-        -- process must have ended
-        pid = nil
-    elseif file_exists(livebuffer) then
-        -- nordlicht is probably being generated right now
-        local cmd = {"convert", "-size", livewidth.."x"..liveheight, "-depth", "8", livebuffer, "-depth", "8", "-resize", width.."x"..height.."!", buffer}
-        utils.subprocess({args=cmd})
-        mp.command("overlay_add 0 0 0 "..buffer.." 0 bgra "..width.." "..height.." "..width*4)
-    else
-        -- no nordlicht available yet
-        mp.command("overlay_remove 0")
-    end
-
-    local pos = mp.get_property("percent-pos")
-    if pos ~= nil then
-        mp.command("overlay_add 1 "..(math.floor(pos/100*width)-(mw-1)/2).." "..(height).." /tmp/arrow_up.bgra 0 bgra "..mw.." "..mh.." "..mw*4)
+        local pos = mp.get_property("percent-pos")
+        if pos ~= nil then
+            mp.command("overlay_add 1 "..(math.floor(pos/100*width)-(mw-1)/2).." "..(height).." /tmp/arrow_up.bgra 0 bgra "..mw.." "..mh.." "..mw*4)
+        end
     end
 
     mp.add_timeout(1.0/30, update)
@@ -75,9 +73,7 @@ end
 -- start update loop, always show the nordlicht
 function on()
     if not is_on then
-        --timer = mp.add_periodic_timer(1.0/10, update)
         is_on = true
-        update()
     end
 end
 
@@ -97,15 +93,6 @@ function off()
             end
             off_timer = mp.add_timeout(1/30, off)
         end
-    end
-end
-
--- toggle between on and off state
-function toggle()
-    if is_on then
-        off()
-    else
-        on()
     end
 end
 
@@ -165,7 +152,7 @@ function mouse_move()
     end
 end
 
--- tset up buffer filenames and hooks
+-- set up buffer filenames and hooks
 function init()
     -- nordlicht's internal bgra buffer will be mmapped to this file
     local tmpbuffer = os.tmpname()
@@ -180,13 +167,13 @@ function init()
     mp.register_event("shutdown", shutdown)
     mp.register_event("seek", poke)
     mp.observe_property("osd-width", "number", resize)
-    mp.add_key_binding("n", "nordlicht-toggle", toggle)
     mp.add_key_binding("N", "nordlicht-regenerate", regenerate)
     mp.add_key_binding("mouse_btn0", "nordlicht-click", click)
     mp.add_key_binding("mouse_move", mouse_move)
 
     new_file()
-    on()
+    is_on = false
+    update()
 end
 
 -- wait until the osd-width is > 0, then init
