@@ -83,12 +83,14 @@ unsigned char image_get_b(const image *i, const int x, const int y) {
 
 void image_to_bgra(unsigned char *target, const int width, const int height, const image *i, const int offset_x, const int offset_y) {
     int x, y;
-    for (y = 0; y < image_height(i) && offset_y+y < height ; y++) {
+    for (y = 0; y < image_height(i) && offset_y+y < height; y++) {
         for (x = 0; x < image_width(i) && offset_x+x < width; x++) {
-            *(target+width*4*(offset_y+y)+4*(offset_x+x)+0) = image_get_b(i, x, y);
-            *(target+width*4*(offset_y+y)+4*(offset_x+x)+1) = image_get_g(i, x, y);
-            *(target+width*4*(offset_y+y)+4*(offset_x+x)+2) = image_get_r(i, x, y);
-            *(target+width*4*(offset_y+y)+4*(offset_x+x)+3) = 255;
+            if (offset_x+x < width && offset_x+x >= 0 && offset_y+y < height && offset_y+y >= 0) {
+                *(target+width*4*(offset_y+y)+4*(offset_x+x)+0) = image_get_b(i, x, y);
+                *(target+width*4*(offset_y+y)+4*(offset_x+x)+1) = image_get_g(i, x, y);
+                *(target+width*4*(offset_y+y)+4*(offset_x+x)+2) = image_get_r(i, x, y);
+                *(target+width*4*(offset_y+y)+4*(offset_x+x)+3) = 255;
+            }
         }
     }
 }

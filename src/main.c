@@ -82,6 +82,7 @@ Examples:\n\
 int main(const int argc, const char **argv) {
     int width = -1;
     int height = -1;
+    int rows = 1;
     float start = 0.0;
     float end = 1.0;
     char *output_file = NULL;
@@ -95,9 +96,10 @@ int main(const int argc, const char **argv) {
     int version = 0;
 
     const struct poptOption optionsTable[] = {
-        {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width; by default it's \"height*10\", or 1920 pixels, if both are undefined", NULL},
-        {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height; by default it's \"width/10\"", NULL},
-        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename, the default is VIDEOFILE.png", "FILENAME"},
+        {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width (default: \"height*10\", or 1920 pixels, if both are undefined)", NULL},
+        {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height (default: \"width/10\")", NULL},
+        {"rows", 'r', POPT_ARG_INT, &rows, 0, "set the number of rows (default: 1)", NULL},
+        {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename (default: VIDEOFILE.nordlicht.png)", "FILENAME"},
         {"buffer", 'b', POPT_ARG_STRING, &buffer_file, 0, "the internal raw 32-bit BGRA image buffer will be mmapped to this file, can be used for live display", "FILENAME"},
         {"style", 's', POPT_ARG_STRING, &styles_string, 0, "default is 'horizontal', see \"Styles\" section below. You can specify more than one style, separated by '+', to get multiple tracks", "STYLE"},
         {"start", '\0', POPT_ARG_FLOAT, &start, 0, "specify where to start the barcode (ratio between 0 and 1)", NULL},
@@ -219,6 +221,7 @@ int main(const int argc, const char **argv) {
         exit(1);
     }
 
+    nordlicht_set_rows(n, rows);
     nordlicht_set_start(n, start);
     nordlicht_set_end(n, end);
     nordlicht_set_styles(n, styles, num_tracks);

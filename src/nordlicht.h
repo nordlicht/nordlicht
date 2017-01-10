@@ -56,6 +56,9 @@ NORDLICHT_API nordlicht* nordlicht_init(const char *filename, const int width, c
 // Free a nordlicht.
 NORDLICHT_API void nordlicht_free(nordlicht *n);
 
+// Set the number of rows. Default is 1.
+NORDLICHT_API int nordlicht_set_rows(nordlicht *n, const int rows);
+
 // Specify where to start the nordlicht in the file, as a ratio between 0 and 1.
 NORDLICHT_API int nordlicht_set_start(nordlicht *n, const float start);
 

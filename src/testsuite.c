@@ -71,6 +71,18 @@ CHEAT_TEST(valid_size,
     cheat_not_null(nordlicht_init("video.mp4", 1, 100000));
 )
 
+CHEAT_TEST(rows,
+    n = nordlicht_init("video.mp4", 100, 100);
+    cheat_not_null(n);
+    cheat_ok(nordlicht_set_rows(n, 1));
+    cheat_ok(nordlicht_set_rows(n, 100));
+    cheat_fail(nordlicht_set_rows(n, 101));
+    cheat_fail(nordlicht_set_rows(n, 0));
+    cheat_fail(nordlicht_set_rows(n, -1));
+    cheat_fail(nordlicht_set_rows(n, INT_MIN));
+    cheat_fail(nordlicht_set_rows(n, INT_MAX));
+)
+
 CHEAT_TEST(invalid_output,
     n = nordlicht_init("video.mp4", 100, 100);
     cheat_not_null(n);
@@ -193,6 +205,18 @@ CHEAT_TEST(tool_size,
     cheat_fail(tool("video.mp4 -h 1.1"));
     cheat_fail(tool("video.mp4 -w 1,1"));
     cheat_fail(tool("video.mp4 -h 1,1"));
+)
+
+CHEAT_TEST(tool_rows,
+    cheat_ok(tool("video.mp4 -w 1 -h 10 -r 1"));
+    cheat_ok(tool("video.mp4 -w 1 -h 10 -r 10"));
+    cheat_fail(tool("video.mp4 -w 1 -h 10 -r 11"));
+    cheat_fail(tool("video.mp4 -w 1 -h 10 -r 0"));
+    cheat_fail(tool("video.mp4 -w 1 -h 10 -r -1"));
+    cheat_fail(tool("video.mp4 -w 1 -h 10 -r -100000000000"));
+    cheat_fail(tool("video.mp4 -w 1 -h 10 -r 100000000000"));
+    cheat_ok(tool("video.mp4 -s horizontal+vertical -w 1 -h 10 -r 5"));
+    cheat_fail(tool("video.mp4 -s horizontal+vertical -w 1 -h 10 -r 6"));
 )
 
 CHEAT_TEST(tool_output,

@@ -17,6 +17,7 @@ struct nordlicht {
     char *filename;
     track *tracks;
     int num_tracks;
+    int rows;
     unsigned char *data;
 
     int owns_data;
@@ -75,6 +76,8 @@ NORDLICHT_API nordlicht* nordlicht_init(const char *filename, const int width, c
     n->tracks[0].style = NORDLICHT_STYLE_HORIZONTAL;
     n->tracks[0].height = n->height;
 
+    n->rows = 1;
+
     n->strategy = NORDLICHT_STRATEGY_FAST;
     n->modifiable = 1;
     n->source = source_init(n->filename);
@@ -105,6 +108,24 @@ NORDLICHT_API void nordlicht_free(nordlicht *n) {
 
 NORDLICHT_API const char *nordlicht_error() {
     return get_error();
+}
+
+NORDLICHT_API int nordlicht_set_rows(nordlicht *n, const int rows) {
+    if (! n->modifiable) {
+        return -1;
+    }
+
+    if (rows < 1) {
+        error("Number of rows must be positive (got %d)", rows);
+        return -1;
+    }
+    if (rows > n->height/n->num_tracks) {
+        error("%d rows are too many for a height of %d px, assuming %d styles", rows, n->height, n->num_tracks);
+        return -1;
+    }
+
+    n->rows = rows;
+    return 0;
 }
 
 NORDLICHT_API int nordlicht_set_start(nordlicht *n, const float start) {
@@ -161,15 +182,15 @@ NORDLICHT_API int nordlicht_set_styles(nordlicht *n, const nordlicht_style *styl
 
     n->num_tracks = num_tracks;
 
-    if (n->num_tracks > n->height) {
-        error("Height of %d px is too low for %d styles", n->height, n->num_tracks);
+    if (n->num_tracks > n->height/n->rows) {
+        error("Height of %d px is too low for %d styles, assuming %d rows", n->height, n->num_tracks, n->rows);
         return -1;
     }
 
     free(n->tracks);
     n->tracks = (track *) malloc(n->num_tracks*sizeof(track));
 
-    int height_of_each_track = n->height/n->num_tracks;
+    int height_of_each_track = n->height/n->num_tracks/n->rows;
     int i;
     for (i=0; i<num_tracks; i++) {
         nordlicht_style s = styles[i];
@@ -180,7 +201,7 @@ NORDLICHT_API int nordlicht_set_styles(nordlicht *n, const nordlicht_style *styl
         n->tracks[i].style = s;
         n->tracks[i].height = height_of_each_track;
     }
-    n->tracks[0].height = n->height - (n->num_tracks-1)*height_of_each_track;
+    //n->tracks[0].height = n->height - (n->num_tracks-1)*height_of_each_track; TODO fill full height
 
     return 0;
 }
@@ -215,22 +236,23 @@ NORDLICHT_API int nordlicht_generate_step(nordlicht *n) {
     } else {
         image *frame;
 
+        double min_percent = 1.0*(n->current_column+0.5-COLUMN_PRECISION/2.0)/(n->width*n->rows);
+        double max_percent = 1.0*(n->current_column+0.5+COLUMN_PRECISION/2.0)/(n->width*n->rows);
+
         if (n->tracks[n->current_track].style == NORDLICHT_STYLE_SPECTROGRAM) {
             if (!source_has_audio(n->source)) {
                 error("File contains no audio, please select an appropriate style");
                 n->progress = 1;
                 return -1;
             }
-            frame = source_get_audio_frame(n->source, 1.0*(n->current_column+0.5-COLUMN_PRECISION/2.0)/n->width,
-                    1.0*(n->current_column+0.5+COLUMN_PRECISION/2.0)/n->width);
+            frame = source_get_audio_frame(n->source, min_percent, max_percent);
         } else {
             if (!source_has_video(n->source)) {
                 error("File contains no video, please select an appropriate style");
                 n->progress = 1;
                 return -1;
             }
-            frame = source_get_video_frame(n->source, 1.0*(n->current_column+0.5-COLUMN_PRECISION/2.0)/n->width,
-                    1.0*(n->current_column+0.5+COLUMN_PRECISION/2.0)/n->width);
+            frame = source_get_video_frame(n->source, min_percent, max_percent);
         }
 
         if (frame != NULL) {
@@ -291,19 +313,39 @@ NORDLICHT_API int nordlicht_generate_step(nordlicht *n) {
                     break;
             }
 
-            image_to_bgra(n->data, n->width, n->height, column, n->current_column, n->current_y_offset);
+            int row_offset = n->current_column/n->width*(n->height/n->rows);
+
+            image_to_bgra(n->data, n->width, n->height, column, n->current_column%n->width, n->current_y_offset+row_offset);
+
+            int remaining = n->current_column%n->width+image_width(column)-n->width;
+            int written = n->width-n->current_column%n->width;
+            while (remaining > 0) {
+
+                printf("rem: %d\n", remaining);
+                printf("wr: %d\n", written);
+
+                row_offset += (n->height/n->rows);
+
+                if (n->current_column+written >= n->width*n->rows) {
+                    break;
+                }
+
+                image_to_bgra(n->data, n->width, n->height, column, -written, n->current_y_offset+row_offset);
+                remaining = -written+image_width(column)-n->width;
+                written = image_width(column)-remaining;
+            }
 
             n->current_column = n->current_column + image_width(column) - 1;
-            if (n->current_column >= n->width) {
-                n->current_column = n->width - 1;
+            if (n->current_column >= n->width*n->rows) {
+                n->current_column = n->width*n->rows - 1;
             }
-            n->progress = (n->current_track+1.0*n->current_column/n->width)/n->num_tracks;
+            n->progress = (n->current_track+1.0*n->current_column/(n->width*n->rows))/n->num_tracks;
 
             image_free(column);
         }
 
         n->current_column++;
-        if (n->current_column == n->width) {
+        if (n->current_column == n->width*n->rows) {
             n->current_column = 0;
             n->current_y_offset += n->tracks[n->current_track].height;
             n->current_track++;
