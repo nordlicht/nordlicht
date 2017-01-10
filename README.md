@@ -19,6 +19,8 @@ Development of *nordlicht* happens on GitHub. Please report any bugs or ideas to
 
 You can also help by packaging the software for your favorite operating system, or writing an integration for your favorite video player. Even rough prototypes are highly appreciated!
 
+Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+
 ## License: GPLv2+
 
 See [LICENSE.md](LICENSE.md) for details.
