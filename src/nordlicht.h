@@ -37,6 +37,7 @@ typedef enum nordlicht_style {
     NORDLICHT_STYLE_HORIZONTALTHIRD, // same as 'horizontal', but only use the middle third
     NORDLICHT_STYLE_VERTICALTHIRD, // same as 'vertical', but only use the middle third
     NORDLICHT_STYLE_SLITSCANTHIRD, // same as 'slitscan', but only use the middle third
+    NORDLICHT_STYLE_TIME, // time scale, each section equals one minute
     NORDLICHT_STYLE_LAST // just a marker so that we can count the number of available styles
 } nordlicht_style;
 

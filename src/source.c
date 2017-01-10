@@ -145,9 +145,12 @@ int seek_keyframe(source *s, stream *st, const long frame) {
     return grab_next_frame(s, st) != 0;
 }
 
+double source_duration(const source *s) {
+    return 1.0*s->format->duration/AV_TIME_BASE;
+}
+
 int total_number_of_frames(const source *s, stream *st) {
-    double duration_sec = 1.0*s->format->duration/AV_TIME_BASE;
-    return st->fps*duration_sec;
+    return st->fps*source_duration(s);
 }
 
 // Returns 0 if done

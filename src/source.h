@@ -10,6 +10,8 @@ typedef struct source source;
 
 source* source_init(const char *filename);
 
+double source_duration(const source *s);
+
 int source_has_video(source *s);
 
 int source_has_audio(source *s);

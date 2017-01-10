@@ -250,6 +250,13 @@ CHEAT_TEST(tool_style,
     cheat_fail(tool("video.mp4 -s"));
 )
 
+CHEAT_TEST(tool_time,
+    cheat_ok(tool("video.mp4 -w 100 -h 1 -s time"));
+    cheat_fail(tool("video.mp4 -w 100 -h 1 -s time+time"));
+    cheat_ok(tool("video.mp4 -w 100 -h 2 -s thumbnails+time"));
+    cheat_ok(tool("video.mp4 -w 100 -h 100 -s time+time+time+time+time+time+time+time+time+time+time+time+time+time+time+time+time+time+time+time+time+time+time+time"));
+)
+
 CHEAT_TEST(tool_region,
     cheat_ok(tool("video.mp4 -w 1 --start=0.5"));
     cheat_ok(tool("video.mp4 -w 1 --end=0.5"));

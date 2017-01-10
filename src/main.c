@@ -43,6 +43,7 @@ const style style_table[] = {
     {"thumbnails", "display small thumbnails at regular intervals", NORDLICHT_STYLE_THUMBNAILS},
     {"thumbnailsthird", "same as 'thumbnails', but only use the middle third", NORDLICHT_STYLE_THUMBNAILSTHIRD},
     {"spectrogram", "spectrogram of the first audio track (not all sample formats are supported yet)", NORDLICHT_STYLE_SPECTROGRAM},
+    {"time", "time scale, each section equals one minute", NORDLICHT_STYLE_TIME},
     {NULL, NULL, NORDLICHT_STYLE_LAST}
 };
 
