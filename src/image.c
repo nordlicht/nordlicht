@@ -259,6 +259,18 @@ image* image_column(const image *i, double percent) {
     return i2;
 }
 
+image* image_cut(const image *i, int x, int y, int width, int height) {
+    image *i2 = image_init(width, height);
+
+    for (int xx = x; xx < image_width(i) && xx < x+width; xx++) {
+        for (int yy = y; yy < image_height(i) && yy < y+height; yy++) {
+            image_set(i2, xx-x, yy-y, image_get_r(i, xx, yy), image_get_g(i, xx, yy), image_get_b(i, xx, yy));
+        }
+    }
+
+    return i2;
+}
+
 int image_write_png(const image *i, const char *file_path) {
     AVCodec *encoder = avcodec_find_encoder_by_name("png");
     AVCodecContext *encoder_context;

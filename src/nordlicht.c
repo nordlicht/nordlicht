@@ -241,17 +241,39 @@ NORDLICHT_API int nordlicht_generate_step(nordlicht *n) {
                 case NORDLICHT_STYLE_THUMBNAILS:
                     column = image_scale(frame, thumbnail_width, n->tracks[n->current_track].height);
                     break;
+                case NORDLICHT_STYLE_THUMBNAILSTHIRD:
+                    tmp = image_cut(frame, 0.333*image_width(frame), 0, 0.333*image_width(frame), image_height(frame));
+                    column = image_scale(tmp, 0.333*thumbnail_width, n->tracks[n->current_track].height);
+                    image_free(tmp);
+                    break;
                 case NORDLICHT_STYLE_HORIZONTAL:
                     column = image_scale(frame, 1, n->tracks[n->current_track].height);
+                    break;
+                case NORDLICHT_STYLE_HORIZONTALTHIRD:
+                    tmp = image_cut(frame, 0.333*image_width(frame), 0, 0.333*image_width(frame), image_height(frame));
+                    column = image_scale(tmp, 1, n->tracks[n->current_track].height);
+                    image_free(tmp);
                     break;
                 case NORDLICHT_STYLE_VERTICAL:
                     tmp = image_scale(frame, n->tracks[n->current_track].height, 1);
                     column = image_flip(tmp);
                     image_free(tmp);
                     break;
+                case NORDLICHT_STYLE_VERTICALTHIRD:
+                    tmp = image_cut(frame, 0, 0.333*image_height(frame), image_width(frame), 0.333*image_height(frame));
+                    image *tmp2 = NULL;
+                    tmp2 = image_scale(tmp, n->tracks[n->current_track].height, 1);
+                    column = image_flip(tmp2);
+                    image_free(tmp);
+                    image_free(tmp2);
+                    break;
                 case NORDLICHT_STYLE_SLITSCAN:
                     tmp = image_column(frame, 1.0*(n->current_column%thumbnail_width)/thumbnail_width);
-
+                    column = image_scale(tmp, 1, n->tracks[n->current_track].height);
+                    image_free(tmp);
+                    break;
+                case NORDLICHT_STYLE_SLITSCANTHIRD:
+                    tmp = image_column(frame, 0.333+0.333*fmod((3.0*(n->current_column%(thumbnail_width))/thumbnail_width),1));
                     column = image_scale(tmp, 1, n->tracks[n->current_track].height);
                     image_free(tmp);
                     break;

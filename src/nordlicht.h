@@ -33,6 +33,10 @@ typedef enum nordlicht_style {
     NORDLICHT_STYLE_SLITSCAN, // take single columns, while moving to the right (and wrapping to the left)
     NORDLICHT_STYLE_MIDDLECOLUMN, // take the frames' middlemost column
     NORDLICHT_STYLE_SPECTROGRAM, // spectrogram of the first audio track (not all sample formats are supported yet)
+    NORDLICHT_STYLE_THUMBNAILSTHIRD, // same as 'thumbnails', but only use the middle third
+    NORDLICHT_STYLE_HORIZONTALTHIRD, // same as 'horizontal', but only use the middle third
+    NORDLICHT_STYLE_VERTICALTHIRD, // same as 'vertical', but only use the middle third
+    NORDLICHT_STYLE_SLITSCANTHIRD, // same as 'slitscan', but only use the middle third
     NORDLICHT_STYLE_LAST // just a marker so that we can count the number of available styles
 } nordlicht_style;
 

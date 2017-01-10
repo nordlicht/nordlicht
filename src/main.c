@@ -34,10 +34,14 @@ typedef struct {
 
 const style style_table[] = {
     {"horizontal", "compress frames to vertical lines and append them", NORDLICHT_STYLE_HORIZONTAL},
+    {"horizontalthird", "same as 'horizontal', but only use the middle third", NORDLICHT_STYLE_HORIZONTALTHIRD},
     {"vertical", "compress frames to horizontal lines and rotate them counterclockwise by 90 degrees", NORDLICHT_STYLE_VERTICAL},
+    {"verticalthird", "same as 'vertical', but only use the middle third", NORDLICHT_STYLE_VERTICALTHIRD},
     {"slitscan", "take single columns while constantly moving to the right (and wrapping back to the left)", NORDLICHT_STYLE_SLITSCAN},
+    {"slitscanthird", "same as 'slitscan', but only use the middle third", NORDLICHT_STYLE_SLITSCANTHIRD},
     {"middlecolumn", "take the middlemost column of each frame", NORDLICHT_STYLE_MIDDLECOLUMN},
     {"thumbnails", "display small thumbnails at regular intervals", NORDLICHT_STYLE_THUMBNAILS},
+    {"thumbnailsthird", "same as 'thumbnails', but only use the middle third", NORDLICHT_STYLE_THUMBNAILSTHIRD},
     {"spectrogram", "spectrogram of the first audio track (not all sample formats are supported yet)", NORDLICHT_STYLE_SPECTROGRAM},
     {NULL, NULL, NORDLICHT_STYLE_LAST}
 };
@@ -63,7 +67,7 @@ void print_help(const poptContext popt, const int ret) {
     printf("\nStyles:\n");
     int i;
     for (i = 0; style_table[i].name; i++) {
-        printf("  %-14s %s\n", style_table[i].name, style_table[i].description);
+        printf("  %-17s %s\n", style_table[i].name, style_table[i].description);
     }
 
     printf("\n\
