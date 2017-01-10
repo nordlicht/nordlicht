@@ -54,7 +54,7 @@ configure_file(src/version.h.in version.h @ONLY)
 if (NOT WIN32)
     configure_file(cmake/nordlicht.pc.in nordlicht.pc @ONLY)
     add_custom_command(TARGET nordlicht POST_BUILD
-        COMMAND help2man ${CMAKE_BINARY_DIR}/nordlicht -N -n "creates colorful barcodes from video files"
+        COMMAND help2man ${CMAKE_BINARY_DIR}/nordlicht -N -n "creates colorful timebars from video and audio files"
         -o ${CMAKE_BINARY_DIR}/nordlicht.1
     )
 endif()

@@ -229,10 +229,10 @@ CHEAT_TEST(tool_output,
     cheat_fail(tool("video.mp4 -w 1 -o ."));
     cheat_fail(tool("video.mp4 -w 1 -o .."));
     cheat_fail(tool("video.mp4 -w 1 -o /"));
-    cheat_ok(tool("video.mp4 -w 1 -o barcode.bgra"));
+    cheat_ok(tool("video.mp4 -w 1 -o timebar.bgra"));
     // fall back to PNG in these two cases:
-    cheat_ok(tool("video.mp4 -w 1 -o barcode.abc"));
-    cheat_ok(tool("video.mp4 -w 1 -o barcode"));
+    cheat_ok(tool("video.mp4 -w 1 -o timebar.abc"));
+    cheat_ok(tool("video.mp4 -w 1 -o timebar"));
 )
 
 CHEAT_TEST(tool_style,

@@ -41,7 +41,7 @@ typedef enum nordlicht_style {
 } nordlicht_style;
 
 typedef enum nordlicht_strategy {
-    NORDLICHT_STRATEGY_FAST, // generate barcode in a single pass as fast as possible
+    NORDLICHT_STRATEGY_FAST, // generate timebar in a single pass as fast as possible
     NORDLICHT_STRATEGY_LIVE, // generate a fast approximation first, good for live display
 } nordlicht_strategy;
 
@@ -80,7 +80,7 @@ NORDLICHT_API int nordlicht_set_styles(nordlicht *n, const nordlicht_style *styl
 NORDLICHT_API int nordlicht_set_strategy(nordlicht *n, const nordlicht_strategy strategy);
 
 // Return a pointer to the nordlicht's internal buffer. You can use it to draw
-// the barcode while it is generated. The pixel format is 32-bit BGRA.
+// the timebar while it is generated. The pixel format is 32-bit BGRA.
 NORDLICHT_API const unsigned char* nordlicht_buffer(const nordlicht *n);
 
 // Replace the internal nordlicht's internal buffer. The data pointer is owned

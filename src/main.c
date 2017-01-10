@@ -74,7 +74,7 @@ void print_help(const poptContext popt, const int ret) {
 Examples:\n\
   nordlicht video.mp4                                   generate video.mp4.nordlicht.png of default size\n\
   nordlicht video.mp4 -s vertical                       compress individual frames to columns\n\
-  nordlicht video.mp4 -w 1000 -h 1000 -o barcode.png    override size and name of the output file\n");
+  nordlicht video.mp4 -w 1000 -h 1000 -o timebar.png    override size and name of the output file\n");
 
     exit(ret);
 }
@@ -96,14 +96,14 @@ int main(const int argc, const char **argv) {
     int version = 0;
 
     const struct poptOption optionsTable[] = {
-        {"width", 'w', POPT_ARG_INT, &width, 0, "set the barcode's width (default: \"height*10\", or 1920 pixels, if both are undefined)", NULL},
-        {"height", 'h', POPT_ARG_INT, &height, 0, "set the barcode's height (default: \"width/10\")", NULL},
+        {"width", 'w', POPT_ARG_INT, &width, 0, "set the timebar's width (default: \"height*10\", or 1920 pixels, if both are undefined)", NULL},
+        {"height", 'h', POPT_ARG_INT, &height, 0, "set the timebar's height (default: \"width/10\")", NULL},
         {"rows", 'r', POPT_ARG_INT, &rows, 0, "set the number of rows (default: 1)", NULL},
         {"output", 'o', POPT_ARG_STRING, &output_file, 0, "set output filename (default: VIDEOFILE.nordlicht.png)", "FILENAME"},
         {"buffer", 'b', POPT_ARG_STRING, &buffer_file, 0, "the internal raw 32-bit BGRA image buffer will be mmapped to this file, can be used for live display", "FILENAME"},
         {"style", 's', POPT_ARG_STRING, &styles_string, 0, "default is 'horizontal', see \"Styles\" section below. You can specify more than one style, separated by '+', to get multiple tracks", "STYLE"},
-        {"start", '\0', POPT_ARG_FLOAT, &start, 0, "specify where to start the barcode (ratio between 0 and 1)", NULL},
-        {"end", '\0', POPT_ARG_FLOAT, &end, 0, "specify where to end the barcode (ratio between 0 and 1)", NULL},
+        {"start", '\0', POPT_ARG_FLOAT, &start, 0, "specify where to start the timebar (ratio between 0 and 1)", NULL},
+        {"end", '\0', POPT_ARG_FLOAT, &end, 0, "specify where to end the timebar (ratio between 0 and 1)", NULL},
         {"quiet", 'q', 0, &quiet, 0, "don't show progress indicator", NULL},
         {"help", '\0', 0, &help, 0, "display this help and exit", NULL},
         {"version", '\0', 0, &version, 0, "output version information and exit", NULL},
