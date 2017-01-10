@@ -320,10 +320,6 @@ NORDLICHT_API int nordlicht_generate_step(nordlicht *n) {
             int remaining = n->current_column%n->width+image_width(column)-n->width;
             int written = n->width-n->current_column%n->width;
             while (remaining > 0) {
-
-                printf("rem: %d\n", remaining);
-                printf("wr: %d\n", written);
-
                 row_offset += (n->height/n->rows);
 
                 if (n->current_column+written >= n->width*n->rows) {
