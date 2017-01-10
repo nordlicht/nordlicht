@@ -264,8 +264,9 @@ image* image_column(const image *i, double percent) {
 image* image_cut(const image *i, int x, int y, int width, int height) {
     image *i2 = image_init(width, height);
 
-    for (int xx = x; xx < image_width(i) && xx < x+width; xx++) {
-        for (int yy = y; yy < image_height(i) && yy < y+height; yy++) {
+    int xx, yy;
+    for (xx = x; xx < image_width(i) && xx < x+width; xx++) {
+        for (yy = y; yy < image_height(i) && yy < y+height; yy++) {
             image_set(i2, xx-x, yy-y, image_get_r(i, xx, yy), image_get_g(i, xx, yy), image_get_b(i, xx, yy));
         }
     }
