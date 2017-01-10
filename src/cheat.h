@@ -266,7 +266,7 @@ maze is not necessary.
 Isolated tests that take too long to send data are terminated after this time.
 */
 #ifndef CHEAT_TIME
-#define CHEAT_TIME (60000) /* This is in milliseconds. */
+#define CHEAT_TIME (2000) /* This is in milliseconds. */
 #endif
 
 /*

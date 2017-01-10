@@ -200,11 +200,11 @@ CHEAT_TEST(tool_output,
     cheat_assert(-1 != access("video.mp4.nordlicht.png", F_OK));
     cheat_ok(tool("video.mp4 -w 1 -o ünîç⌀də.png"));
     cheat_assert(-1 != access("ünîç⌀də.png", F_OK));
-    cheat_fail(tool("video.mp4 -o video.mp4"));
-    cheat_fail(tool("video.mp4 -o ''"));
-    cheat_fail(tool("video.mp4 -o ."));
-    cheat_fail(tool("video.mp4 -o .."));
-    cheat_fail(tool("video.mp4 -o /"));
+    cheat_fail(tool("video.mp4 -w 1 -o video.mp4"));
+    cheat_fail(tool("video.mp4 -w 1 -o ''"));
+    cheat_fail(tool("video.mp4 -w 1 -o ."));
+    cheat_fail(tool("video.mp4 -w 1 -o .."));
+    cheat_fail(tool("video.mp4 -w 1 -o /"));
     cheat_ok(tool("video.mp4 -w 1 -o barcode.bgra"));
     // fall back to PNG in these two cases:
     cheat_ok(tool("video.mp4 -w 1 -o barcode.abc"));
