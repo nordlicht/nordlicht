@@ -74,7 +74,7 @@ void print_help(const poptContext popt, const int ret) {
     printf("\n\
 Examples:\n\
   nordlicht video.mp4                                   generate video.mp4.nordlicht.png of default size\n\
-  nordlicht video.mp4 -s vertical                       compress individual frames to columns\n\
+  nordlicht video.mp4 -s slitscan                       use the 'slitscan' style, see above\n\
   nordlicht video.mp4 -w 1000 -h 1000 -o timebar.png    override size and name of the output file\n");
 
     exit(ret);
