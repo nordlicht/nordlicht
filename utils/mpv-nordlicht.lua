@@ -158,6 +158,12 @@ function mouse_move()
     end
 end
 
+function shutdown()
+    -- delete temporary files
+    utils.subprocess_detached({args={"rm", livebuffer}})
+    utils.subprocess_detached({args={"rm", buffer}})
+end
+
 -- set up buffer filenames and hooks
 function init()
     NORDLICHT_CACHE_DIR = os.getenv("XDG_CACHE_HOME") or os.getenv("HOME").."/.cache"
