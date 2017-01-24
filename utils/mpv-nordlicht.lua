@@ -1,8 +1,9 @@
 -- nordlicht integration for mpv. You need mpv >= 0.3.6 to correctly support lua scripting.
--- You also need ImageMagick's "convert" in your PATH, as well as the luaposix package.
+-- You also need ImageMagick's "convert" in your PATH, as well as the luaposix and md5 packages.
 
 utils = require "mp.utils"
 posix = require "posix"
+md5 = require "md5"
 
 -- check if a file exists
 function file_exists(name)
@@ -23,7 +24,7 @@ function new_file()
     end
 
     resize()
-    nordlicht = video..".nordlicht.png"
+    nordlicht = NORDLICHT_CACHE_DIR..md5.sumhexa(mp.get_property("filename"))..".png"
 
     if not file_exists(nordlicht) then
         livewidth = width
@@ -42,20 +43,24 @@ function update()
             -- final PNG nordlicht exists
             local cmd = {"convert", nordlicht, "-depth", "8", "-resize", width.."x"..height.."!", buffer}
             utils.subprocess({args=cmd})
-            mp.command("overlay_add 0 0 0 "..buffer.." 0 bgra "..width.." "..height.." "..width*4)
+
             -- process must have ended
             pid = nil
         elseif file_exists(livebuffer) then
             -- nordlicht is probably being generated right now
             local cmd = {"convert", "-size", livewidth.."x"..liveheight, "-depth", "8", livebuffer, "-depth", "8", "-resize", width.."x"..height.."!", buffer}
             utils.subprocess({args=cmd})
-            mp.command("overlay_add 0 0 0 "..buffer.." 0 bgra "..width.." "..height.." "..width*4)
         else
             -- no nordlicht available yet
             mp.command("overlay_remove 0")
         end
 
         local pos = mp.get_property("percent-pos")
+
+        if file_exists(buffer) then
+            mp.command("overlay_add 0 0 0 "..buffer.." 0 bgra "..width.." "..height.." "..width*4)
+        end
+
         if pos ~= nil then
             mp.command("overlay_add 1 "..(math.floor(pos/100*width)-(mw-1)/2).." "..(height).." /tmp/arrow_up.bgra 0 bgra "..mw.." "..mh.." "..mw*4)
         end
@@ -83,7 +88,6 @@ function off()
         local mouse_x, mouse_y = mp.get_mouse_pos()
 
         if mouse_y > 2*height then
-            --mp.cancel_timer(timer)
             mp.command("overlay_remove 0")
             mp.command("overlay_remove 1")
             is_on = false
@@ -107,6 +111,7 @@ function resize()
 
     -- create the little marker triangle using ImageMagick
     utils.subprocess({args={"convert", "-depth", "8", "-size", mw.."x"..mh, "xc:none", "-fill", "white", "-stroke", "black", "-strokewidth", "0.5", "+antialias", "-draw", "path 'M"..((mw-1)/2)..",0L"..(mw-1)..","..(mh-1).."L0,"..(mh-1).."Z'", "bgra:/tmp/arrow_up.bgra"}})
+    --utils.subprocess({args={"convert", "-depth", "8", "-size", mw.."x"..mh, "bgra:/tmp/arrow_up.bgra", "-flip", "bgra:/tmp/arrow_down.bgra"}})
 end
 
 -- kill the current nordlicht process, if there is one
@@ -154,6 +159,9 @@ end
 
 -- set up buffer filenames and hooks
 function init()
+    NORDLICHT_CACHE_DIR = os.getenv("XDG_CACHE_HOME") or os.getenv("HOME").."/.cache"
+    NORDLICHT_CACHE_DIR = NORDLICHT_CACHE_DIR.."/nordlicht/"
+    utils.subprocess({args={"mkdir", "-p", NORDLICHT_CACHE_DIR}})
     -- nordlicht's internal bgra buffer will be mmapped to this file
     local tmpbuffer = os.tmpname()
     livebuffer = tmpbuffer .. ".nordlicht.mpv.bgra"
