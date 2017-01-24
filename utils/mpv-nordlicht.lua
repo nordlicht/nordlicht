@@ -1,5 +1,5 @@
 -- nordlicht integration for mpv. You need mpv >= 0.3.6 to correctly support lua scripting.
--- You also need ImageMagick's "convert" in your PATH, as well as the luaposix and md5 packages.
+-- You also need ImageMagick's "convert" in your PATH, as well as the luaposix >= 33.3.0 and md5 packages.
 
 utils = require "mp.utils"
 posix = require "posix"
@@ -161,7 +161,7 @@ end
 function init()
     NORDLICHT_CACHE_DIR = os.getenv("XDG_CACHE_HOME") or os.getenv("HOME").."/.cache"
     NORDLICHT_CACHE_DIR = NORDLICHT_CACHE_DIR.."/nordlicht/"
-    utils.subprocess({args={"mkdir", "-p", NORDLICHT_CACHE_DIR}})
+    posix.mkdir(NORDLICHT_CACHE_DIR)
     -- nordlicht's internal bgra buffer will be mmapped to this file
     local tmpbuffer = os.tmpname()
     livebuffer = tmpbuffer .. ".nordlicht.mpv.bgra"
