@@ -1,6 +1,6 @@
 # nordlicht
 
-**nordlicht** is a C library that creates moodbars from video files. For a general introduction, installation and usage instructions, please visit <http://nordlicht.github.io/>.
+**nordlicht** is a C library that creates colorful timebars from video and audio files. For a general introduction, installation and usage instructions, please visit <http://nordlicht.github.io/>.
 
 ## Building from source
 
