@@ -63,7 +63,7 @@ install(TARGETS libnordlicht DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(TARGETS nordlicht DESTINATION bin)
 install(FILES ${CMAKE_SOURCE_DIR}/src/nordlicht.h DESTINATION include)
 install(FILES ${CMAKE_BINARY_DIR}/nordlicht.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-install(FILES ${CMAKE_BINARY_DIR}/nordlicht.1 DESTINATION share/man/man1)
+install(FILES ${CMAKE_BINARY_DIR}/nordlicht.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 install(FILES ${CMAKE_SOURCE_DIR}/utils/mpv-nordlicht.lua DESTINATION share/nordlicht)
 install(FILES ${CMAKE_SOURCE_DIR}/utils/nordlicht.thumbnailer DESTINATION share/nordlicht)
 
