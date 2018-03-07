@@ -1,0 +1,41 @@
+#!/bin/bash
+
+#
+# nordlicht overlay for ffplay
+#
+# USAGE: with 'nordlicht' installed just call with the video-file to
+# playback as the only argument. Use the time bar shown below the
+# video to navigate with in the video by right clicking on it.
+#
+# BUGS: If the playback window is wider than the video (black padding
+# left and right of the color bar) clicking the bar will not be
+# concise for ffplay will assume the width to be 100% of the video.
+#
+
+if [[ ! -f "${1}" ]]; then
+		echo "need file name to play"
+		exit 1
+fi
+
+#
+# get parameters of the video with ffprobe
+#
+eval $(ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=height,width "${1}")
+VW=$streams_stream_0_width
+VH=$streams_stream_0_height
+
+NI="${1}.nordlicht.png"
+PH=$(( $VW/24 ))
+
+#
+# generate color bar overlay image
+#
+if [[ ! -f "${NI}" ]] || [[ $(stat -c %Y "${1}") -gt $(stat -c %Y "${NI}") ]]; then
+		nordlicht "${1}" -w $VW -h $PH
+fi
+
+#
+# play with color bar image overlayed
+#
+ffplay -v error -hide_banner "${1}" -vf "[in]pad=in_w:in_h+$PH+5[pad];movie=$NI[cbar];[pad][cbar]overlay=0:$VH+5[out]"
+
